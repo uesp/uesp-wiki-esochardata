@@ -1,0 +1,22 @@
+
+name = uesp.wikiesochardata
+description = MediaWiki extension for handling ESO character data.
+repository = https://code.google.com/p/uesp.WikiEsoCharData/
+backup = false
+verbosity = 0
+
+	# Staging is important as the APC cache randomly breaks if you try
+	# to update the files in place.
+staged = true
+
+ignore = *.deploy
+ignore = .hg*
+
+dest = content1.uesp.net:/home/uesp/www/w/extensions/UespEsoCharData/
+dest = content2.uesp.net:/home/uesp/www/w/extensions/UespEsoCharData/
+dest = content3.uesp.net:/home/uesp/www/w/extensions/UespEsoCharData/
+dest = content1.uesp.net:/home/uesp/www-mobile/w/extensions/UespEsoCharData/
+dest = content2.uesp.net:/home/uesp/www-mobile/w/extensions/UespEsoCharData/
+dest = content3.uesp.net:/home/uesp/www-mobile/w/extensions/UespEsoCharData/
+
+
