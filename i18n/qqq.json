@@ -1,10 +1,10 @@
 {
     "@metadata": {
         "authors": [
-            "<your username>"
+           "Daveh"
         ]
     },
-    "esochardata": "ESO Character Data",
-    "esochardata-desc": "{{desc}}",
-    "esochardata-summary": "Viewing ESO character data."
+    "esobuilddata": "ESO Character Build Data",
+    "esobuilddata-desc": "{{desc}}",
+    "esobuilddata-summary": "Viewing ESO character build data."
 }

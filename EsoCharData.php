@@ -17,7 +17,7 @@ EOT;
 }
 
 require_once("/home/uesp/secrets/esochardata.secrets");
-require_once('/home/uesp/www/esochardata/viewCharData.class.php');
+require_once('/home/uesp/www/esobuilddata/viewBuildData.class.php');
 
 
 $wgExtensionCredits['specialpage'][] = array(
@@ -29,16 +29,16 @@ $wgExtensionCredits['specialpage'][] = array(
 	'version' => '0.1.0',
 );
 
-$wgAutoloadClasses['SpecialEsoCharData'] = __DIR__ . '/SpecialEsoCharData.php';
+$wgAutoloadClasses['SpecialEsoBuildData'] = __DIR__ . '/SpecialEsoBuildData.php';
 $wgMessagesDirs['EsoCharData'] = __DIR__ . "/i18n";
 $wgExtensionMessagesFiles['EsoCharDataAlias'] = __DIR__ . '/EsoCharData.alias.php';
-$wgSpecialPages['EsoCharData'] = 'SpecialEsoCharData';
+$wgSpecialPages['EsoBuildData'] = 'SpecialEsoBuildData';
 
 $wgHooks['BeforePageDisplay'][] = 'uespEsoCharData_beforePageDisplay';
 
-$wgResourceModules['ext.EsoCharData'] = array(
-		'scripts' => 'esochardata.js',
-		'styles' => 'esochardata.css',
+$wgResourceModules['ext.EsoBuildData'] = array(
+		'scripts' => 'esobuilddata.js',
+		'styles' => 'esobuilddata.css',
 		'position' => 'top',
 		'localBasePath' => dirname( __FILE__ ) . '/modules',
 		'remoteExtPath' => 'EsoCharData/modules'
@@ -49,8 +49,8 @@ function uespEsoCharData_beforePageDisplay(&$out)
 {
 	global $wgScriptPath;
 	
-	//$out->addHeadItem("uesp-esochardata-css", "<link rel='stylesheet' href='http://content3.uesp.net/esochardata/resources/esochardata.css' />");
-	//$out->addHeadItem("uesp-esochardata-js", "<script src='http://content3.uesp.net/esochardata/resources/esochardata.js'></script>");
+	//$out->addHeadItem("uesp-esochardata-css", "<link rel='stylesheet' href='http://content3.uesp.net/esobuilddata/resources/esobuilddata.css' />");
+	//$out->addHeadItem("uesp-esochardata-js", "<script src='http://content3.uesp.net/esobuilddata/resources/esobuilddata.js'></script>");
 	
 	return true;
 }

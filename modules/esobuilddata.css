@@ -1,23 +1,23 @@
 @font-face {
 	font-family: 'EsoFontStyle';
-	src: url('/esochardata/resources/esofontregular-webfont.eot');
-	src: url('/esochardata/resources/esofontregular-webfont.eot?#iefix') format('embedded-opentype'),
-		url('/esochardata/resources/esofontregular-webfont.woff2') format('woff2'),
-		url('/esochardata/resources/esofontregular-webfont.woff') format('woff'),
-		url('/esochardata/resources/esofontregular-webfont.ttf') format('truetype'),
-		url('/esochardata/resources/esofontregular-webfont.svg#esofontregular') format('svg');
+	src: url('/esobuilddata/resources/esofontregular-webfont.eot');
+	src: url('/esobuilddata/resources/esofontregular-webfont.eot?#iefix') format('embedded-opentype'),
+		url('/esobuilddata/resources/esofontregular-webfont.woff2') format('woff2'),
+		url('/esobuilddata/resources/esofontregular-webfont.woff') format('woff'),
+		url('/esobuilddata/resources/esofontregular-webfont.ttf') format('truetype'),
+		url('/esobuilddata/resources/esofontregular-webfont.svg#esofontregular') format('svg');
 	font-weight: normal;
 	font-style: normal;
 }
 
 @font-face {
 	font-family: 'EsoFontStyle';
-	src: url('/esochardata/resources/esofontbold-webfont.eot');
-	src: url('/esochardata/resources/esofontbold-webfont.eot?#iefix') format('embedded-opentype'),
-		url('/esochardata/resources/esofontbold-webfont.woff2') format('woff2'),
-		url('/esochardata/resources/esofontbold-webfont.woff') format('woff'),
-		url('/esochardata/resources/esofontbold-webfont.ttf') format('truetype'),
-		url('/esochardata/resources/esofontbold-webfont.svg#esofontbold') format('svg');
+	src: url('/esobuilddata/resources/esofontbold-webfont.eot');
+	src: url('/esobuilddata/resources/esofontbold-webfont.eot?#iefix') format('embedded-opentype'),
+		url('/esobuilddata/resources/esofontbold-webfont.woff2') format('woff2'),
+		url('/esobuilddata/resources/esofontbold-webfont.woff') format('woff'),
+		url('/esobuilddata/resources/esofontbold-webfont.ttf') format('truetype'),
+		url('/esobuilddata/resources/esofontbold-webfont.svg#esofontbold') format('svg');
 	font-weight: bold;
 	font-style: normal;
 }
@@ -35,18 +35,18 @@
 	color: black;
 }
 
-.ecdRawCharData {
+.ecdRawBuildData {
 	border: solid thin; 
   	border-collapse: collapse; 
 }
 
-.ecdRawCharData th, 
-.ecdRawCharData td {
+.ecdRawBuildData th, 
+.ecdRawBuildData td {
 	border: solid thin;
 	padding: 2px;
 }
 
-.ecdRawCharData th,
+.ecdRawBuildData th,
 .ecdRawCharArrayData th {
 	font-size: 15px;
 	background-color: #CBAFB5;
@@ -147,7 +147,7 @@
 	display: inline-block;
 	width: 68px;
 	height: 68px;
-	background-image: url(/esochardata/resources/eso_ability_frame.png);
+	background-image: url(/esobuilddata/resources/eso_ability_frame.png);
 	background-size: 100% 100%;
 	vertical-align: middle;
 }
@@ -178,7 +178,7 @@
 
 .ecdSkillTooltip {
 	width: 360px;
-	background-image: url(/esochardata/resources/eso_item_border.png);
+	background-image: url(/esobuilddata/resources/eso_item_border.png);
 	background-size: 100% 100%;
 	color: #C5C29E;
 	line-height: 125%;
@@ -190,7 +190,7 @@
 
 .ecdSkillTooltip1 {
 	width: 360px;
-	background-image: url(/esochardata/resources/eso_item_border.png);
+	background-image: url(/esobuilddata/resources/eso_item_border.png);
 	background-size: 100% 100%;
 	color: #C5C29E;
 	line-height: 125%;
@@ -607,7 +607,7 @@
 .ecdSkillIconBox {
 	width: 34px;
 	height: 34px;
-	background-image: url(/esochardata/resources/eso_ability_frame.png);
+	background-image: url(/esobuilddata/resources/eso_ability_frame.png);
 	background-size: 100% 100%;
 	display: inline-block;
 	vertical-align: middle;
@@ -616,7 +616,7 @@
 .ecdSkillPassiveIconBox {
 	width: 34px;
 	height: 34px;
-	background-image: url(/esochardata/resources/eso_round_ability_frame.png);
+	background-image: url(/esobuilddata/resources/eso_round_ability_frame.png);
 	background-size: 100% 100%;
 	display: inline-block;
 	vertical-align: middle;
