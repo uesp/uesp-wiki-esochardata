@@ -12,7 +12,7 @@ class SpecialEsoBuildData extends SpecialPage
 				
 		parent::__construct( 'EsoBuildData' );
 		
-		$wgOut->addModules( 'ext.EsoBuildData' );
+		//$wgOut->addModules( 'ext.EsoBuildData' );
 		
 		$this->buildDataViewer = new EsoBuildDataViewer();
 		$this->buildDataViewer->baseUrl = "/wiki/Special:EsoBuildData";

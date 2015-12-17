@@ -49,8 +49,8 @@ function uespEsoCharData_beforePageDisplay(&$out)
 {
 	global $wgScriptPath;
 	
-	//$out->addHeadItem("uesp-esochardata-css", "<link rel='stylesheet' href='http://content3.uesp.net/esobuilddata/resources/esobuilddata.css' />");
-	//$out->addHeadItem("uesp-esochardata-js", "<script src='http://content3.uesp.net/esobuilddata/resources/esobuilddata.js'></script>");
+	$out->addHeadItem("uesp-esochardata-css", "<link rel='stylesheet' href='http://content3.uesp.net/esobuilddata/resources/esobuilddata.css' />");
+	$out->addHeadItem("uesp-esochardata-js", "<script src='http://content3.uesp.net/esobuilddata/resources/esobuilddata.js'></script>");
 	
 	return true;
 }
