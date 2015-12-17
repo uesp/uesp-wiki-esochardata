@@ -24,7 +24,7 @@ $wgExtensionCredits['specialpage'][] = array(
 	'path' => __FILE__,
 	'name' => 'EsoCharData',
 	'author' => 'Dave Humphrey (dave@uesp.net)',
-	'url' => 'https://www.uesp.net/wiki/UESPWiki:EsoCharData',
+	'url' => 'http://www.uesp.net/wiki/UESPWiki:EsoCharData',
 	'descriptionmsg' => 'esochardata-desc',
 	'version' => '0.1.0',
 );
