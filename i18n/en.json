@@ -6,5 +6,7 @@
     },
     "esobuilddata": "ESO Character Build Data",
     "esobuilddata-desc": "Displays ESO character build data.",
+    "esochardata": "ESO Character Build Data",
+    "esochardata-desc": "Displays ESO character build data.",
     "esobuilddata-summary": "Viewing ESO character build data."
 }
