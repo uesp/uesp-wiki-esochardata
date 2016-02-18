@@ -45,6 +45,12 @@ $wgResourceModules['ext.EsoBuildData'] = array(
 );
 
 
+$wgGroupPermissions['*']['esochardata_edit'] = false;
+$wgGroupPermissions['*']['esochardata_delete'] = false;
+$wgGroupPermissions['sysop']['esochardata_edit'] = true;
+$wgGroupPermissions['sysop']['esochardata_delete'] = true;
+
+
 function uespEsoCharData_beforePageDisplay(&$out) 
 {
 	global $wgScriptPath;

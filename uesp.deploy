@@ -15,8 +15,5 @@ ignore = .hg*
 dest = content1.uesp.net:/home/uesp/www/w/extensions/EsoCharData/
 dest = content2.uesp.net:/home/uesp/www/w/extensions/EsoCharData/
 dest = content3.uesp.net:/home/uesp/www/w/extensions/EsoCharData/
-dest = content1.uesp.net:/home/uesp/www-mobile/w/extensions/EsoCharData/
-dest = content2.uesp.net:/home/uesp/www-mobile/w/extensions/EsoCharData/
-dest = content3.uesp.net:/home/uesp/www-mobile/w/extensions/EsoCharData/
 
 
