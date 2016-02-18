@@ -1,23 +1,23 @@
 @font-face {
 	font-family: 'EsoFontStyle';
-	src: url('/esobuilddata/resources/esofontregular-webfont.eot');
-	src: url('/esobuilddata/resources/esofontregular-webfont.eot?#iefix') format('embedded-opentype'),
-		url('/esobuilddata/resources/esofontregular-webfont.woff2') format('woff2'),
-		url('/esobuilddata/resources/esofontregular-webfont.woff') format('woff'),
-		url('/esobuilddata/resources/esofontregular-webfont.ttf') format('truetype'),
-		url('/esobuilddata/resources/esofontregular-webfont.svg#esofontregular') format('svg');
+	src: url('esofontregular-webfont.eot');
+	src: url('esofontregular-webfont.eot?#iefix') format('embedded-opentype'),
+		url('esofontregular-webfont.woff2') format('woff2'),
+		url('esofontregular-webfont.woff') format('woff'),
+		url('esofontregular-webfont.ttf') format('truetype'),
+		url('esofontregular-webfont.svg#esofontregular') format('svg');
 	font-weight: normal;
 	font-style: normal;
 }
 
 @font-face {
 	font-family: 'EsoFontStyle';
-	src: url('/esobuilddata/resources/esofontbold-webfont.eot');
-	src: url('/esobuilddata/resources/esofontbold-webfont.eot?#iefix') format('embedded-opentype'),
-		url('/esobuilddata/resources/esofontbold-webfont.woff2') format('woff2'),
-		url('/esobuilddata/resources/esofontbold-webfont.woff') format('woff'),
-		url('/esobuilddata/resources/esofontbold-webfont.ttf') format('truetype'),
-		url('/esobuilddata/resources/esofontbold-webfont.svg#esofontbold') format('svg');
+	src: url('esofontbold-webfont.eot');
+	src: url('esofontbold-webfont.eot?#iefix') format('embedded-opentype'),
+		url('esofontbold-webfont.woff2') format('woff2'),
+		url('esofontbold-webfont.woff') format('woff'),
+		url('esofontbold-webfont.ttf') format('truetype'),
+		url('esofontbold-webfont.svg#esofontbold') format('svg');
 	font-weight: bold;
 	font-style: normal;
 }
@@ -83,6 +83,7 @@
 	background-color: BLACK;
 	position: relative;
     line-height: 1.25em;
+    min-width: 700px;
 }
 
 #ecdRoot img {
@@ -97,6 +98,7 @@
 	padding-left: 70px;
 	padding-right: 70px;
 	color: YELLOW;
+	vertical-align: middle;
 }
 
 .ecdCharName {
@@ -148,7 +150,7 @@
 	display: inline-block;
 	width: 68px;
 	height: 68px;
-	background-image: url(/esobuilddata/resources/eso_ability_frame.png);
+	background-image: url(eso_ability_frame.png);
 	background-size: 100% 100%;
 	vertical-align: middle;
 }
@@ -179,24 +181,20 @@
 
 .ecdSkillTooltip {
 	width: 360px;
-	background-image: url(/esobuilddata/resources/eso_item_border.png);
+	background-image: url(eso_item_border.png);
 	background-size: 100% 100%;
 	color: #C5C29E;
 	line-height: 125%;
-	margin-left: 10px;
-	margin-top: -100px;
 	text-align: left;
     white-space: normal;
 }
 
 .ecdSkillTooltip1 {
 	width: 360px;
-	background-image: url(/esobuilddata/resources/eso_item_border.png);
+	background-image: url(eso_item_border.png);
 	background-size: 100% 100%;
 	color: #C5C29E;
 	line-height: 125%;
-	margin-left: 40px;
-	margin-top: -100px;
 	text-align: left;
     white-space: normal;
 }
@@ -538,13 +536,11 @@
     font-size: 24px;
     font-weight: bold;
     color: WHITE;
-    float: right;
+    float: none;
     text-align: left;
     display: inline-block;
-    position: relative;
-    width: 440px;
-    right: 0px;
-    top: -10px;
+    margin-bottom: 10px;
+    margin-top: 5px;
 }
 
 #ecdSkillTree {
@@ -554,15 +550,21 @@
     margin-top: 20px;
 }
 
+.ecdSkillRank {
+	font-size: 1.4em;
+	display: inline-block;
+	margin-top: 15px;
+}
+
 #ecdSkillContents {
 	width: 440px;
-	height: 510px;
+	height: 560px;
     display: inline-block;
     float: right;
     padding: 3px;
-    margin-top: 17px;
     overflow-y: auto;
     overflow-x: hidden;
+    margin-top: -30px;
 }
 
 .ecdSkillTree1 {
@@ -609,7 +611,7 @@
 .ecdSkillIconBox {
 	width: 34px;
 	height: 34px;
-	background-image: url(/esobuilddata/resources/eso_ability_frame.png);
+	background-image: url(eso_ability_frame.png);
 	background-size: 100% 100%;
 	display: inline-block;
 	vertical-align: middle;
@@ -618,7 +620,7 @@
 .ecdSkillPassiveIconBox {
 	width: 34px;
 	height: 34px;
-	background-image: url(/esobuilddata/resources/eso_round_ability_frame.png);
+	background-image: url(eso_round_ability_frame.png);
 	background-size: 100% 100%;
 	display: inline-block;
 	vertical-align: middle;
@@ -654,7 +656,7 @@
 	font-size: 14px;
 	font-weight: normal;
 	color: #C5C29E;
-	margin-left: 65px;
+	margin-left: 25px;
 	margin-bottom: 7px;
 }
 
@@ -743,10 +745,24 @@
 	font-weight: normal;
 	color: WHITE;
 	display: inline-block;
-    margin-left: 10px;
+	margin-left: 10px;
 }
 
 .ecdActiveAbilityBar {
 	border: solid 2px yellow;
 	padding: 2px;
+}
+
+#ecdTrail {
+}
+
+.ecdShortCharLink {
+	float: right;
+}
+
+.ecdHeader {
+	
+}
+
+.ecdTooltipTrigger {
 }
