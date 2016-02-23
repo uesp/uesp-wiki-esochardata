@@ -4,9 +4,9 @@
            "Daveh"
         ]
     },
-    "esobuilddata": "ESO Character Build Data",
+    "esobuilddata": "ESO Build Data",
     "esobuilddata-desc": "{{desc}}",
-    "esochardata": "ESO Character Build Data",
+    "esochardata": "ESO Character Data",
     "esochardata-desc": "{{desc}}",
-    "esobuilddata-summary": "Viewing ESO character build data."
+    "esobuilddata-summary": "Viewing ESO build data."
 }

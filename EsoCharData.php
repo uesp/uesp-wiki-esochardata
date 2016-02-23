@@ -2,7 +2,8 @@
 /*
  * UespEsoCharData -- by Dave Humphrey, dave@uesp.net, December 2015
  * 
- * Adds the Special:EsoCharData page to MediaWiki for displaying ESO characte data.
+ * Adds the Special:EsoBuildData and Special:EsoCharData pages to MediaWiki 
+ * for displaying ESO character and build data.
  *
  * TODO:
  *
@@ -18,6 +19,7 @@ EOT;
 
 require_once("/home/uesp/secrets/esochardata.secrets");
 require_once('/home/uesp/www/esobuilddata/viewBuildData.class.php');
+require_once('/home/uesp/www/esobuilddata/viewCharData.class.php');
 
 
 $wgExtensionCredits['specialpage'][] = array(
@@ -26,23 +28,26 @@ $wgExtensionCredits['specialpage'][] = array(
 	'author' => 'Dave Humphrey (dave@uesp.net)',
 	'url' => 'http://www.uesp.net/wiki/UESPWiki:EsoCharData',
 	'descriptionmsg' => 'esochardata-desc',
-	'version' => '0.1.0',
+	'version' => '0.2.0',
 );
 
 $wgAutoloadClasses['SpecialEsoBuildData'] = __DIR__ . '/SpecialEsoBuildData.php';
+$wgAutoloadClasses['SpecialEsoCharData']  = __DIR__ . '/SpecialEsoCharData.php';
 $wgMessagesDirs['EsoCharData'] = __DIR__ . "/i18n";
 $wgExtensionMessagesFiles['EsoCharDataAlias'] = __DIR__ . '/EsoCharData.alias.php';
 $wgSpecialPages['EsoBuildData'] = 'SpecialEsoBuildData';
+$wgSpecialPages['EsoCharData']  = 'SpecialEsoCharData';
 
 $wgHooks['BeforePageDisplay'][] = 'uespEsoCharData_beforePageDisplay';
 
+/*
 $wgResourceModules['ext.EsoBuildData'] = array(
 		'scripts' => 'esobuilddata.js',
 		'styles' => 'esobuilddata.css',
 		'position' => 'top',
 		'localBasePath' => dirname( __FILE__ ) . '/modules',
 		'remoteExtPath' => 'EsoCharData/modules'
-);
+); //*/
 
 
 $wgGroupPermissions['*']['esochardata_edit'] = false;
@@ -56,6 +61,7 @@ function uespEsoCharData_beforePageDisplay(&$out)
 	global $wgScriptPath;
 	
 	$out->addHeadItem("uesp-esochardata-css", "<link rel='stylesheet' href='http://content3.uesp.net/esobuilddata/resources/esobuilddata.css' />");
+	$out->addHeadItem("uesp-tablesorter-js", "<script src='http://content3.uesp.net/esobuilddata/resources/jquery.tablesorter.min.js'></script>");
 	$out->addHeadItem("uesp-esochardata-js", "<script src='http://content3.uesp.net/esobuilddata/resources/esobuilddata.js'></script>");
 	
 	return true;

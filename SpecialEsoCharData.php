@@ -1,22 +1,22 @@
 <?php
 
 
-class SpecialEsoBuildData extends SpecialPage 
+class SpecialEsoCharData extends SpecialPage 
 {
-	public $buildDataViewer = null;
+	public $charDataViewer = null;
 	
 	
 	function __construct() 
 	{
 		global $wgOut;
 				
-		parent::__construct( 'EsoBuildData' );
+		parent::__construct( 'EsoCharData' );
 		
 		//$wgOut->addModules( 'ext.EsoBuildData' );
 		
-		$this->buildDataViewer = new EsoBuildDataViewer();
-		$this->buildDataViewer->baseUrl = "/wiki/Special:EsoBuildData";
-		$this->buildDataViewer->baseResourceUrl = "/esobuilddata/";
+		$this->charDataViewer = new EsoCharDataViewer();
+		$this->charDataViewer->baseUrl = "/wiki/Special:EsoCharData";
+		$this->charDataViewer->baseResourceUrl = "/esobuilddata/";
 	}
 	
 
@@ -33,7 +33,7 @@ class SpecialEsoBuildData extends SpecialPage
 		$charId = $request->getText( 'id' );
 		$raw = $request->getText( 'raw' );
 
-		$output->addHTML($this->buildDataViewer->getOutput());
+		$output->addHTML($this->charDataViewer->getOutput());
 	}
 	
 	
