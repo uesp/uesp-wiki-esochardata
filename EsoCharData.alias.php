@@ -12,6 +12,7 @@ $specialPageAliases = array();
  * @author Daveh
  */
 $specialPageAliases['en'] = array(
-	'EsoBuildData' => array( 'EsoBuildData', 'ESO Character Build Data' ),
+	'EsoBuildData' => array( 'EsoBuildData', 'ESO Build Data' ),
+	'EsoCharData'  => array( 'EsoCharData',  'ESO Character Data' ),
 );
 
