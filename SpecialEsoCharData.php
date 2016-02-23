@@ -22,7 +22,7 @@ class SpecialEsoCharData extends SpecialPage
 
 	function execute( $par ) 
 	{
-		$this->buildDataViewer->wikiContext = $this->getContext();
+		$this->charDataViewer->wikiContext = $this->getContext();
 		
 		//$this->getOutput()->addModules( 'ext.EsoBuildData' );
 		
