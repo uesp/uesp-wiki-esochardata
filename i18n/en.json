@@ -4,9 +4,13 @@
             "Daveh"
         ]
     },
-    "esobuilddata": "ESO Build Data",
-    "esobuilddata-desc": "Displays ESO build data.",
+    
     "esochardata": "ESO Character Data",
     "esochardata-desc": "Displays ESO character data.",
-    "esobuilddata-summary": "Viewing ESO build data."
+    "esobuilddata": "ESO Build Data",
+    "esobuilddata-desc": "Displays ESO build data.",
+    "esobuilddata-summary": "Viewing ESO build data.",
+    "esobuildeditor": "ESO Build Editor",
+    "esobuildeditor-desc": "Edits ESO build data.",
+    "esobuildeditor-summary": "Editing ESO build data."
 }

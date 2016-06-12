@@ -8,5 +8,8 @@
     "esobuilddata-desc": "{{desc}}",
     "esochardata": "ESO Character Data",
     "esochardata-desc": "{{desc}}",
-    "esobuilddata-summary": "Viewing ESO build data."
+    "esobuilddata-summary": "Viewing ESO build data.",
+    "esobuildeditor": "ESO Build Editor",
+    "esobuildeditor-desc": "Edits ESO build data.",
+    "esobuildeditor-summary": "Editing ESO build data."
 }
