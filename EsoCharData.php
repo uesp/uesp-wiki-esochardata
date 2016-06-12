@@ -20,6 +20,7 @@ EOT;
 require_once("/home/uesp/secrets/esochardata.secrets");
 require_once('/home/uesp/www/esobuilddata/viewBuildData.class.php');
 require_once('/home/uesp/www/esobuilddata/viewCharData.class.php');
+require_once('/home/uesp/www/esobuilddata/editBuild.class.php');
 
 
 $wgExtensionCredits['specialpage'][] = array(
@@ -32,9 +33,11 @@ $wgExtensionCredits['specialpage'][] = array(
 );
 
 $wgAutoloadClasses['SpecialEsoBuildData'] = __DIR__ . '/SpecialEsoBuildData.php';
+$wgAutoloadClasses['SpecialEsoBuildEditor'] = __DIR__ . '/SpecialEsoBuildEditor.php';
 $wgAutoloadClasses['SpecialEsoCharData']  = __DIR__ . '/SpecialEsoCharData.php';
 $wgMessagesDirs['EsoCharData'] = __DIR__ . "/i18n";
 $wgExtensionMessagesFiles['EsoCharDataAlias'] = __DIR__ . '/EsoCharData.alias.php';
+$wgSpecialPages['EsoBuildEditor'] = 'SpecialEsoBuildEditor';
 $wgSpecialPages['EsoBuildData'] = 'SpecialEsoBuildData';
 $wgSpecialPages['EsoCharData']  = 'SpecialEsoCharData';
 
