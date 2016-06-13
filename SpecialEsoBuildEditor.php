@@ -27,6 +27,7 @@ class SpecialEsoBuildEditor extends SpecialPage
 	function execute( $par ) 
 	{
 		$this->buildDataEditor->wikiContext = $this->getContext();
+		$this->buildDataEditor->buildDataViewer->wikiContext = $this->getContext();
 		
 		//$this->getOutput()->addModules( 'ext.EsoBuildData' );
 		$out = $this->getOutput();
