@@ -32,10 +32,11 @@ class SpecialEsoBuildEditor extends SpecialPage
 		//$this->getOutput()->addModules( 'ext.EsoBuildData' );
 		$out = $this->getOutput();
 		
-		$out->addHeadItem("uesp-esobuildeditor1-css", "<link rel='stylesheet' href='http://esolog.uesp.net/resources/esoItemSearchPopup.css' />");
-		$out->addHeadItem("uesp-esobuildeditor1-js", "<script src='http://esolog.uesp.net/resources/esoItemSearchPopup.js'></script>");
-		$out->addHeadItem("uesp-esobuildeditor2-css", "<link rel='stylesheet' href='http://esobuilds.uesp.net/resources/esoEditBuild_embed.css' />");
-		$out->addHeadItem("uesp-esobuildeditor2-js", "<script src='http://esobuilds.uesp.net/resources/esoEditBuild.js'></script>");
+		$out->addHeadItem("uesp-esobuildeditor3-js", "<script src='http://esobuilds-static.uesp.net/resources/json2.js'></script>");
+		$out->addHeadItem("uesp-esobuildeditor1-css", "<link rel='stylesheet' href='http://esolog-static.uesp.net/resources/esoItemSearchPopup.css' />");
+		$out->addHeadItem("uesp-esobuildeditor1-js", "<script src='http://esolog-static.uesp.net/resources/esoItemSearchPopup.js'></script>");
+		$out->addHeadItem("uesp-esobuildeditor2-css", "<link rel='stylesheet' href='http://esobuilds-static.uesp.net/resources/esoEditBuild_embed.css' />");
+		$out->addHeadItem("uesp-esobuildeditor2-js", "<script src='http://esobuilds-static.uesp.net/resources/esoEditBuild.js'></script>");
 		
 		/*
 		<link rel="stylesheet" href="http://esolog.uesp.net/resources/esocp_simple_embed.css" />
