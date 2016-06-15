@@ -35,8 +35,8 @@ class SpecialEsoBuildEditor extends SpecialPage
 		$out->addHeadItem("uesp-esobuildeditor3-js", "<script src='http://esobuilds-static.uesp.net/resources/json2.js'></script>");
 		$out->addHeadItem("uesp-esobuildeditor1-css", "<link rel='stylesheet' href='http://esolog-static.uesp.net/resources/esoItemSearchPopup.css' />");
 		$out->addHeadItem("uesp-esobuildeditor1-js", "<script src='http://esolog-static.uesp.net/resources/esoItemSearchPopup.js'></script>");
-		$out->addHeadItem("uesp-esobuildeditor2-css", "<link rel='stylesheet' href='http://esobuilds-static.uesp.net/resources/esoEditBuild_embed.css?14June2016A' />");
-		$out->addHeadItem("uesp-esobuildeditor2-js", "<script src='http://esobuilds-static.uesp.net/resources/esoEditBuild.js?14June2016A'></script>");
+		$out->addHeadItem("uesp-esobuildeditor2-css", "<link rel='stylesheet' href='http://esobuilds-static.uesp.net/resources/esoEditBuild_embed.css?14June2016B' />");
+		$out->addHeadItem("uesp-esobuildeditor2-js", "<script src='http://esobuilds-static.uesp.net/resources/esoEditBuild.js?14June2016B'></script>");
 		
 		/*
 		<link rel="stylesheet" href="http://esolog.uesp.net/resources/esocp_simple_embed.css" />
