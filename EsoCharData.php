@@ -27,7 +27,7 @@ $wgExtensionCredits['specialpage'][] = array(
 	'path' => __FILE__,
 	'name' => 'EsoCharData',
 	'author' => 'Dave Humphrey (dave@uesp.net)',
-	'url' => 'http://www.uesp.net/wiki/UESPWiki:EsoCharData',
+	'url' => '//www.uesp.net/wiki/UESPWiki:EsoCharData',
 	'descriptionmsg' => 'esochardata-desc',
 	'version' => '0.2.0',
 );
@@ -63,9 +63,9 @@ function uespEsoCharData_beforePageDisplay(&$out)
 {
 	global $wgScriptPath;
 	
-	$out->addHeadItem("uesp-esochardata-css", "<link rel='stylesheet' href='http://esobuilds-static.uesp.net/resources/esobuilddata.css?version=28Mar2017' />");
-	$out->addHeadItem("uesp-tablesorter-js", "<script src='http://esobuilds-static.uesp.net/resources/jquery.tablesorter.min.js'></script>");
-	$out->addHeadItem("uesp-esochardata-js", "<script src='http://esobuilds-static.uesp.net/resources/esobuilddata.js?version=28Mar2017'></script>");
+	$out->addHeadItem("uesp-esochardata-css", "<link rel='stylesheet' href='//esobuilds-static.uesp.net/resources/esobuilddata.css?version=28Mar2017' />");
+	$out->addHeadItem("uesp-tablesorter-js", "<script src='//esobuilds-static.uesp.net/resources/jquery.tablesorter.min.js'></script>");
+	$out->addHeadItem("uesp-esochardata-js", "<script src='//esobuilds-static.uesp.net/resources/esobuilddata.js?version=28Mar2017'></script>");
 	
 	return true;
 }
