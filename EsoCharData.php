@@ -63,9 +63,9 @@ function uespEsoCharData_beforePageDisplay(&$out)
 {
 	global $wgScriptPath;
 	
-	$out->addHeadItem("uesp-esochardata-css", "<link rel='stylesheet' href='//esobuilds-static.uesp.net/resources/esobuilddata.css?version=28Mar2017' />");
+	$out->addHeadItem("uesp-esochardata-css", "<link rel='stylesheet' href='//esobuilds-static.uesp.net/resources/esobuilddata.css?version=25May2017' />");
 	$out->addHeadItem("uesp-tablesorter-js", "<script src='//esobuilds-static.uesp.net/resources/jquery.tablesorter.min.js'></script>");
-	$out->addHeadItem("uesp-esochardata-js", "<script src='//esobuilds-static.uesp.net/resources/esobuilddata.js?version=28Mar2017'></script>");
+	$out->addHeadItem("uesp-esochardata-js", "<script src='//esobuilds-static.uesp.net/resources/esobuilddata.js?version=25May2017'></script>");
 	
 	return true;
 }

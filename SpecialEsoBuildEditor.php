@@ -35,17 +35,17 @@ class SpecialEsoBuildEditor extends SpecialPage
 		$out = $this->getOutput();
 		
 		$out->addHeadItem("uesp-esobuildeditor3-js", "<script src='//esobuilds-static.uesp.net/resources/json2.js'></script>");
-		$out->addHeadItem("uesp-esobuildeditor1-css", "<link rel='stylesheet' href='//esolog-static.uesp.net/resources/esoItemSearchPopup.css?version=28Mar2017' />");
-		$out->addHeadItem("uesp-esobuildeditor1-js", "<script src='//esolog-static.uesp.net/resources/esoItemSearchPopup.js?version=28Mar2017'></script>");
-		$out->addHeadItem("uesp-esobuildeditor2-css", "<link rel='stylesheet' href='//esobuilds-static.uesp.net/resources/esoEditBuild_embed.css?version=28Mar2017' />");
+		$out->addHeadItem("uesp-esobuildeditor1-css", "<link rel='stylesheet' href='//esolog-static.uesp.net/resources/esoItemSearchPopup.css?version=25May2017' />");
+		$out->addHeadItem("uesp-esobuildeditor1-js", "<script src='//esolog-static.uesp.net/resources/esoItemSearchPopup.js?version=25May2017'></script>");
+		$out->addHeadItem("uesp-esobuildeditor2-css", "<link rel='stylesheet' href='//esobuilds-static.uesp.net/resources/esoEditBuild_embed.css?version=25May2017' />");
 		//$out->addHeadItem("uesp-esobuildeditor4-js", "<script src='//esobuilds-static.uesp.net/resources/jquery-ui.min.js?version=28Mar2017'></script>");
 		//$out->addHeadItem("uesp-esobuildeditor5-js", "<script src='//esobuilds-static.uesp.net/resources/jquery.ui.touch-punch.min.js?version=28Mar2017'></script>");
-		$out->addHeadItem("uesp-esobuildeditor2-js", "<script src='//esobuilds-static.uesp.net/resources/esoEditBuild.js?version=4Apr2017'></script>");
-		$out->addHeadItem("uesp-esobuildeditor3-js", "<script src='//esobuilds-static.uesp.net/resources/esoBuildCombat.js?version=28Mar2017'></script>");
+		$out->addHeadItem("uesp-esobuildeditor2-js", "<script src='//esobuilds-static.uesp.net/resources/esoEditBuild.js?version=25May2017'></script>");
+		$out->addHeadItem("uesp-esobuildeditor3-js", "<script src='//esobuilds-static.uesp.net/resources/esoBuildCombat.js?version=25May2017'></script>");
 		
 		if ($uespIsMobile || (class_exists("MobileContext") && MobileContext::singleton()->isMobileDevice()))
 		{
-			$out->addHeadItem("uesp-esobuildeditor3-css", "<link rel='stylesheet' href='//esobuilds-static.uesp.net/resources/esoEditBuild_mobile.css?version=28Mar2017' />");
+			$out->addHeadItem("uesp-esobuildeditor3-css", "<link rel='stylesheet' href='//esobuilds-static.uesp.net/resources/esoEditBuild_mobile.css?version=25May2017' />");
 		}
 		
 		/*
