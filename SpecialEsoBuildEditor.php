@@ -35,12 +35,12 @@ class SpecialEsoBuildEditor extends SpecialPage
 		$out = $this->getOutput();
 		
 		$out->addHeadItem("uesp-esobuildeditor3-js", "<script src='//esobuilds-static.uesp.net/resources/json2.js'></script>");
-		$out->addHeadItem("uesp-esobuildeditor1-css", "<link rel='stylesheet' href='//esolog-static.uesp.net/resources/esoItemSearchPopup.css?version=30May2017' />");
-		$out->addHeadItem("uesp-esobuildeditor1-js", "<script src='//esolog-static.uesp.net/resources/esoItemSearchPopup.js?version=30May2017'></script>");
-		$out->addHeadItem("uesp-esobuildeditor2-css", "<link rel='stylesheet' href='//esobuilds-static.uesp.net/resources/esoEditBuild_embed.css?version=6June2017' />");
+		$out->addHeadItem("uesp-esobuildeditor1-css", "<link rel='stylesheet' href='//esolog-static.uesp.net/resources/esoItemSearchPopup.css?version=13Nov2017' />");
+		$out->addHeadItem("uesp-esobuildeditor1-js", "<script src='//esolog-static.uesp.net/resources/esoItemSearchPopup.js?version=13Nov2017'></script>");
+		$out->addHeadItem("uesp-esobuildeditor2-css", "<link rel='stylesheet' href='//esobuilds-static.uesp.net/resources/esoEditBuild_embed.css?version=13Nov2017' />");
 		//$out->addHeadItem("uesp-esobuildeditor4-js", "<script src='//esobuilds-static.uesp.net/resources/jquery-ui.min.js?version=28Mar2017'></script>");
 		//$out->addHeadItem("uesp-esobuildeditor5-js", "<script src='//esobuilds-static.uesp.net/resources/jquery.ui.touch-punch.min.js?version=28Mar2017'></script>");
-		$out->addHeadItem("uesp-esobuildeditor2-js", "<script src='//esobuilds-static.uesp.net/resources/esoEditBuild.js?version=8Nov2017'></script>");
+		$out->addHeadItem("uesp-esobuildeditor2-js", "<script src='//esobuilds-static.uesp.net/resources/esoEditBuild.js?version=13Nov2017'></script>");
 		$out->addHeadItem("uesp-esobuildeditor3-js", "<script src='//esobuilds-static.uesp.net/resources/esoBuildCombat.js?version=18July2017'></script>");
 		
 		if ($uespIsMobile || (class_exists("MobileContext") && MobileContext::singleton()->isMobileDevice()))
