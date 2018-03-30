@@ -29,10 +29,10 @@ class SpecialEsoBuildData extends SpecialPage
 		$request = $this->getRequest();
 		$output = $this->getOutput();
 				
-		$output->addHeadItem("uesp-esochardata-css", "<link rel='stylesheet' href='//esobuilds-static.uesp.net/resources/esobuilddata.css?version=29Mar2018' />");
+		$output->addHeadItem("uesp-esochardata-css", "<link rel='stylesheet' href='//esobuilds-static.uesp.net/resources/esobuilddata.css?version=30Mar2018A' />");
 		$output->addHeadItem("uesp-tablesorter-js", "<script src='//esobuilds-static.uesp.net/resources/jquery.tablesorter.min.js'></script>");
 		$output->addHeadItem("uesp-tablesorter-js", "<script src='//esobuilds-static.uesp.net/resources/jquery.visible.js'></script>");
-		$output->addHeadItem("uesp-esochardata-js", "<script src='//esobuilds-static.uesp.net/resources/esobuilddata.js?version=29Mar2018'></script>");
+		$output->addHeadItem("uesp-esochardata-js", "<script src='//esobuilds-static.uesp.net/resources/esobuilddata.js?version=30Mar2018A'></script>");
 		
 		$this->setHeaders();
 
