@@ -34,22 +34,22 @@ class SpecialEsoBuildEditor extends SpecialPage
 		//$this->getOutput()->addModules( 'ext.EsoBuildData' );
 		$out = $this->getOutput();
 		
-		$out->addHeadItem("uesp-esochardata-css", "<link rel='stylesheet' href='//esobuilds-static.uesp.net/resources/esobuilddata.css?version=6Apr2018' />");
+		$out->addHeadItem("uesp-esochardata-css", "<link rel='stylesheet' href='//esobuilds-static.uesp.net/resources/esobuilddata.css?version=2May2018' />");
 		$out->addHeadItem("uesp-tablesorter-js", "<script src='//esobuilds-static.uesp.net/resources/jquery.tablesorter.min.js'></script>");
 		$out->addHeadItem("uesp-tablesorter-js", "<script src='//esobuilds-static.uesp.net/resources/jquery.visible.js'></script>");
-		$out->addHeadItem("uesp-esochardata-js", "<script src='//esobuilds-static.uesp.net/resources/esobuilddata.js?version=6Apr2018'></script>");
+		$out->addHeadItem("uesp-esochardata-js", "<script src='//esobuilds-static.uesp.net/resources/esobuilddata.js?version=2May2018'></script>");
 		$out->addHeadItem("uesp-esobuildeditor3-js", "<script src='//esobuilds-static.uesp.net/resources/json2.js'></script>");
-		$out->addHeadItem("uesp-esobuildeditor1-css", "<link rel='stylesheet' href='//esolog-static.uesp.net/resources/esoItemSearchPopup.css?version=13Nov2017' />");
-		$out->addHeadItem("uesp-esobuildeditor1-js", "<script src='//esolog-static.uesp.net/resources/esoItemSearchPopup.js?version=14Nov2017'></script>");
-		$out->addHeadItem("uesp-esobuildeditor2-css", "<link rel='stylesheet' href='//esobuilds-static.uesp.net/resources/esoEditBuild_embed.css?version=13Nov2017' />");
+		$out->addHeadItem("uesp-esobuildeditor1-css", "<link rel='stylesheet' href='//esolog-static.uesp.net/resources/esoItemSearchPopup.css?version=2May2018' />");
+		$out->addHeadItem("uesp-esobuildeditor1-js", "<script src='//esolog-static.uesp.net/resources/esoItemSearchPopup.js?version=2May2018'></script>");
+		$out->addHeadItem("uesp-esobuildeditor2-css", "<link rel='stylesheet' href='//esobuilds-static.uesp.net/resources/esoEditBuild_embed.css?version=2May2018' />");
 		//$out->addHeadItem("uesp-esobuildeditor4-js", "<script src='//esobuilds-static.uesp.net/resources/jquery-ui.min.js?version=28Mar2017'></script>");
 		//$out->addHeadItem("uesp-esobuildeditor5-js", "<script src='//esobuilds-static.uesp.net/resources/jquery.ui.touch-punch.min.js?version=28Mar2017'></script>");
-		$out->addHeadItem("uesp-esobuildeditor2-js", "<script src='//esobuilds-static.uesp.net/resources/esoEditBuild.js?version=16Apr2018'></script>");
-		$out->addHeadItem("uesp-esobuildeditor3-js", "<script src='//esobuilds-static.uesp.net/resources/esoBuildCombat.js?version=18July2017'></script>");
+		$out->addHeadItem("uesp-esobuildeditor2-js", "<script src='//esobuilds-static.uesp.net/resources/esoEditBuild.js?version=2May2018'></script>");
+		$out->addHeadItem("uesp-esobuildeditor3-js", "<script src='//esobuilds-static.uesp.net/resources/esoBuildCombat.js?version=2May2018'></script>");
 		
 		if ($uespIsMobile || (class_exists("MobileContext") && MobileContext::singleton()->isMobileDevice()))
 		{
-			$out->addHeadItem("uesp-esobuildeditor3-css", "<link rel='stylesheet' href='//esobuilds-static.uesp.net/resources/esoEditBuild_mobile.css?version=2Nov2017' />");
+			$out->addHeadItem("uesp-esobuildeditor3-css", "<link rel='stylesheet' href='//esobuilds-static.uesp.net/resources/esoEditBuild_mobile.css?version=2May2018' />");
 		}
 		
 		/*
