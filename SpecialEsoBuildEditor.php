@@ -44,7 +44,7 @@ class SpecialEsoBuildEditor extends SpecialPage
 		$out->addHeadItem("uesp-esobuildeditor2-css", "<link rel='stylesheet' href='//esobuilds-static.uesp.net/resources/esoEditBuild_embed.css?version=2May2018' />");
 		//$out->addHeadItem("uesp-esobuildeditor4-js", "<script src='//esobuilds-static.uesp.net/resources/jquery-ui.min.js?version=28Mar2017'></script>");
 		//$out->addHeadItem("uesp-esobuildeditor5-js", "<script src='//esobuilds-static.uesp.net/resources/jquery.ui.touch-punch.min.js?version=28Mar2017'></script>");
-		$out->addHeadItem("uesp-esobuildeditor2-js", "<script src='//esobuilds-static.uesp.net/resources/esoEditBuild.js?version=10May2018'></script>");
+		$out->addHeadItem("uesp-esobuildeditor2-js", "<script src='//esobuilds-static.uesp.net/resources/esoEditBuild.js?version=10May2018a'></script>");
 		$out->addHeadItem("uesp-esobuildeditor3-js", "<script src='//esobuilds-static.uesp.net/resources/esoBuildCombat.js?version=2May2018'></script>");
 		
 		if ($uespIsMobile || (class_exists("MobileContext") && MobileContext::singleton()->isMobileDevice()))
