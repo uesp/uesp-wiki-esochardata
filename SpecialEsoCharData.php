@@ -12,7 +12,8 @@ class SpecialEsoCharData extends SpecialPage
 				
 		parent::__construct( 'EsoCharData' );
 		
-		//$wgOut->addModules( 'ext.EsoBuildData' );
+		$wgOut->addModules( 'ext.EsoBuildData.viewer.scripts' );
+		$wgOut->addModuleStyles( 'ext.EsoBuildData.viewer.styles' );
 		
 		$this->charDataViewer = new EsoCharDataViewer();
 		$this->charDataViewer->baseUrl = "/wiki/Special:EsoCharData";
@@ -24,16 +25,9 @@ class SpecialEsoCharData extends SpecialPage
 	{
 		$this->charDataViewer->wikiContext = $this->getContext();
 		
-		//$this->getOutput()->addModules( 'ext.EsoBuildData' );
-		
 		$request = $this->getRequest();
 		$output = $this->getOutput();
-		
-		$output->addHeadItem("uesp-esochardata-css", "<link rel='stylesheet' href='//esobuilds-static.uesp.net/resources/esobuilddata.css?version=10Aug2018' />");
-		$output->addHeadItem("uesp-tablesorter-js", "<script src='//esobuilds-static.uesp.net/resources/jquery.tablesorter.min.js'></script>");
-		$output->addHeadItem("uesp-tablesorter-js", "<script src='//esobuilds-static.uesp.net/resources/jquery.visible.js'></script>");
-		$output->addHeadItem("uesp-esochardata-js", "<script src='//esobuilds-static.uesp.net/resources/esobuilddata.js?version=2May2018'></script>");
-		
+				
 		$this->setHeaders();
 
 		$charId = $request->getText( 'id' );

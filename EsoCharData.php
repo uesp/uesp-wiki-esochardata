@@ -41,17 +41,62 @@ $wgSpecialPages['EsoBuildEditor'] = 'SpecialEsoBuildEditor';
 $wgSpecialPages['EsoBuildData'] = 'SpecialEsoBuildData';
 $wgSpecialPages['EsoCharData']  = 'SpecialEsoCharData';
 
-$wgHooks['BeforePageDisplay'][] = 'uespEsoCharData_beforePageDisplay';
+$wgResourceModules['ext.EsoBuildData.viewer.styles'] = array(
+	'position' => 'top',
+	'styles' => array( 'esobuilddata.css' ),
+	'localBasePath' => '/home/uesp/www/esobuilddata/resources/',
+	'remoteBasePath' => '//esobuilds-static.uesp.net/resources/',
+	'targets' => array( 'desktop', 'mobile' ),
+);
 
-/*
-$wgResourceModules['ext.EsoBuildData'] = array(
-		'scripts' => 'esobuilddata.js',
-		'styles' => 'esobuilddata.css',
-		'position' => 'top',
-		'localBasePath' => dirname( __FILE__ ) . '/modules',
-		'remoteExtPath' => 'EsoCharData/modules'
-); //*/
+$wgResourceModules['ext.EsoBuildData.viewer.scripts'] = array(
+	'position' => 'top',
+	'scripts' => array( 'jquery.tablesorter.min.js', 'jquery.visible.js', 'esobuilddata.js' ),
+	'localBasePath' => '/home/uesp/www/esobuilddata/resources/',
+	'remoteBasePath' => '//esobuilds-static.uesp.net/resources/',
+	'targets' => array( 'desktop', 'mobile' ),
+);
 
+$wgResourceModules['ext.EsoBuildData.editor.styles'] = array(
+	'position' => 'top',
+	'styles' => array( 'esoEditBuild_embed.css' ),
+	'localBasePath' => '/home/uesp/www/esobuilddata/resources/',
+	'remoteBasePath' => '//esobuilds-static.uesp.net/resources/',
+	'targets' => array( 'desktop', 'mobile' ),
+);
+
+$wgResourceModules['ext.EsoBuildData.editor.mobilestyles'] = array(
+	'position' => 'top',
+	'styles' => array( 'esoEditBuild_mobile.css' ),
+	'localBasePath' => '/home/uesp/www/esobuilddata/resources/',
+	'remoteBasePath' => '//esobuilds-static.uesp.net/resources/',
+	'targets' => array( 'mobile' ),
+	'dependencies' => array( 'ext.EsoBuildData.editor.styles' ),
+);
+
+$wgResourceModules['ext.EsoBuildData.editor.scripts'] = array(
+	'position' => 'top',
+	'scripts' => array( 'json2.js', 'esoEditBuild.js', 'esoBuildCombat.js' ),
+	'localBasePath' => '/home/uesp/www/esobuilddata/resources/',
+	'remoteBasePath' => '//esobuilds-static.uesp.net/resources/',
+	'targets' => array( 'desktop', 'mobile' ),
+);
+
+$wgResourceModules['ext.EsoBuildData.itemsearchpopup.styles'] = array(
+	'position' => 'top',
+	'styles' => array( 'esoItemSearchPopup.css' ),
+	'localBasePath' => '/home/uesp/esolog.static/resources/',
+	'remoteBasePath' => '//esolog-static.uesp.net/resources/',
+	'targets' => array( 'desktop', 'mobile' ),
+);
+
+$wgResourceModules['ext.EsoBuildData.itemsearchpopup.scripts'] = array(
+	'position' => 'top',
+	'scripts' => array( 'esoItemSearchPopup.js' ),
+	'localBasePath' => '/home/uesp/esolog.static/resources/',
+	'remoteBasePath' => '//esolog-static.uesp.net/resources/',
+	'targets' => array( 'desktop', 'mobile' ),
+);
 
 $wgGroupPermissions['*']['esochardata_edit'] = false;
 $wgGroupPermissions['*']['esochardata_delete'] = false;
@@ -59,16 +104,6 @@ $wgGroupPermissions['sysop']['esochardata_edit'] = true;
 $wgGroupPermissions['sysop']['esochardata_delete'] = true;
 
 
-function uespEsoCharData_beforePageDisplay(&$out) 
-{
-	global $wgScriptPath;
-	
-	//$out->addHeadItem("uesp-esochardata-css", "<link rel='stylesheet' href='//esobuilds-static.uesp.net/resources/esobuilddata.css?version=16Jan2018' />");
-	//$out->addHeadItem("uesp-tablesorter-js", "<script src='//esobuilds-static.uesp.net/resources/jquery.tablesorter.min.js'></script>");
-	//$out->addHeadItem("uesp-esochardata-js", "<script src='//esobuilds-static.uesp.net/resources/esobuilddata.js?version=16Jan2018'></script>");
-	
-	return true;
-}
 
 
 
