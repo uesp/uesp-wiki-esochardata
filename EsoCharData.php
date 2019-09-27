@@ -54,7 +54,8 @@ $wgResourceModules['ext.EsoBuildData.viewer.scripts'] = array(
 	'scripts' => array( 'jquery.tablesorter.min.js', 'jquery.visible.js', 'esobuilddata.js' ),
 	'localBasePath' => '/home/uesp/www/esobuilddata/resources/',
 	'remoteBasePath' => '//esobuilds-static.uesp.net/resources/',
-	'targets' => array( 'desktop', 'mobile' ),
+	'targets' => array( 'desktop', 'mobile'),
+	'dependencies' => array('ext.EsoItemLink.scripts', 'ext.EsoSkills.scripts'),
 );
 
 $wgResourceModules['ext.EsoBuildData.editor.styles'] = array(
@@ -80,6 +81,7 @@ $wgResourceModules['ext.EsoBuildData.editor.scripts'] = array(
 	'localBasePath' => '/home/uesp/www/esobuilddata/resources/',
 	'remoteBasePath' => '//esobuilds-static.uesp.net/resources/',
 	'targets' => array( 'desktop', 'mobile' ),
+	'dependencies' => array('ext.EsoBuildData.viewer.scripts', 'ext.EsoBuildData.itemsearchpopup.scripts'),
 );
 
 $wgResourceModules['ext.EsoBuildData.itemsearchpopup.styles'] = array(
@@ -96,6 +98,7 @@ $wgResourceModules['ext.EsoBuildData.itemsearchpopup.scripts'] = array(
 	'localBasePath' => '/home/uesp/esolog.static/resources/',
 	'remoteBasePath' => '//esolog-static.uesp.net/resources/',
 	'targets' => array( 'desktop', 'mobile' ),
+	//'dependencies' => array(),
 );
 
 $wgGroupPermissions['*']['esochardata_edit'] = false;
