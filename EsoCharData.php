@@ -35,9 +35,11 @@ $wgExtensionCredits['specialpage'][] = array(
 $wgAutoloadClasses['SpecialEsoBuildData'] = __DIR__ . '/SpecialEsoBuildData.php';
 $wgAutoloadClasses['SpecialEsoBuildEditor'] = __DIR__ . '/SpecialEsoBuildEditor.php';
 $wgAutoloadClasses['SpecialEsoCharData']  = __DIR__ . '/SpecialEsoCharData.php';
+$wgAutoloadClasses['SpecialEsoBuildRuleEditor']  = __DIR__ . '/SpecialEsoBuildRuleEditor.php';
 $wgMessagesDirs['EsoCharData'] = __DIR__ . "/i18n";
 $wgExtensionMessagesFiles['EsoCharDataAlias'] = __DIR__ . '/EsoCharData.alias.php';
 $wgSpecialPages['EsoBuildEditor'] = 'SpecialEsoBuildEditor';
+$wgSpecialPages['EsoBuildRuleEditor'] = 'SpecialEsoBuildRuleEditor';
 $wgSpecialPages['EsoBuildData'] = 'SpecialEsoBuildData';
 $wgSpecialPages['EsoCharData']  = 'SpecialEsoCharData';
 
@@ -77,7 +79,7 @@ $wgResourceModules['ext.EsoBuildData.editor.mobilestyles'] = array(
 
 $wgResourceModules['ext.EsoBuildData.editor.scripts'] = array(
 	'position' => 'top',
-	'scripts' => array( 'json2.js', 'esoEditBuild.js', 'esoBuildCombat.js' ),
+	'scripts' => array( 'json2.js', 'esoBuildCombat.js', 'esoEditBuild.js' ),
 	'localBasePath' => '/home/uesp/www/esobuilddata/resources/',
 	'remoteBasePath' => '//esobuilds-static.uesp.net/resources/',
 	'targets' => array( 'desktop', 'mobile' ),
@@ -105,6 +107,10 @@ $wgGroupPermissions['*']['esochardata_edit'] = false;
 $wgGroupPermissions['*']['esochardata_delete'] = false;
 $wgGroupPermissions['sysop']['esochardata_edit'] = true;
 $wgGroupPermissions['sysop']['esochardata_delete'] = true;
+
+$wgGroupPermissions['*']['esochardata_ruleedit'] = false;
+$wgGroupPermissions['sysop']['esochardata_ruleedit'] = true;
+$wgGroupPermissions['esobuildruleseditor']['esochardata_ruleedit'] = true;
 
 
 
