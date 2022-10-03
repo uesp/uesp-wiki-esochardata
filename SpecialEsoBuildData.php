@@ -1,7 +1,5 @@
 <?php
 
-//testing push/pull from atom
-
 class SpecialEsoBuildData extends SpecialPage
 {
 	public $buildDataViewer = null;
