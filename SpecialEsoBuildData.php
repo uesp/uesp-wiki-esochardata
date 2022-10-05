@@ -2,15 +2,15 @@
 
 
 
-class SpecialEsoBuildData extends SpecialPage 
+class SpecialEsoBuildData extends SpecialPage
 {
 	public $buildDataViewer = null;
 	
 	
-	function __construct() 
+	function __construct()
 	{
 		global $wgOut;
-				
+		
 		parent::__construct( 'EsoBuildData' );
 		
 		$wgOut->addModules( 'ext.EsoBuildData.viewer.scripts' );
@@ -21,24 +21,45 @@ class SpecialEsoBuildData extends SpecialPage
 		$this->buildDataViewer->baseResourceUrl = "/esobuilddata/";
 	}
 	
-
-	function execute( $par ) 
+	
+	function execute( $par )
 	{
 		$this->buildDataViewer->wikiContext = $this->getContext();
 		
 		$request = $this->getRequest();
 		$output = $this->getOutput();
 		
-		$this->setHeaders();
-
 		$charId = $request->getText( 'id' );
 		$raw = $request->getText( 'raw' );
-
-		$output->addHTML($this->buildDataViewer->getOutput());
+		
+		$html = $this->buildDataViewer->getOutput();
+		
+		if ($this->buildDataViewer->shouldOutputJson())
+		{
+			$this->outputJsonHeader();
+			print($this->buildDataViewer->outputJson);
+			die();
+		}
+		
+		$this->setHeaders();
+		
+		$output->addHTML($html);
 	}
 	
 	
-	function getGroupName() 
+	function outputJsonHeader()
+	{
+		ob_start("ob_gzhandler");
+		
+		header("Expires: 0");
+		header("Pragma: no-cache");
+		header("Cache-Control: no-cache, no-store, must-revalidate");
+		header("Access-Control-Allow-Origin: " . $_SERVER['HTTP_ORIGIN'] . "");
+		header("content-type: application/json");
+	}
+	
+	
+	function getGroupName()
 	{
 		return 'wiki';
 	}
