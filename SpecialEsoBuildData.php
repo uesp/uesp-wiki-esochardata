@@ -1,7 +1,5 @@
 <?php
 
-
-
 class SpecialEsoBuildData extends SpecialPage
 {
 	public $buildDataViewer = null;
@@ -63,5 +61,5 @@ class SpecialEsoBuildData extends SpecialPage
 	{
 		return 'wiki';
 	}
-	
+
 };
