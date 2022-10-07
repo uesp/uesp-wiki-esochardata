@@ -108,8 +108,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 	{
 		$output = $this->getOutput();
 
+		$baselink = "https://dev.uesp.net/wiki/Special:EsoBuildRuleEditor";
+
 		$output->addHTML("<h3>Add New Rule</h3>");
-		$output->addHTML("<form action="/">");
+		$output->addHTML("<form action="$baselink/saverule">");
 		$output->addHTML("<label for="ruleType">Rule Type:</label><br>");
 		$output->addHTML("<label for="nameId">Name ID:</label><br>");
 		$output->addHTML("<label for="displayName">Display Name:</label><br>");
@@ -118,14 +120,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<label for="requireSkillLine">requireSkillLine:</label><br>");
 		$output->addHTML("<label for="statRequireId">statRequireId:</label><br>");
 		$output->addHTML("<label for="factorStatId">factorStatId:</label><br>");
-
-		//could only be true or false (1 or 0)
-		$output->addHTML("<label for="isEnabled">Enabled:</label><br>");
-		$output->addHTML("<label for="isVisible">Visible:</label><br>");
-		$output->addHTML("<label for="enableOffBar">Enable Off Bar:</label><br>");
-		$output->addHTML("<label for="matchSkillName">Match Skill Name:</label><br>");
-		$output->addHTML("<label for="updateBuffValue">Update Buff Value:</label><br>");
-
 		$output->addHTML("<label for="originalId">Original ID:</label><br>");
 		$output->addHTML("<label for="icon">Icon:</label><br>");
 		$output->addHTML("<label for="group">Group:</label><br>");
@@ -134,10 +128,29 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<label for="description">Description:</label><br>");
 		$output->addHTML("<label for="disableIds">Disable IDs:</label><br>");
 
+
+		//could only be true or false (1 or 0)
+		$output->addHTML("<br><p> For the following inputs, enter 1 for TRUE and 0 for FALSE</p>");
+		$output->addHTML("<label for="isEnabled">Enabled:</label><br>");
+		$output->addHTML("<label for="isVisible">Visible:</label><br>");
+		$output->addHTML("<label for="enableOffBar">Enable Off Bar:</label><br>");
+		$output->addHTML("<label for="matchSkillName">Match Skill Name:</label><br>");
+		$output->addHTML("<label for="updateBuffValue">Update Buff Value:</label><br>");
+
+		$output->addHTML("<br><input type="submit" value="Save Rule">");
+
+		$output->addHTML("</form>");
+
 	}
 
 
 	public function OutputEditRuleForm()
+	{
+		//....
+		//$this->LoadRule(ruleId);
+	}
+
+	public function SaveRule()
 	{
 		//....
 		//$this->LoadRule(ruleId);
@@ -174,6 +187,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$this->OutputAddRuleForm();
 		elseif ($parameter == "editrule")
 			$this->OutputEditRuleForm();
+		elseif ($parameter == "saverule")
+			$this->SaveRule();
 		else
 			$this->OutputTableOfContents();
 	}
