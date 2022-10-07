@@ -100,7 +100,28 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 	public function OutputShowRulesTable()
 	{
 		$this->LoadRules();
-		//....
+
+		$output = $this->getOutput();
+
+		$output->addHTML("<table class='wikitable sortable jquery-tablesorter' id='rules'><thead>");
+
+		$output->addHTML("<tr>");
+		$output->addHTML("<th>Rule Type</th>");
+		$output->addHTML("<th>Name ID</th>");
+		$output->addHTML("<th>Display Name</th>");
+		$output->addHTML("<th>Match Regex</th>");
+		$output->addHTML("<th>statRequireId</th>");
+		$output->addHTML("<th>Original Id</th>");
+		$output->addHTML("<th>Group</th>");
+		$output->addHTML("<th>Description</th>");
+		$output->addHTML("<th>Version</th>");
+		$output->addHTML("<th>Enabled</th>");
+		$output->addHTML("<th>Visible</th>");
+		$output->addHTML("<th>Enable Off Bar</th>");
+		$output->addHTML("<th>Match Skill Name</th>");
+		$output->addHTML("<th>Update Buff Value</th>");
+
+		$output->addHTML("</table>");
 	}
 
 
@@ -121,6 +142,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<label for="statRequireId">statRequireId:</label><br>");
 		$output->addHTML("<label for="factorStatId">factorStatId:</label><br>");
 		$output->addHTML("<label for="originalId">Original ID:</label><br>");
+		$output->addHTML("<label for="version">Version:</label><br>");
 		$output->addHTML("<label for="icon">Icon:</label><br>");
 		$output->addHTML("<label for="group">Group:</label><br>");
 		$output->addHTML("<label for="maxTimes">Maximum Times:</label><br>");
@@ -150,7 +172,13 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		//$this->LoadRule(ruleId);
 	}
 
-	public function SaveRule()
+	public function SaveNewRule()
+	{
+		//....
+		//$this->LoadRule(ruleId);
+	}
+
+	public function SaveChanges()
 	{
 		//....
 		//$this->LoadRule(ruleId);
@@ -188,7 +216,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		elseif ($parameter == "editrule")
 			$this->OutputEditRuleForm();
 		elseif ($parameter == "saverule")
-			$this->SaveRule();
+			$this->SaveNewRule();
+		elseif ($parameter == "savechanges")
+			$this->SaveChanges();
 		else
 			$this->OutputTableOfContents();
 	}
