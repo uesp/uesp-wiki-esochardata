@@ -1,8 +1,14 @@
 <?php
 
 
+require_once("/home/uesp/secrets/esobuilddata.secrets");
+
+
 class SpecialEsoBuildRuleEditor extends SpecialPage
 {
+
+
+	public $db = null;
 
 
 	function __construct()
@@ -21,10 +27,137 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			// TODO: Add any mobile specific CSS/scripts resource modules here
 		}
 
+		$this->InitDatabase();
 	}
 
 
-/*	function execute( $parameter )
+	protected function CreateTables()
+	{
+		//TODO:
+
+		$result = $this->db->query("CREATE TABLE IF NOT EXISTS rules (
+                        id INTEGER AUTO_INCREMENT NOT NULL,
+                        version TINYTEXT NOT NULL,
+                        ruleType TINYTEXT NOT NULL,
+                        nameId TINYTEXT,
+                        displayName TINYTEXT,
+                        matchRegex TINYTEXT NOT NULL,
+                        displayRegex TINYTEXT,
+                        requireSkillLine TINYTEXT,
+                        statRequireId TINYTEXT,
+                        statRequireValue TINYTEXT,
+                        factorStatId TINYTEXT,
+                        isEnabled TINYINT(1) NOT NULL,
+                        isVisible TINYINT(1) NOT NULL,
+                        toggleVisible TINYINT(1) NOT NULL,
+                        isToggle TINYINT(1) NOT NULL,
+                        enableOffBar TINYINT(1) NOT NULL,
+                        matchSkillName TINYINT(1) NOT NULL,
+                        updateBuffValue TINYINT(1) NOT NULL,
+                        originalId TINYTEXT,
+                        icon TINYTEXT,
+                        group TINYTEXT,
+                        maxTimes INTEGER,
+                        comment TINYTEXT NOT NULL,
+                        description TINYTEXT NOT NULL,
+                        disableIds TINYTEXT,
+                        PRIMARY KEY (id),
+                        INDEX index_version(version(10)),
+                        INDEX index_ruleId(originalId),
+                    	);
+
+										");
+
+		if ($result === false) return false;
+
+
+		return true;
+	}
+
+
+	public function InitDatabase()
+	{
+		global $uespEsoBuildDataWriteDBHost, $uespEsoBuildDataWriteUser, $uespEsoBuildDataWritePW, $uespEsoBuildDataDatabase;
+
+		$this->db = new mysqli($uespEsoBuildDataWriteDBHost, $uespEsoBuildDataWriteUser, $uespEsoBuildDataWritePW, $uespEsoBuildDataDatabase);
+		if ($this->db->connect_error) return false;
+
+		$this->CreateTables();
+
+		return true;
+	}
+
+
+	public function LoadRules()
+	{
+		$query = "SELECT * FROM rules;";
+		$result = $this->db->query($query);
+		//....
+		//$this->rulesData[]
+	}
+
+
+	public function OutputShowRulesTable()
+	{
+		$this->LoadRules();
+		//....
+	}
+
+
+	public function OutputAddRuleForm()
+	{
+		$output = $this->getOutput();
+
+		$output->addHTML("<h3>Add New Rule</h3>");
+		$output->addHTML("<form action="/">");
+		$output->addHTML("<label for="ruleType">Rule Type:</label><br>");
+		$output->addHTML("<label for="nameId">Rule Type:</label><br>");
+		$output->addHTML("<label for="displayName">Rule Type:</label><br>");
+		$output->addHTML("<label for="matchRegex">Rule Type:</label><br>");
+		$output->addHTML("<label for="displayRegex">Rule Type:</label><br>");
+		$output->addHTML("<label for="requireSkillLine">Rule Type:</label><br>");
+		$output->addHTML("<label for="statRequireId">Rule Type:</label><br>");
+		$output->addHTML("<label for="factorStatId">Rule Type:</label><br>");
+
+		//could only be true or false (1 or 0)
+		$output->addHTML("<label for="isEnabled">Rule Type:</label><br>");
+		$output->addHTML("<label for="isVisible">Rule Type:</label><br>");
+		$output->addHTML("<label for="enableOffBar">Rule Type:</label><br>");
+		$output->addHTML("<label for="matchSkillName">Rule Type:</label><br>");
+		$output->addHTML("<label for="updateBuffValue">Rule Type:</label><br>");
+
+		$output->addHTML("<label for="originalId">Rule Type:</label><br>");
+		$output->addHTML("<label for="icon">Rule Type:</label><br>");
+		$output->addHTML("<label for="group">Rule Type:</label><br>");
+		$output->addHTML("<label for="maxTimes">Rule Type:</label><br>");
+		$output->addHTML("<label for="comment">Rule Type:</label><br>");
+		$output->addHTML("<label for="description">Rule Type:</label><br>");
+		$output->addHTML("<label for="disableIds">Rule Type:</label><br>");
+
+	}
+
+
+	public function OutputEditRuleForm()
+	{
+		//....
+		//$this->LoadRule(ruleId);
+	}
+
+
+	public function OutputTableOfContents()
+	{
+		$output = $this->getOutput();
+
+		$baselink = "https://dev.uesp.net/wiki/Special:EsoBuildRuleEditor";
+
+		$output->addHTML("<ul>");
+		$output->addHTML("<li><a href='$baselink/showrules'>Show Rules</a></li>");
+		$output->addHTML("<li><a href='$baselink/addrule'>Add Rule</a></li>");
+		$output->addHTML("</ul>");
+	}
+
+
+	function execute( $parameter )
 	{
 		$request = $this->getRequest();
 		$output = $this->getOutput();
@@ -34,175 +167,16 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 			// TODO: Determine action/output based on the input $parameter
 		$output->addHTML("TODO: ESO Build Rule Editor");
-	}
-	*/
 
-	private function getBreadcrumbHtml() {
-	$html = "<div class='uesppatBreadcrumb'>";
-	$index = 0;
-
-	foreach ($this->breadcrumb as $breadcrumb) {
-		if ($index != 0) $html .= " : ";
-
-		$link = $breadcrumb['link'];
-		$title = $breadcrumb['title'];
-
-		if ($link == null)
-			$html .= "$title";
+		if ($parameter == "showrules")
+			$this->OutputShowRulesTable();
+		elseif ($parameter == "addrule")
+			$this->OutputAddRuleForm();
+		elseif ($parameter == "editrule")
+			$this->OutputEditRuleForm();
 		else
-			$html .= "<a href='$link'>$title</a>";
-
-		++$index;
+			$this->OutputTableOfContents();
 	}
-
-	$html .= "</div>";
-	return $html;
-}
-
-	private function addBreadcrumb($title, $link = null) {
-		$newCrumb = array();
-		$newCrumb['title'] = $title;
-		$newCrumb['link'] = $link;
-		$this->breadcrumb[] = $newCrumb;
-	}
-
-	public function loadInfo() {
-
-		/*note: check if db is same*/
-		$db = wfGetDB(DB_SLAVE);
-
-		$res = $db->select('rules_table', '*');
-
-		while ($row = $res->fetchRow()) {
-			//TODO: fetch row info from table
-		}
-
-		return true;
-	}
-
-
-	private function loadAllRulesDataDB($useActive = true, $useInactive = true, $includeFollowers = false)
-	{
-		//TODO: load data from table
-		$db = wfGetDB(DB_SLAVE);
-		$res = $db->select('rules_table', '*');
-
-
-		return $this->rules;
-	}
-
-	//complete when adding filter search features
-	private function getShowListTierOptionHtml($onlyTiers = false, $targetName = "list") {
-
-	}
-
-
-//all that is needed to get the count of rules is fetching the last row's id
-private function countRulesOutput()
-{
-	if ($rules == null) return 0;
-
-	$outputCount = 0;
-
-
-	return $outputCount;
-}
-
-private function getLastUpdateFormat(){
-	//TODO: calculate when was lastUpdate
-	$lastUpdate = "";
-
-	return $lastUpdate;
-}
-
-
-private function outputPatronTable($patrons) {
-		global $wgOut;
-
-		$wgOut->addHTML("<table class='wikitable sortable jquery-tablesorter' id='uesprules'><thead>");
-
-		$wgOut->addHTML("<tr>");
-		$wgOut->addHTML("<th>id</th>");
-		$wgOut->addHTML("<th>ruleType</th>");
-		$wgOut->addHTML("<th>buffId</th>");
-		$wgOut->addHTML("<th>nameId</th>");
-		$wgOut->addHTML("<th>originalId</th>");
-		$wgOut->addHTML("<th>statId</th>");
-		$wgOut->addHTML("<th>statRequireId</th>");
-		$wgOut->addHTML("<th>factorStatId</th>");
-		$wgOut->addHTML("<th>version</th>");
-		$wgOut->addHTML("<th>displayRegex</th>");
-		$wgOut->addHTML("<th>matchRegex</th>");
-		$wgOut->addHTML("<th>icon</th>");
-		$wgOut->addHTML("<th>displayName</th>");
-		$wgOut->addHTML("<th>group</th>");
-		$wgOut->addHTML("<th category</th>");
-		$wgOut->addHTML("<th description</th>");
-		$wgOut->addHTML("<th value</th>");
-		$wgOut->addHTML("<th factorValue</th>");
-		$wgOut->addHTML("</tr></thead><tbody>");
-
-	}
-
-private function showList{
-
-	$this->addBreadcrumb("Home", $this->getLink());
-
-/*note: to be used when adding the filter search features*/
-//	$this->addBreadcrumb($this->getShowListTierOptionHtml());
-		$this->loadInfo();
-		$rules = $this->loadAllRulesDataDB();
-
-		if ($rules == null || count($rules) == 0) {
-			$wgOut->addHTML("No rules found!");
-			return;
-		}
-
-		$count = $this->countRulesOutput($rules);
-
-		$wgOut->addHTML("Showing $count rules.");
-
-		$lastUpdate = $this->getLastUpdateFormat();
-		$wgOut->addHTML(" Patron data last updated $lastUpdate ago. ");
-
-
-		$this->outputRulesTable($rules);
-
-		$wgOut->addHTML("</form>");
-
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 	function getGroupName()
