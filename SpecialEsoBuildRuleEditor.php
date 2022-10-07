@@ -111,28 +111,28 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<h3>Add New Rule</h3>");
 		$output->addHTML("<form action="/">");
 		$output->addHTML("<label for="ruleType">Rule Type:</label><br>");
-		$output->addHTML("<label for="nameId">Rule Type:</label><br>");
-		$output->addHTML("<label for="displayName">Rule Type:</label><br>");
-		$output->addHTML("<label for="matchRegex">Rule Type:</label><br>");
-		$output->addHTML("<label for="displayRegex">Rule Type:</label><br>");
-		$output->addHTML("<label for="requireSkillLine">Rule Type:</label><br>");
-		$output->addHTML("<label for="statRequireId">Rule Type:</label><br>");
-		$output->addHTML("<label for="factorStatId">Rule Type:</label><br>");
+		$output->addHTML("<label for="nameId">Name ID:</label><br>");
+		$output->addHTML("<label for="displayName">Display Name:</label><br>");
+		$output->addHTML("<label for="matchRegex">Match Regex:</label><br>");
+		$output->addHTML("<label for="displayRegex">Display Regex:</label><br>");
+		$output->addHTML("<label for="requireSkillLine">requireSkillLine:</label><br>");
+		$output->addHTML("<label for="statRequireId">statRequireId:</label><br>");
+		$output->addHTML("<label for="factorStatId">factorStatId:</label><br>");
 
 		//could only be true or false (1 or 0)
-		$output->addHTML("<label for="isEnabled">Rule Type:</label><br>");
-		$output->addHTML("<label for="isVisible">Rule Type:</label><br>");
-		$output->addHTML("<label for="enableOffBar">Rule Type:</label><br>");
-		$output->addHTML("<label for="matchSkillName">Rule Type:</label><br>");
-		$output->addHTML("<label for="updateBuffValue">Rule Type:</label><br>");
+		$output->addHTML("<label for="isEnabled">Enabled:</label><br>");
+		$output->addHTML("<label for="isVisible">Visible:</label><br>");
+		$output->addHTML("<label for="enableOffBar">Enable Off Bar:</label><br>");
+		$output->addHTML("<label for="matchSkillName">Match Skill Name:</label><br>");
+		$output->addHTML("<label for="updateBuffValue">Update Buff Value:</label><br>");
 
-		$output->addHTML("<label for="originalId">Rule Type:</label><br>");
-		$output->addHTML("<label for="icon">Rule Type:</label><br>");
-		$output->addHTML("<label for="group">Rule Type:</label><br>");
-		$output->addHTML("<label for="maxTimes">Rule Type:</label><br>");
-		$output->addHTML("<label for="comment">Rule Type:</label><br>");
-		$output->addHTML("<label for="description">Rule Type:</label><br>");
-		$output->addHTML("<label for="disableIds">Rule Type:</label><br>");
+		$output->addHTML("<label for="originalId">Original ID:</label><br>");
+		$output->addHTML("<label for="icon">Icon:</label><br>");
+		$output->addHTML("<label for="group">Group:</label><br>");
+		$output->addHTML("<label for="maxTimes">Maximum Times:</label><br>");
+		$output->addHTML("<label for="comment">Comment:</label><br>");
+		$output->addHTML("<label for="description">Description:</label><br>");
+		$output->addHTML("<label for="disableIds">Disable IDs:</label><br>");
 
 	}
 
