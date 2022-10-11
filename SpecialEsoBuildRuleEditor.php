@@ -31,6 +31,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 	}
 
 
+	public static function escapeHtml($html) {
+		return htmlspecialchars($html);
+	}
+
 	protected function CreateTables()
 	{
 		//TODO:
@@ -129,7 +133,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 	{
 		$output = $this->getOutput();
 
-		$baselink = "https://dev.uesp.net/wiki/Special:EsoBuildRuleEditor";
+		$baselink = GetBaseLink();
 
 		$output->addHTML("<h3>Add New Rule</h3>");
 		$output->addHTML("<form action="$baselink/saverule">");
@@ -175,21 +179,25 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 	public function SaveNewRule()
 	{
 		//....
-		//$this->LoadRule(ruleId);
 	}
 
 	public function SaveChanges()
 	{
 		//....
-		//$this->LoadRule(ruleId);
 	}
 
+	public function GetBaseLink()
+	{
+		$link = "https://dev.uesp.net/wiki/Special:EsoBuildRuleEditor";
+
+		return($link);
+	}
 
 	public function OutputTableOfContents()
 	{
 		$output = $this->getOutput();
 
-		$baselink = "https://dev.uesp.net/wiki/Special:EsoBuildRuleEditor";
+		$baselink = GetBaseLink();
 
 		$output->addHTML("<ul>");
 		$output->addHTML("<li><a href='$baselink/showrules'>Show Rules</a></li>");
