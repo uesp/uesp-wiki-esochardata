@@ -133,37 +133,37 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 	{
 		$output = $this->getOutput();
 
-		$baselink = GetBaseLink();
+		$baselink = $this->GetBaseLink();
 
 		$output->addHTML("<h3>Add New Rule</h3>");
-		$output->addHTML("<form action="$baselink/saverule">");
-		$output->addHTML("<label for="ruleType">Rule Type:</label><br>");
-		$output->addHTML("<label for="nameId">Name ID:</label><br>");
-		$output->addHTML("<label for="displayName">Display Name:</label><br>");
-		$output->addHTML("<label for="matchRegex">Match Regex:</label><br>");
-		$output->addHTML("<label for="displayRegex">Display Regex:</label><br>");
-		$output->addHTML("<label for="requireSkillLine">requireSkillLine:</label><br>");
-		$output->addHTML("<label for="statRequireId">statRequireId:</label><br>");
-		$output->addHTML("<label for="factorStatId">factorStatId:</label><br>");
-		$output->addHTML("<label for="originalId">Original ID:</label><br>");
-		$output->addHTML("<label for="version">Version:</label><br>");
-		$output->addHTML("<label for="icon">Icon:</label><br>");
-		$output->addHTML("<label for="group">Group:</label><br>");
-		$output->addHTML("<label for="maxTimes">Maximum Times:</label><br>");
-		$output->addHTML("<label for="comment">Comment:</label><br>");
-		$output->addHTML("<label for="description">Description:</label><br>");
-		$output->addHTML("<label for="disableIds">Disable IDs:</label><br>");
+		$output->addHTML("<form action='$baselink/saverule'>");
+		$output->addHTML("<label for='ruleType'>Rule Type:</label><br>");
+		$output->addHTML("<label for='nameId'>Name ID:</label><br>");
+		$output->addHTML("<label for='displayName'>Display Name:</label><br>");
+		$output->addHTML("<label for='matchRegex'>Match Regex:</label><br>");
+		$output->addHTML("<label for='displayRegex'>Display Regex:</label><br>");
+		$output->addHTML("<label for='requireSkillLine'>requireSkillLine:</label><br>");
+		$output->addHTML("<label for='statRequireId'>statRequireId:</label><br>");
+		$output->addHTML("<label for='factorStatId'>factorStatId:</label><br>");
+		$output->addHTML("<label for='originalId'>Original ID:</label><br>");
+		$output->addHTML("<label for='version'>Version:</label><br>");
+		$output->addHTML("<label for='icon'>Icon:</label><br>");
+		$output->addHTML("<label for='group'>Group:</label><br>");
+		$output->addHTML("<label for='maxTimes'>Maximum Times:</label><br>");
+		$output->addHTML("<label for='comment'>Comment:</label><br>");
+		$output->addHTML("<label for='description'>Description:</label><br>");
+		$output->addHTML("<label for='disableIds'>Disable IDs:</label><br>");
 
 
 		//could only be true or false (1 or 0)
 		$output->addHTML("<br><p> For the following inputs, enter 1 for TRUE and 0 for FALSE</p>");
-		$output->addHTML("<label for="isEnabled">Enabled:</label><br>");
-		$output->addHTML("<label for="isVisible">Visible:</label><br>");
-		$output->addHTML("<label for="enableOffBar">Enable Off Bar:</label><br>");
-		$output->addHTML("<label for="matchSkillName">Match Skill Name:</label><br>");
-		$output->addHTML("<label for="updateBuffValue">Update Buff Value:</label><br>");
+		$output->addHTML("<label for='isEnabled'>Enabled:</label><br>");
+		$output->addHTML("<label for='isVisible'>Visible:</label><br>");
+		$output->addHTML("<label for='enableOffBar'>Enable Off Bar:</label><br>");
+		$output->addHTML("<label for='matchSkillName'>Match Skill Name:</label><br>");
+		$output->addHTML("<label for='updateBuffValue'>Update Buff Value:</label><br>");
 
-		$output->addHTML("<br><input type="submit" value="Save Rule">");
+		$output->addHTML("<br><input type='submit' value='Save Rule'>");
 
 		$output->addHTML("</form>");
 
@@ -186,7 +186,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		//....
 	}
 
-	public function GetBaseLink()
+	public static function GetBaseLink()
 	{
 		$link = "https://dev.uesp.net/wiki/Special:EsoBuildRuleEditor";
 
@@ -197,7 +197,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 	{
 		$output = $this->getOutput();
 
-		$baselink = GetBaseLink();
+		$baselink = $this->GetBaseLink();
 
 		$output->addHTML("<ul>");
 		$output->addHTML("<li><a href='$baselink/showrules'>Show Rules</a></li>");
