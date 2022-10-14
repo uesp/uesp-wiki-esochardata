@@ -60,19 +60,21 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
                         updateBuffValue TINYINT(1) NOT NULL,
                         originalId TINYTEXT,
                         icon TINYTEXT,
-                        group TINYTEXT,
+                        groupName TINYTEXT,
                         maxTimes INTEGER,
                         comment TINYTEXT NOT NULL,
                         description TINYTEXT NOT NULL,
                         disableIds TINYTEXT,
                         PRIMARY KEY (id),
                         INDEX index_version(version(10)),
-                        INDEX index_ruleId(originalId),
-                    	);
+                        INDEX index_ruleId(originalId(30))
+                    	);"
 
-										");
+										);
 
-		if ($result === false) return false;
+		if ($result === false) {
+			return $this->reportError("Error: failed to create table");
+		}
 
 
 		return true;
@@ -84,10 +86,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		global $uespEsoBuildDataWriteDBHost, $uespEsoBuildDataWriteUser, $uespEsoBuildDataWritePW, $uespEsoBuildDataDatabase;
 
 		$this->db = new mysqli($uespEsoBuildDataWriteDBHost, $uespEsoBuildDataWriteUser, $uespEsoBuildDataWritePW, $uespEsoBuildDataDatabase);
-		if ($this->db->connect_error) return false;
-
+		if ($this->db->connect_error) {
+			return $this->reportError("Error: failed to initialize database!");;
+		}
 		$this->CreateTables();
-
 		return true;
 	}
 
@@ -165,8 +167,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<input type='number' id='version' name='version'><br>");
 		$output->addHTML("<label for='icon'>Icon:</label>");
 		$output->addHTML("<input type='text' id='icon' name='icon'><br>");
-		$output->addHTML("<label for='group'>Group:</label>");
-		$output->addHTML("<input type='text' id='group' name='group'><br>");
+		$output->addHTML("<label for='groupName'>Group:</label>");
+		$output->addHTML("<input type='text' id='groupName' name='groupName'><br>");
 		$output->addHTML("<label for='maxTimes'>Maximum Times:</label>");
 		$output->addHTML("<input type='text' id='maxTimes' name='maxTimes'><br>");
 		$output->addHTML("<label for='comment'>Comment:</label>");
@@ -203,6 +205,15 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		//$this->LoadRule(ruleId);
 	}
 
+	public function ReportError ($msg)
+{
+    $output = $this->getOutput();
+    $output->addHTML($msg . "<br/>");
+		$output->addHTML($this->db->error);
+    error_log($msg);
+    return false;
+}
+
 	public function SaveNewRule()
 	{
 		$output = $this->getOutput();
@@ -218,7 +229,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$originalId = $_POST['originalId'];
 		$version = $_POST['version'];
 		$icon = $_POST['icon'];
-		$group= $_POST['group'];
+		$group= $_POST['groupName'];
 		$maxTimes = $_POST['maxTimes'];
 		$comment = $_POST['comment'];
 		$description = $_POST['description'];
@@ -235,8 +246,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 		$output->addHTML("<p>new rule saved</p><br>");
 		$output->addHTML("<a href='$baselink'>Go Back to Table Of Content</a>");
-
-
 	}
 
 	public function SaveChanges()
