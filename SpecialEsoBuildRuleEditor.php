@@ -99,13 +99,15 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$query = "SELECT * FROM rules;";
 		$result = $this->db->query($query);
 
-		$this->rulesData = [];
+		$this->rulesDatas = [];
 
 		if ($result->num_rows >0){
 			while($row = mysqli_fetch_assoc($result)) {
-				$rulesData[] = $row;
+				$rulesDatas[] = $row;
 			}
 		}
+
+		return true;
 	}
 
 
@@ -114,6 +116,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$this->LoadRules();
 
 		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
+
+		$output->addHTML("<a href='$baselink'>Go Back to Table Of Content</a>");
+
 
 		$output->addHTML("<table class='wikitable sortable jquery-tablesorter' id='rules'><thead>");
 
@@ -128,10 +134,59 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<th>Description</th>");
 		$output->addHTML("<th>Version</th>");
 		$output->addHTML("<th>Enabled</th>");
+		$output->addHTML("<th>Toggle</th>");
+		$output->addHTML("<th>Toggle Visible</th>");
 		$output->addHTML("<th>Visible</th>");
 		$output->addHTML("<th>Enable Off Bar</th>");
 		$output->addHTML("<th>Match Skill Name</th>");
 		$output->addHTML("<th>Update Buff Value</th>");
+		$output->addHTML("</tr></thead><tbody>");
+
+
+		foreach ($rulesDatas as $rulesData) {
+
+			//don't think we need to show the artificial ID
+			//$ID = $rulesData['id'];
+
+			$ruleType = $rulesData['ruleType'];
+			$nameId = $rulesData['nameId'];
+			$displayName = $rulesData['displayName'];
+			$matchRegex = $rulesData['matchRegex'];
+			$statRequireId = $rulesData['statRequireId'];
+			$originalId = $rulesData['originalId'];
+			$groupName = $rulesData['groupName'];
+			$description = $rulesData['description'];
+			$version = $rulesData['version'];
+			$isEnabled = $rulesData['isEnabled'];
+			$toggle = $rulesData['toggle'];
+			$toggleVisible = $rulesData['toggleVisible'];
+			$isVisible = $rulesData['isVisible'];
+			$enableOffBar = $rulesData['enableOffBar'];
+			$matchSkillName = $rulesData['matchSkillName'];
+			$updateBuffValue = $rulesData['updateBuffValue'];
+
+			$output->addHTML("$ruleType");
+			/* commented out for debugging
+			$output->addHTML("<tr>");
+			$output->addHTML("<td>$nameId</td>");
+			$output->addHTML("<td>$displayName</td>");
+			$output->addHTML("<td>$matchRegex</td>");
+			$output->addHTML("<td>$statRequireId</td>");
+			$output->addHTML("<td>$originalId</td>");
+			$output->addHTML("<td>$groupName</td>");
+			$output->addHTML("<td>$description</td>");
+			$output->addHTML("<td>$version</td>");
+			$output->addHTML("<td>$isEnabled</td>");
+			$output->addHTML("<td>$toggle</td>");
+			$output->addHTML("<td>$toggleVisible</td>");
+			$output->addHTML("<td>$isVisible</td>");
+			$output->addHTML("<td>$enableOffBar</td>");
+			$output->addHTML("<td>$matchSkillName</td>");
+			$output->addHTML("<td>$updateBuffValue</td>");
+			$output->addHTML("</tr>");
+			*/
+		}
+
 
 		$output->addHTML("</table>");
 	}
@@ -144,7 +199,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$baselink = $this->GetBaseLink();
 
 		$output->addHTML("<h3>Add New Rule</h3>");
-		$output->addHTML("<form action='$baselink/saverule' method:'POST'>");
+		$output->addHTML("<form action='$baselink/saverule' method='POST'>");
 		$output->addHTML("<label for='ruleType'>Rule Type:</label>");
 		$output->addHTML("<input type='text' id='ruleType' name='ruleType'><br>");
 		$output->addHTML("<label for='nameId'>Name ID:</label>");
@@ -190,7 +245,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<input type='number' id='matchSkillName' name='matchSkillName'><br>");
 		$output->addHTML("<label for='updateBuffValue'>Update Buff Value:</label>");
 		$output->addHTML("<input type='number' id='updateBuffValue' name='updateBuffValue'><br>");
-
+		$output->addHTML("<label for='toggleVisible'>Toggle Visible:</label>");
+		$output->addHTML("<input type='number' id='toggleVisible' name='toggleVisible'><br>");
+		$output->addHTML("<label for='toggle'>Toggle:</label>");
+		$output->addHTML("<input type='number' id='toggle' name='toggle'><br>");
 
 		$output->addHTML("<br><input type='submit' value='Save Rule'>");
 
@@ -218,33 +276,41 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 	{
 		$output = $this->getOutput();
 		$baselink = $this->GetBaseLink();
+		$req = $this->getRequest();
 
-		$ruleType = $_POST['ruleType'];
-		$nameId = $_POST['nameId'];
-		$displayName = $_POST['displayName'];
-		$matchRegex =$_POST['matchRegex'];
-		$requireSkillLine = $_POST['requireSkillLine'];
-		$statRequireId = $_POST['statRequireId'];
-		$factorStatId = $_POST['factorStatId'];
-		$originalId = $_POST['originalId'];
-		$version = $_POST['version'];
-		$icon = $_POST['icon'];
-		$group= $_POST['groupName'];
-		$maxTimes = $_POST['maxTimes'];
-		$comment = $_POST['comment'];
-		$description = $_POST['description'];
-		$disableIds = $_POST['disableIds'];
-		$isEnabled = $_POST['isEnabled'];
-		$isVisible = $_POST['isVisible'];
-		$enableOffBar = $_POST['enableOffBar'];
-		$matchSkillName = $_POST['matchSkillName'];
-		$updateBuffValue = $_POST['updateBuffValue'];
 
-		$query = "INSERT into rules(ruleType, nameId, displayName, matchRegex, requireSkillLine, statRequireId, factorStatId, originalId, version, icon, group, maxTimes, comment, description, disableIds, isEnabled, isVisible, enableOffBar, matchSkillName, updateBuffValue)
-													VALUES('$ruleType', '$nameId', '$displayName', '$matchRegex', '$requireSkillLine', '$statRequireId', '$factorStatId', '$originalId', '$version', '$icon', '$group', '$maxTimes', '$comment', '$description', '$disableIds', '$isEnabled', '$isVisible', '$enableOffBar', '$matchSkillName', '$updateBuffValue');";
+		$input_ruleType = $req->getVal('ruleType');
+		$input_nameId = $req->getVal('nameId');
+		$input_displayName = $req->getVal('displayName');
+		$input_matchRegex =$req->getVal('matchRegex');
+		$input_requireSkillLine = $req->getVal('requireSkillLine');
+		$input_statRequireId = $req->getVal('statRequireId');
+		$input_factorStatId = $req->getVal('factorStatId');
+		$input_originalId = $req->getVal('originalId');
+		$input_version = $req->getVal('version');
+		$input_icon =$req->getVal('icon');
+		$input_group= $req->getVal('group');
+		$input_maxTimes = $req->getVal('maxTimes');
+		$input_comment = $req->getVal('comment');
+		$input_description = $req->getVal('description');
+		$input_disableIds = $req->getVal('disableIds');
+		$input_isEnabled = $req->getVal('isEnabled');
+		$input_isVisible = $req->getVal('isVisible');
+		$input_enableOffBar = $req->getVal('enableOffBar');
+		$input_matchSkillName = $req->getVal('matchSkillName');
+		$input_updateBuffValue = $req->getVal('updateBuffValue');
+		$input_toggleVisible = $req->getVal('toggleVisible');
+		$input_toggle = $req->getVal('toggle');
+
+		$query = "INSERT into rules(ruleType, nameId, displayName, matchRegex, requireSkillLine, statRequireId, factorStatId, originalId, version, icon, groupName, maxTimes, comment, description, disableIds, isEnabled, isVisible, enableOffBar, matchSkillName, updateBuffValue, toggleVisible, isToggle)
+							VALUES('$input_ruleType', '$input_nameId', '$input_displayName', '$input_matchRegex', '$input_requireSkillLine', '$input_statRequireId', '$input_factorStatId', '$input_originalId', '$input_version', '$input_icon', '$input_group', '$input_maxTimes', '$input_comment', '$input_description', '$input_disableIds', '$input_isEnabled', '$input_isVisible', '$input_enableOffBar', '$input_matchSkillName', '$input_updateBuffValue', '$input_toggleVisible', '$input_toggle');";
 		$result = $this->db->query($query);
 
-		$output->addHTML("<p>new rule saved</p><br>");
+		if ($result === false) {
+			return $this->reportError("Error: failed to INSERT into database");
+		}
+
+		$output->addHTML("<p>New rule added</p><br>");
 		$output->addHTML("<a href='$baselink'>Go Back to Table Of Content</a>");
 	}
 
