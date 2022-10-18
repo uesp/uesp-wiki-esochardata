@@ -100,14 +100,13 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$result = $this->db->query($query);
 
 		if ($result === false) {
-			return $this->reportError("Error: failed load rules from db");
+			return $this->reportError("Error: failed to load rules from database");
 		}
 
-		$this->rulesDatas;
-		$rulesDatas[] = $row;
+		$this->rulesDatas =[];
 
 		while($row = mysqli_fetch_assoc($result)) {
-				$rulesDatas[] = $row;
+				$this->rulesDatas[] = $row;
 		}
 
 		return true;
@@ -126,6 +125,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<table class='wikitable sortable jquery-tablesorter' id='rules'><thead>");
 
 		$output->addHTML("<tr>");
+		$output->addHTML("<th>Edit</th>");
 		$output->addHTML("<th>Rule Type</th>");
 		$output->addHTML("<th>Name ID</th>");
 		$output->addHTML("<th>Display Name</th>");
@@ -145,7 +145,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("</tr></thead><tbody>");
 
 
-		foreach ($rulesDatas as $rulesData) {
+		foreach ($this->rulesDatas as $rulesData) {
 
 			$ruleType = $this->escapeHtml($rulesData['ruleType']);
 			$nameId = $this->escapeHtml($rulesData['nameId']);
@@ -163,6 +163,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$updateBuffValue = $this->escapeHtml($rulesData['updateBuffValue']);
 
 			$output->addHTML("<tr>");
+			$output->addHTML("<td><a href='$baselink/editrule'>Edit</a></td>");
 			$output->addHTML("<td>$ruleType</td>");
 			$output->addHTML("<td>$nameId</td>");
 			$output->addHTML("<td>$displayName</td>");
