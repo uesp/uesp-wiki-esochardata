@@ -126,6 +126,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 		$output->addHTML("<tr>");
 		$output->addHTML("<th>Edit</th>");
+		$output->addHTML("<th>ID</th>");
 		$output->addHTML("<th>Rule Type</th>");
 		$output->addHTML("<th>Name ID</th>");
 		$output->addHTML("<th>Display Name</th>");
@@ -147,6 +148,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 		foreach ($this->rulesDatas as $rulesData) {
 
+			$id = $this->escapeHtml($rulesData['id']);
 			$ruleType = $this->escapeHtml($rulesData['ruleType']);
 			$nameId = $this->escapeHtml($rulesData['nameId']);
 			$displayName = $this->escapeHtml($rulesData['displayName']);
@@ -163,7 +165,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$updateBuffValue = $this->escapeHtml($rulesData['updateBuffValue']);
 
 			$output->addHTML("<tr>");
-			$output->addHTML("<td><a href='$baselink/editrule'>Edit</a></td>");
+			$output->addHTML("<td><a href='$baselink/editrule?ruleid=$id'>Edit</a></td>");
+		//	$output->addHTML("<td>$id</td>");
 			$output->addHTML("<td>$ruleType</td>");
 			$output->addHTML("<td>$nameId</td>");
 			$output->addHTML("<td>$displayName</td>");
@@ -184,6 +187,132 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		}
 
 		$output->addHTML("</table>");
+	}
+
+	public function LoadRule($primaryKey)
+	{
+		$query = "SELECT * FROM rules WHERE id= '$primaryKey';";
+		$result = $this->db->query($query);
+
+		if ($result === false) {
+			return $this->reportError("Error: failed to load rule from database");
+		}
+
+		$this->row =[];
+		$row = mysqli_fetch_assoc($result);
+
+		return true;
+	}
+
+	public function OutputEditRuleForm()
+	{
+			$output = $this->getOutput();
+			$baselink = $this->GetBaseLink();
+
+			$id = $this->GetRowId();
+
+		  $this->LoadRule($id);
+
+			$output->addHTML("<a href='$baselink/showrules'>Go Back To Rules Table</a><br>");
+
+
+			$output->addHTML("<h3>Edit Rule: $id</h3>");
+			$output->addHTML("<form action='$baselink/saveedits' method='POST'>");
+
+			$output->addHTML("<label for='edit_ruleType'>Rule Type: </label>");
+			$output->addHTML("<select id='edit_ruleType' name='edit_ruleType'>");
+			$output->addHTML("<option value='buff'>buff</option>");
+			$output->addHTML("<option value='mundus'>mundus</option>");
+			$output->addHTML("<option value='set'>set</option>");
+			$output->addHTML("<option value='active'>active</option>");
+			$output->addHTML("<option value='passive'>passive</option>");
+			$output->addHTML("<option value='cp'>cp</option>");
+			$output->addHTML("<option value='armorEnchant'>armorEnchant</option>");
+			$output->addHTML("<option value='weaponEnchant'>weaponEnchant</option>");
+			$output->addHTML("<option value='offHandEnchant'>offHandEnchant</option>");
+			$output->addHTML("<option value='abilityDesc'>abilityDesc</option>");
+			$output->addHTML("</select><br>");
+
+			$output->addHTML("<label for='edit_nameId'>Name ID: </label>");
+			$output->addHTML("<input type='text' id='edit_nameID' name='edit_nameID'><br>");
+			$output->addHTML("<label for='edit_displayName'>Display Name: </label>");
+			$output->addHTML("<input type='text' id='edit_displayName' name='edit_displayname'><br>");
+			$output->addHTML("<label for='edit_matchRegex'>Match Regex: </label>");
+			$output->addHTML("<input type='text' id='edit_matchRegex' name='edit_matchRegex'><br>");
+			$output->addHTML("<label for='edit_displayRegex'>Display Regex: </label>");
+			$output->addHTML("<input type='text' id='edit_displayRegex' name='edit_displayRegex'><br>");
+			$output->addHTML("<label for='edit_requireSkillLine'>requireSkillLine: </label>");
+			$output->addHTML("<input type='text' id='edit_requireSkillLine' name='edit_requireSkillLine'><br>");
+			$output->addHTML("<label for='edit_statRequireId'>statRequireId: </label>");
+			$output->addHTML("<input type='text' id='edit_statRequireId' name='edit_statRequireId'><br>");
+			$output->addHTML("<label for='edit_factorStatId'>factorStatId: </label>");
+			$output->addHTML("<input type='text' id='edit_factorStatId' name='edit_factorStatId'><br>");
+			$output->addHTML("<label for='edit_originalId'>Original ID: </label>");
+			$output->addHTML("<input type='text' id='edit_originalId' name='edit_originalId'><br>");
+			$output->addHTML("<label for='edit_version'>Version: </label>");
+			$output->addHTML("<input type='number' id='edit_version' name='edit_version'><br>");
+			$output->addHTML("<label for='edit_icon'>Icon: </label>");
+			$output->addHTML("<input type='text' id='edit_icon' name='edit_icon'><br>");
+			$output->addHTML("<label for='edit_groupName'>Group: </label>");
+			$output->addHTML("<input type='text' id='edit_groupName' name='edit_groupName'><br>");
+			$output->addHTML("<label for='edit_maxTimes'>Maximum Times: </label>");
+			$output->addHTML("<input type='text' id='edit_maxTimes' name='edit_maxTimes'><br>");
+			$output->addHTML("<label for='edit_comment'>Comment: </label>");
+			$output->addHTML("<input type='text' id='edit_comment' name='edit_comment'><br>");
+			$output->addHTML("<label for='edit_description'>Description: </label>");
+			$output->addHTML("<input type='text' id='edit_description' name='edit_description'><br>");
+			$output->addHTML("<label for='edit_disableIds'>Disable IDs: </label>");
+			$output->addHTML("<input type='text' id='edit_disableIds' name='edit_disableIds'><br>");
+
+			//could only be true or false (1 or 0)
+			$output->addHTML("<br><label for='edit_isEnabled'>Enabled:</label>");
+			$output->addHTML("<input type='checkbox' id='edit_isEnabled' name='edit_isEnabled' value='true'> ");
+			$output->addHTML("<label for='edit_isEnabled'>TRUE </label>");
+			$output->addHTML("<input type='checkbox' id='edit_isEnabled' name='edit_isEnabled' value='false'> ");
+			$output->addHTML("<label for='edit_isEnabled'>FALSE </label><br>");
+
+			$output->addHTML("<label for='edit_isVisible'>Visible:</label>");
+			$output->addHTML("<input type='checkbox' id='edit_isVisible' name='edit_isVisible' value='true'> ");
+			$output->addHTML("<label for='edit_isVisible'>TRUE </label>");
+			$output->addHTML("<input type='checkbox' id='edit_isVisible' name='edit_isVisible' value='false'> ");
+			$output->addHTML("<label for='edit_isVisible'>FALSE </label><br>");
+
+
+			$output->addHTML("<label for='edit_enableOffBar'>Enable Off Bar:</label>");
+			$output->addHTML("<input type='checkbox' id='edit_enableOffBar' name='edit_enableOffBar' value='true'> ");
+			$output->addHTML("<label for='edit_enableOffBar'>TRUE </label>");
+			$output->addHTML("<input type='checkbox' id='edit_enableOffBar' name='edit_enableOffBar' value='false'> ");
+			$output->addHTML("<label for='edit_enableOffBar'>FALSE </label><br>");
+
+			$output->addHTML("<label for='edit_matchSkillName'>Match Skill Name:</label>");
+			$output->addHTML("<input type='checkbox' id='edit_matchSkillName' name='edit_matchSkillName' value='true'> ");
+			$output->addHTML("<label for='edit_matchSkillName'>TRUE </label>");
+			$output->addHTML("<input type='checkbox' id='edit_matchSkillName' name='edit_matchSkillName' value='false'> ");
+			$output->addHTML("<label for='edit_matchSkillName'>FALSE </label><br>");
+
+			$output->addHTML("<label for='edit_updateBuffValue'>Update Buff Value:</label>");
+			$output->addHTML("<input type='checkbox' id='edit_updateBuffValue' name='edit_updateBuffValue' value='true'> ");
+			$output->addHTML("<label for='edit_updateBuffValue'>TRUE </label>");
+			$output->addHTML("<input type='checkbox' id='edit_updateBuffValue' name='edit_updateBuffValue' value='false'> ");
+			$output->addHTML("<label for='edit_updateBuffValue'>FALSE </label><br>");
+
+			$output->addHTML("<label for='edit_toggleVisible'>Toggle Visible:</label>");
+			$output->addHTML("<input type='checkbox' id='edit_toggleVisible' name='edit_toggleVisible' value='true'> ");
+			$output->addHTML("<label for='edit_toggleVisible'>TRUE </label>");
+			$output->addHTML("<input type='checkbox' id='edit_toggleVisible' name='edit_toggleVisible' value='false'> ");
+			$output->addHTML("<label for='edit_toggleVisible'>FALSE </label><br>");
+
+			$output->addHTML("<label for='edit_toggle'>Toggle:</label>");
+			$output->addHTML("<input type='checkbox' id='edit_toggle' name='edit_toggle' value='true'> ");
+			$output->addHTML("<label for='edit_toggle'>TRUE </label>");
+			$output->addHTML("<input type='checkbox' id='edit_toggle' name='edit_toggle' value='false'> ");
+			$output->addHTML("<label for='edit_toggle'>FALSE </label><br>");
+
+			$output->addHTML("<br><input type='submit' value='Save Edits'>");
+
+			$output->addHTML("</form>");
+
+
 	}
 
 
@@ -292,12 +421,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 	}
 
 
-	public function OutputEditRuleForm()
-	{
-		//....
-		//$this->LoadRule(ruleId);
-	}
-
 	public function ReportError ($msg)
 {
     $output = $this->getOutput();
@@ -403,9 +526,82 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<a href='$baselink'>Go Back to Table Of Content</a>");
 	}
 
-	public function SaveChanges()
+	public function SaveEdits()
 	{
-		//....
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
+		$req = $this->getRequest();
+
+		$new_ruleType = $req->getVal('edit_ruleType');
+		$new_nameId = $req->getVal('edit_nameId');
+		$new_displayName = $req->getVal('edit_displayName');
+		$new_matchRegex =$req->getVal('edit_matchRegex');
+		$new_requireSkillLine = $req->getVal('edit_requireSkillLine');
+		$new_statRequireId = $req->getVal('edit_statRequireId');
+		$new_factorStatId = $req->getVal('edit_factorStatId');
+		$new_originalId = $req->getVal('edit_originalId');
+		$new_version = $req->getVal('edit_version');
+		$new_icon =$req->getVal('edit_icon');
+		$new_group= $req->getVal('edit_groupName');
+		$new_maxTimes = $req->getVal('edit_maxTimes');
+		$new_comment = $req->getVal('edit_comment');
+		$new_description = $req->getVal('edit_description');
+		$new_disableIds = $req->getVal('edit_disableIds');
+		$new_isEnabled = $req->getVal('edit_isEnabled');
+		$new_isVisible = $req->getVal('edit_isVisible');
+		$new_enableOffBar = $req->getVal('edit_enableOffBar');
+		$new_matchSkillName = $req->getVal('edit_matchSkillName');
+		$new_updateBuffValue = $req->getVal('edit_updateBuffValue');
+		$new_toggleVisible = $req->getVal('edit_toggleVisible');
+		$new_toggle = $req->getVal('edit_toggle');
+
+		$values = [];
+
+		$values[] = "ruleType='" . $this->db->real_escape_string($new_ruleType) . "'";
+		$values[] = "nameId='" . $this->db->real_escape_string($new_nameId). "'";
+		$values[] = "displayName='" . $this->db->real_escape_string($new_displayName). "'";
+		$values[] = "matchRegex='" . $this->db->real_escape_string($new_matchRegex). "'";
+		$values[] = "requireSkillLine='" . $this->db->real_escape_string($new_requireSkillLine). "'";
+		$values[] = "statRequireId='" . $this->db->real_escape_string($new_statRequireId). "'";
+		$values[] = "factorStatId='" . $this->db->real_escape_string($new_factorStatId). "'";
+		$values[] = "originalId='" . $this->db->real_escape_string($new_originalId). "'";
+		$values[] = "version='" . $this->db->real_escape_string($new_version). "'";
+		$values[] = "icon='" . $this->db->real_escape_string($new_icon). "'";
+		$values[] = "groupName='" . $this->db->real_escape_string($new_groupName). "'";
+		$values[] = "maxTimes='" . $this->db->real_escape_string($new_maxTimes). "'";
+		$values[] = "comment='" . $this->db->real_escape_string($new_comment). "'";
+		$values[] = "description='" . $this->db->real_escape_string($new_description). "'";
+		$values[] = "disableIds='" . $this->db->real_escape_string($new_disableIds). "'";
+		$values[] = "isEnabled='" . $this->db->real_escape_string($new_isEnabled). "'";
+		$values[] = "isVisible='" . $this->db->real_escape_string($new_isVisible). "'";
+		$values[] = "enableOffBar='" . $this->db->real_escape_string($new_enableOffBar). "'";
+		$values[] = "matchSkillName='" . $this->db->real_escape_string($new_matchSkillName). "'";
+		$values[] = "updateBuffValue='" . $this->db->real_escape_string($new_updateBuffValue). "'";
+		$values[] = "toggleVisible='" . $this->db->real_escape_string($new_toggleVisible). "'";
+		$values[] = "isToggle='" . $this->db->real_escape_string($new_toggle). "'";
+
+		$values = implode(',', $values);
+
+
+		$query = "UPDATE rules SET $values WHERE id='$id';";
+
+		$result = $this->db->query($query);
+
+		if ($result === false) {
+			return $this->reportError("Error: failed to UPDATE data in database");
+		}
+
+		$output->addHTML("<p>Edits saved</p><br>");
+		$output->addHTML("<a href='$baselink'>Go Back to Table Of Content</a>");
+
+	}
+
+	public function GetRowId() {
+
+		$url = "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+		$rowId = substr($url, strpos($url, "=") + 1);
+
+		return $rowId;
 	}
 
 	public static function GetBaseLink()
@@ -446,8 +642,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$this->OutputEditRuleForm();
 		elseif ($parameter == "saverule")
 			$this->SaveNewRule();
-		elseif ($parameter == "savechanges")
-			$this->SaveChanges();
+		elseif ($parameter == "saveedits")
+			$this->SaveEdits();
 		else
 			$this->OutputTableOfContents();
 	}
