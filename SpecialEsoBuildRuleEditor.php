@@ -126,7 +126,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 		$output->addHTML("<tr>");
 		$output->addHTML("<th>Edit</th>");
-		$output->addHTML("<th>ID</th>");
 		$output->addHTML("<th>Rule Type</th>");
 		$output->addHTML("<th>Name ID</th>");
 		$output->addHTML("<th>Display Name</th>");
@@ -184,24 +183,25 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<td>$matchSkillName</td>");
 			$output->addHTML("<td>$updateBuffValue</td>");
 			$output->addHTML("</tr>");
-		}
+			}
 
 		$output->addHTML("</table>");
 	}
 
 	public function LoadRule($primaryKey)
 	{
-		$query = "SELECT * FROM rules WHERE id= '$primaryKey';";
-		$result = $this->db->query($query);
+			$query = "SELECT * FROM rules WHERE id= '$primaryKey';";
+			$result = $this->db->query($query);
 
-		if ($result === false) {
-			return $this->reportError("Error: failed to load rule from database");
-		}
+			if ($result === false) {
+				return $this->reportError("Error: failed to load rule from database");
+			}
 
-		$this->row =[];
-		$row = mysqli_fetch_assoc($result);
+			$this->row=[];
+			$this->row[] = $result->fetch_assoc();
+			$this->rule = $this->row[0];
 
-		return true;
+			return true;
 	}
 
 	public function OutputEditRuleForm()
@@ -213,14 +213,37 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 		  $this->LoadRule($id);
 
+			$ruleType = $this->escapeHtml($this->rule['ruleType']);
+			$nameId = $this->escapeHtml($this->rule['nameId']);
+			$displayName = $this->escapeHtml($this->rule['displayName']);
+			$matchRegex = $this->escapeHtml($this->rule['matchRegex']);
+			$displayRegex = $this->escapeHtml($this->rule['displayRegex']);
+			$requireSkillLine = $this->escapeHtml($this->rule['requireSkillLine']);
+			$statRequireId = $this->escapeHtml($this->rule['statRequireId']);
+			$factorStatId = $this->escapeHtml($this->rule['factorStatId']);
+			$originalId = $this->escapeHtml($this->rule['originalId']);
+			$version = $this->escapeHtml($this->rule['version']);
+			$icon = $this->escapeHtml($this->rule['icon']);
+			$groupName = $this->escapeHtml($this->rule['groupName']);
+			$maxTimes = $this->escapeHtml($this->rule['maxTimes']);
+			$comment = $this->escapeHtml($this->rule['comment']);
+			$description = $this->escapeHtml($this->rule['description']);
+			$disableIds = $this->escapeHtml($this->rule['disableIds']);
+			$isEnabled = $this->escapeHtml($this->rule['isEnabled']);
+			$isVisible = $this->escapeHtml($this->rule['isVisible']);
+			$enableOffBar = $this->escapeHtml($this->rule['enableOffBar']);
+			$matchSkillName = $this->escapeHtml($this->rule['matchSkillName']);
+			$updateBuffValue = $this->escapeHtml($this->rule['updateBuffValue']);
+			$toggleVisible = $this->escapeHtml($this->rule['toggleVisible']);
+			$toggle = $this->escapeHtml($this->rule['toggle']);
+
 			$output->addHTML("<a href='$baselink/showrules'>Go Back To Rules Table</a><br>");
-
-
 			$output->addHTML("<h3>Edit Rule: $id</h3>");
 			$output->addHTML("<form action='$baselink/saveedits' method='POST'>");
 
 			$output->addHTML("<label for='edit_ruleType'>Rule Type: </label>");
 			$output->addHTML("<select id='edit_ruleType' name='edit_ruleType'>");
+			$output->addHTML("<option value='$ruleType'>$ruleType</option>");
 			$output->addHTML("<option value='buff'>buff</option>");
 			$output->addHTML("<option value='mundus'>mundus</option>");
 			$output->addHTML("<option value='set'>set</option>");
@@ -234,82 +257,53 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("</select><br>");
 
 			$output->addHTML("<label for='edit_nameId'>Name ID: </label>");
-			$output->addHTML("<input type='text' id='edit_nameID' name='edit_nameID'><br>");
+			$output->addHTML("<input type='text' id='edit_nameID' name='edit_nameID' value='$nameId'><br>");
 			$output->addHTML("<label for='edit_displayName'>Display Name: </label>");
-			$output->addHTML("<input type='text' id='edit_displayName' name='edit_displayname'><br>");
+			$output->addHTML("<input type='text' id='edit_displayName' name='edit_displayName' value='$displayName'><br>");
 			$output->addHTML("<label for='edit_matchRegex'>Match Regex: </label>");
-			$output->addHTML("<input type='text' id='edit_matchRegex' name='edit_matchRegex'><br>");
+			$output->addHTML("<input type='text' id='edit_matchRegex' name='edit_matchRegex' value='$matchRegex'><br>");
 			$output->addHTML("<label for='edit_displayRegex'>Display Regex: </label>");
-			$output->addHTML("<input type='text' id='edit_displayRegex' name='edit_displayRegex'><br>");
+			$output->addHTML("<input type='text' id='edit_displayRegex' name='edit_displayRegex' value='$displayRegex'><br>");
 			$output->addHTML("<label for='edit_requireSkillLine'>requireSkillLine: </label>");
-			$output->addHTML("<input type='text' id='edit_requireSkillLine' name='edit_requireSkillLine'><br>");
+			$output->addHTML("<input type='text' id='edit_requireSkillLine' name='edit_requireSkillLine' value='$requireSkillLine'><br>");
 			$output->addHTML("<label for='edit_statRequireId'>statRequireId: </label>");
-			$output->addHTML("<input type='text' id='edit_statRequireId' name='edit_statRequireId'><br>");
+			$output->addHTML("<input type='text' id='edit_statRequireId' name='edit_statRequireId' value='$statRequireId'><br>");
 			$output->addHTML("<label for='edit_factorStatId'>factorStatId: </label>");
-			$output->addHTML("<input type='text' id='edit_factorStatId' name='edit_factorStatId'><br>");
+			$output->addHTML("<input type='text' id='edit_factorStatId' name='edit_factorStatId' value='$factorStatId'><br>");
 			$output->addHTML("<label for='edit_originalId'>Original ID: </label>");
-			$output->addHTML("<input type='text' id='edit_originalId' name='edit_originalId'><br>");
+			$output->addHTML("<input type='text' id='edit_originalId' name='edit_originalId' value='$originalId'><br>");
 			$output->addHTML("<label for='edit_version'>Version: </label>");
-			$output->addHTML("<input type='number' id='edit_version' name='edit_version'><br>");
+			$output->addHTML("<input type='number' id='edit_version' name='edit_version' value='$version'><br>");
 			$output->addHTML("<label for='edit_icon'>Icon: </label>");
-			$output->addHTML("<input type='text' id='edit_icon' name='edit_icon'><br>");
+			$output->addHTML("<input type='text' id='edit_icon' name='edit_icon' value='$icon'><br>");
 			$output->addHTML("<label for='edit_groupName'>Group: </label>");
-			$output->addHTML("<input type='text' id='edit_groupName' name='edit_groupName'><br>");
+			$output->addHTML("<input type='text' id='edit_groupName' name='edit_groupName' value='$groupName'><br>");
 			$output->addHTML("<label for='edit_maxTimes'>Maximum Times: </label>");
-			$output->addHTML("<input type='text' id='edit_maxTimes' name='edit_maxTimes'><br>");
+			$output->addHTML("<input type='text' id='edit_maxTimes' name='edit_maxTimes' value='$maxTimes'><br>");
 			$output->addHTML("<label for='edit_comment'>Comment: </label>");
-			$output->addHTML("<input type='text' id='edit_comment' name='edit_comment'><br>");
+			$output->addHTML("<input type='text' id='edit_comment' name='edit_comment' value='$comment'><br>");
 			$output->addHTML("<label for='edit_description'>Description: </label>");
-			$output->addHTML("<input type='text' id='edit_description' name='edit_description'><br>");
+			$output->addHTML("<input type='text' id='edit_description' name='edit_description' value='$description'><br>");
 			$output->addHTML("<label for='edit_disableIds'>Disable IDs: </label>");
-			$output->addHTML("<input type='text' id='edit_disableIds' name='edit_disableIds'><br>");
+			$output->addHTML("<input type='text' id='edit_disableIds' name='edit_disableIds' value='$disableIds'><br>");
 
 			//could only be true or false (1 or 0)
 			$output->addHTML("<br><label for='edit_isEnabled'>Enabled:</label>");
-			$output->addHTML("<input type='checkbox' id='edit_isEnabled' name='edit_isEnabled' value='true'> ");
-			$output->addHTML("<label for='edit_isEnabled'>TRUE </label>");
-			$output->addHTML("<input type='checkbox' id='edit_isEnabled' name='edit_isEnabled' value='false'> ");
-			$output->addHTML("<label for='edit_isEnabled'>FALSE </label><br>");
-
+			$output->addHTML("<input type='checkbox' id='edit_isEnabled' name='edit_isEnabled' value='1'><br> ");
 			$output->addHTML("<label for='edit_isVisible'>Visible:</label>");
-			$output->addHTML("<input type='checkbox' id='edit_isVisible' name='edit_isVisible' value='true'> ");
-			$output->addHTML("<label for='edit_isVisible'>TRUE </label>");
-			$output->addHTML("<input type='checkbox' id='edit_isVisible' name='edit_isVisible' value='false'> ");
-			$output->addHTML("<label for='edit_isVisible'>FALSE </label><br>");
-
-
+			$output->addHTML("<input type='checkbox' id='edit_isVisible' name='edit_isVisible' value='1'><br>");
 			$output->addHTML("<label for='edit_enableOffBar'>Enable Off Bar:</label>");
-			$output->addHTML("<input type='checkbox' id='edit_enableOffBar' name='edit_enableOffBar' value='true'> ");
-			$output->addHTML("<label for='edit_enableOffBar'>TRUE </label>");
-			$output->addHTML("<input type='checkbox' id='edit_enableOffBar' name='edit_enableOffBar' value='false'> ");
-			$output->addHTML("<label for='edit_enableOffBar'>FALSE </label><br>");
-
+			$output->addHTML("<input type='checkbox' id='edit_enableOffBar' name='edit_enableOffBar' value='1'><br>");
 			$output->addHTML("<label for='edit_matchSkillName'>Match Skill Name:</label>");
-			$output->addHTML("<input type='checkbox' id='edit_matchSkillName' name='edit_matchSkillName' value='true'> ");
-			$output->addHTML("<label for='edit_matchSkillName'>TRUE </label>");
-			$output->addHTML("<input type='checkbox' id='edit_matchSkillName' name='edit_matchSkillName' value='false'> ");
-			$output->addHTML("<label for='edit_matchSkillName'>FALSE </label><br>");
-
+			$output->addHTML("<input type='checkbox' id='edit_matchSkillName' name='edit_matchSkillName' value='1'><br>");
 			$output->addHTML("<label for='edit_updateBuffValue'>Update Buff Value:</label>");
-			$output->addHTML("<input type='checkbox' id='edit_updateBuffValue' name='edit_updateBuffValue' value='true'> ");
-			$output->addHTML("<label for='edit_updateBuffValue'>TRUE </label>");
-			$output->addHTML("<input type='checkbox' id='edit_updateBuffValue' name='edit_updateBuffValue' value='false'> ");
-			$output->addHTML("<label for='edit_updateBuffValue'>FALSE </label><br>");
-
+			$output->addHTML("<input type='checkbox' id='edit_updateBuffValue' name='edit_updateBuffValue' value='1'><br>");
 			$output->addHTML("<label for='edit_toggleVisible'>Toggle Visible:</label>");
-			$output->addHTML("<input type='checkbox' id='edit_toggleVisible' name='edit_toggleVisible' value='true'> ");
-			$output->addHTML("<label for='edit_toggleVisible'>TRUE </label>");
-			$output->addHTML("<input type='checkbox' id='edit_toggleVisible' name='edit_toggleVisible' value='false'> ");
-			$output->addHTML("<label for='edit_toggleVisible'>FALSE </label><br>");
-
+			$output->addHTML("<input type='checkbox' id='edit_toggleVisible' name='edit_toggleVisible' value='1'><br>");
 			$output->addHTML("<label for='edit_toggle'>Toggle:</label>");
-			$output->addHTML("<input type='checkbox' id='edit_toggle' name='edit_toggle' value='true'> ");
-			$output->addHTML("<label for='edit_toggle'>TRUE </label>");
-			$output->addHTML("<input type='checkbox' id='edit_toggle' name='edit_toggle' value='false'> ");
-			$output->addHTML("<label for='edit_toggle'>FALSE </label><br>");
+			$output->addHTML("<input type='checkbox' id='edit_toggle' name='edit_toggle' value='1'><br>");
 
 			$output->addHTML("<br><input type='submit' value='Save Edits'>");
-
 			$output->addHTML("</form>");
 
 
@@ -340,7 +334,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("</select><br>");
 
 		$output->addHTML("<label for='nameId'>Name ID: </label>");
-		$output->addHTML("<input type='text' id='nameID' name='nameID'><br>");
+		$output->addHTML("<input type='text' id='nameId' name='nameId'><br>");
 		$output->addHTML("<label for='displayName'>Display Name: </label>");
 		$output->addHTML("<input type='text' id='displayName' name='displayname'><br>");
 		$output->addHTML("<label for='matchRegex'>Match Regex: </label>");
