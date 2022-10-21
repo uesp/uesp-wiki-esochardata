@@ -126,6 +126,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 		$output->addHTML("<tr>");
 		$output->addHTML("<th>Edit</th>");
+		$output->addHTML("<th>Id</th>");
 		$output->addHTML("<th>Rule Type</th>");
 		$output->addHTML("<th>Name ID</th>");
 		$output->addHTML("<th>Display Name</th>");
@@ -156,8 +157,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$originalId = $this->escapeHtml($rulesData['originalId']);
 			$groupName = $this->escapeHtml($rulesData['groupName']);
 			$description = $this->escapeHtml($rulesData['description']);
+			$version = $this->escapeHtml($rulesData['version']);
 			$isEnabled = $this->escapeHtml($rulesData['isEnabled']);
 			$toggleVisible = $this->escapeHtml($rulesData['toggleVisible']);
+			$toggle = $this->escapeHtml($rulesData['isToggle']);
 			$isVisible = $this->escapeHtml($rulesData['isVisible']);
 			$enableOffBar = $this->escapeHtml($rulesData['enableOffBar']);
 			$matchSkillName = $this->escapeHtml($rulesData['matchSkillName']);
@@ -165,7 +168,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 			$output->addHTML("<tr>");
 			$output->addHTML("<td><a href='$baselink/editrule?ruleid=$id'>Edit</a></td>");
-		//	$output->addHTML("<td>$id</td>");
+			$output->addHTML("<td>$id</td>");
 			$output->addHTML("<td>$ruleType</td>");
 			$output->addHTML("<td>$nameId</td>");
 			$output->addHTML("<td>$displayName</td>");
@@ -235,11 +238,11 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$matchSkillName = $this->escapeHtml($this->rule['matchSkillName']);
 			$updateBuffValue = $this->escapeHtml($this->rule['updateBuffValue']);
 			$toggleVisible = $this->escapeHtml($this->rule['toggleVisible']);
-			$toggle = $this->escapeHtml($this->rule['toggle']);
+			$toggle = $this->escapeHtml($this->rule['isToggle']);
 
 			$output->addHTML("<a href='$baselink/showrules'>Go Back To Rules Table</a><br>");
 			$output->addHTML("<h3>Edit Rule: $id</h3>");
-			$output->addHTML("<form action='$baselink/saveedits' method='POST'>");
+			$output->addHTML("<form action='$baselink/saveedits?ruleid=$id' method='POST'>");
 
 			$output->addHTML("<label for='edit_ruleType'>Rule Type: </label>");
 			$output->addHTML("<select id='edit_ruleType' name='edit_ruleType'>");
@@ -287,21 +290,30 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<label for='edit_disableIds'>Disable IDs: </label>");
 			$output->addHTML("<input type='text' id='edit_disableIds' name='edit_disableIds' value='$disableIds'><br>");
 
-			//could only be true or false (1 or 0)
+
+			$isEnabledBoxCheck = $this->GetCheckboxState($isEnabled);
+			$isVisibleBoxCheck = $this->GetCheckboxState($isVisible);
+			$enableOffBarBoxCheck = $this->GetCheckboxState($enableOffBar);
+			$matchSkillNameBoxCheck = $this->GetCheckboxState($matchSkillName);
+			$updateBuffValueBoxCheck = $this->GetCheckboxState($updateBuffValue);
+			$toggleVisibleBoxCheck = $this->GetCheckboxState($toggleVisible);
+			$isEnabledBoxCheck = $this->GetCheckboxState($isEnabled);
+			$toggleBoxCheck = $this->GetCheckboxState($toggle);
+
 			$output->addHTML("<br><label for='edit_isEnabled'>Enabled:</label>");
-			$output->addHTML("<input checked='$isEnabled' type='checkbox' id='edit_isEnabled' name='edit_isEnabled' value='1'><br> ");
+			$output->addHTML("<input $isEnabledBoxCheck type='checkbox' id='edit_isEnabled' name='edit_isEnabled' value='1'><br> ");
 			$output->addHTML("<label for='edit_isVisible'>Visible:</label>");
-			$output->addHTML("<input checked='$isVisble' type='checkbox' id='edit_isVisible' name='edit_isVisible' value='1'><br>");
+			$output->addHTML("<input $isVisibleBoxCheck type='checkbox' id='edit_isVisible' name='edit_isVisible' value='1'><br>");
 			$output->addHTML("<label for='edit_enableOffBar'>Enable Off Bar:</label>");
-			$output->addHTML("<input checked='$enableOffBar' type='checkbox' id='edit_enableOffBar' name='edit_enableOffBar' value='1'><br>");
+			$output->addHTML("<input $enableOffBarBoxCheck type='checkbox' id='edit_enableOffBar' name='edit_enableOffBar' value='1'><br>");
 			$output->addHTML("<label for='edit_matchSkillName'>Match Skill Name:</label>");
-			$output->addHTML("<input checked='$matchSkillName' type='checkbox' id='edit_matchSkillName' name='edit_matchSkillName' value='1'><br>");
+			$output->addHTML("<input $matchSkillNameBoxCheck type='checkbox' id='edit_matchSkillName' name='edit_matchSkillName' value='1'><br>");
 			$output->addHTML("<label for='edit_updateBuffValue'>Update Buff Value:</label>");
-			$output->addHTML("<input checked='$updateBuffValue' type='checkbox' id='edit_updateBuffValue' name='edit_updateBuffValue' value='1'><br>");
+			$output->addHTML("<input $updateBuffValueBoxCheck type='checkbox' id='edit_updateBuffValue' name='edit_updateBuffValue' value='1'><br>");
 			$output->addHTML("<label for='edit_toggleVisible'>Toggle Visible:</label>");
-			$output->addHTML("<input checked='$toggleVisible' type='checkbox' id='edit_toggleVisible' name='edit_toggleVisible' value='1'><br>");
+			$output->addHTML("<input $toggleVisibleBoxCheck type='checkbox' id='edit_toggleVisible' name='edit_toggleVisible' value='1'><br>");
 			$output->addHTML("<label for='edit_toggle'>Toggle:</label>");
-			$output->addHTML("<input checked='$toggle' type='checkbox' id='edit_toggle' name='edit_toggle' value='1'><br>");
+			$output->addHTML("<input $toggleBoxCheck type='checkbox' id='edit_toggle' name='edit_toggle' value='1'><br>");
 
 			$output->addHTML("<br><input type='submit' value='Save Edits'>");
 			$output->addHTML("</form>");
@@ -366,19 +378,19 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 			//could only be true or false (1 or 0)
 			$output->addHTML("<br><label for='isEnabled'>Enabled:</label>");
-			$output->addHTML("<input type='checkbox' id='isEnabled' name='isEnabled' value='1'> ");
+			$output->addHTML("<input type='checkbox' id='isEnabled' name='isEnabled' value='1'><br>");
 			$output->addHTML("<label for='isVisible'>Visible:</label>");
-			$output->addHTML("<input type='checkbox' id='isVisible' name='isVisible' value='1'> ");
+			$output->addHTML("<input type='checkbox' id='isVisible' name='isVisible' value='1'><br>");
 			$output->addHTML("<label for='enableOffBar'>Enable Off Bar:</label>");
-			$output->addHTML("<input type='checkbox' id='enableOffBar' name='enableOffBar' value='1'> ");
+			$output->addHTML("<input type='checkbox' id='enableOffBar' name='enableOffBar' value='1'><br>");
 			$output->addHTML("<label for='matchSkillName'>Match Skill Name:</label>");
-			$output->addHTML("<input type='checkbox' id='matchSkillName' name='matchSkillName' value='1'> ");
+			$output->addHTML("<input type='checkbox' id='matchSkillName' name='matchSkillName' value='1'><br>");
 			$output->addHTML("<label for='updateBuffValue'>Update Buff Value:</label>");
-			$output->addHTML("<input type='checkbox' id='updateBuffValue' name='updateBuffValue' value='1'> ");
+			$output->addHTML("<input type='checkbox' id='updateBuffValue' name='updateBuffValue' value='1'><br>");
 			$output->addHTML("<label for='toggleVisible'>Toggle Visible:</label>");
-			$output->addHTML("<input type='checkbox' id='toggleVisible' name='toggleVisible' value='1'> ");
+			$output->addHTML("<input type='checkbox' id='toggleVisible' name='toggleVisible' value='1'><br>");
 			$output->addHTML("<label for='toggle'>Toggle:</label>");
-			$output->addHTML("<input type='checkbox' id='toggle' name='toggle' value='1'> ");
+			$output->addHTML("<input type='checkbox' id='toggle' name='toggle' value='1'><br>");
 
 			$output->addHTML("<br><input type='submit' value='Save Rule'>");
 			$output->addHTML("</form>");
@@ -386,13 +398,24 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 	}
 
 
+	public function GetCheckboxState ($boolValue)
+	{
+			$returnVal = "";
+
+			if($boolValue === '1') {
+				$returnVal = "checked";
+			}
+			return $returnVal;
+	}
+
+
 	public function ReportError ($msg)
   {
-    $output = $this->getOutput();
-    $output->addHTML($msg . "<br/>");
-		$output->addHTML($this->db->error);
-    error_log($msg);
-    return false;
+	    $output = $this->getOutput();
+	    $output->addHTML($msg . "<br/>");
+			$output->addHTML($this->db->error);
+	    error_log($msg);
+	    return false;
 	}
 
 	public function SaveNewRule()
@@ -497,6 +520,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$baselink = $this->GetBaseLink();
 			$req = $this->getRequest();
 
+			$id = $this->GetRowId();
 
 			$new_ruleType = $req->getVal('edit_ruleType');
 			$new_nameId = $req->getVal('edit_nameId');
@@ -557,7 +581,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 				return $this->reportError("Error: failed to UPDATE data in database");
 			}
 
-			$output->addHTML("<p>Edits saved</p><br>");
+			$output->addHTML("<p>Edits saved for rule #$id</p><br>");
 			$output->addHTML("<a href='$baselink'>Go Back to Table Of Content</a>");
 
 	}
