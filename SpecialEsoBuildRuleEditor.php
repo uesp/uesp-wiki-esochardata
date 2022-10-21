@@ -133,7 +133,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<th>Match Regex</th>");
 		$output->addHTML("<th>statRequireId</th>");
 		$output->addHTML("<th>Original Id</th>");
-		$output->addHTML("<th>Group</th>");
+		$output->addHTML("<th>groupName</th>");
 		$output->addHTML("<th>Description</th>");
 		$output->addHTML("<th>Version</th>");
 		$output->addHTML("<th>Enabled</th>");
@@ -246,7 +246,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 			$output->addHTML("<label for='edit_ruleType'>Rule Type: </label>");
 			$output->addHTML("<select id='edit_ruleType' name='edit_ruleType'>");
-			$output->addHTML("<option value='' selected disabled hidden>$ruleType</option>");
+			$output->addHTML("<option value='$ruleType'>$ruleType</option>");
 			$output->addHTML("<option value='buff'>buff</option>");
 			$output->addHTML("<option value='mundus'>mundus</option>");
 			$output->addHTML("<option value='set'>set</option>");
@@ -260,7 +260,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("</select><br>");
 
 			$output->addHTML("<label for='edit_nameId'>Name ID: </label>");
-			$output->addHTML("<input type='text' id='edit_nameID' name='edit_nameID' value='$nameId'><br>");
+			$output->addHTML("<input type='text' id='edit_nameId' name='edit_nameId' value='$nameId'><br>");
 			$output->addHTML("<label for='edit_displayName'>Display Name: </label>");
 			$output->addHTML("<input type='text' id='edit_displayName' name='edit_displayName' value='$displayName'><br>");
 			$output->addHTML("<label for='edit_matchRegex'>Match Regex: </label>");
@@ -279,7 +279,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<input type='number' id='edit_version' name='edit_version' value='$version'><br>");
 			$output->addHTML("<label for='edit_icon'>Icon: </label>");
 			$output->addHTML("<input type='text' id='edit_icon' name='edit_icon' value='$icon'><br>");
-			$output->addHTML("<label for='edit_groupName'>Group: </label>");
+			$output->addHTML("<label for='edit_groupName'>groupName: </label>");
 			$output->addHTML("<input type='text' id='edit_groupName' name='edit_groupName' value='$groupName'><br>");
 			$output->addHTML("<label for='edit_maxTimes'>Maximum Times: </label>");
 			$output->addHTML("<input type='text' id='edit_maxTimes' name='edit_maxTimes' value='$maxTimes'><br>");
@@ -365,7 +365,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<input type='number' id='version' name='version'><br>");
 			$output->addHTML("<label for='icon'>Icon: </label>");
 			$output->addHTML("<input type='text' id='icon' name='icon'><br>");
-			$output->addHTML("<label for='groupName'>Group: </label>");
+			$output->addHTML("<label for='groupName'>groupName: </label>");
 			$output->addHTML("<input type='text' id='groupName' name='groupName'><br>");
 			$output->addHTML("<label for='maxTimes'>Maximum Times: </label>");
 			$output->addHTML("<input type='text' id='maxTimes' name='maxTimes'><br>");
@@ -435,7 +435,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$input_originalId = $req->getVal('originalId');
 		$input_version = $req->getVal('version');
 		$input_icon =$req->getVal('icon');
-		$input_group= $req->getVal('groupName');
+		$input_groupName= $req->getVal('groupName');
 		$input_maxTimes = $req->getVal('maxTimes');
 		$input_comment = $req->getVal('comment');
 		$input_description = $req->getVal('description');
@@ -449,7 +449,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$input_toggle = $req->getVal('toggle');
 
 		//$query = "INSERT into rules(ruleType, nameId, displayName, matchRegex, requireSkillLine, statRequireId, factorStatId, originalId, version, icon, groupName, maxTimes, comment, description, disableIds, isEnabled, isVisible, enableOffBar, matchSkillName, updateBuffValue, toggleVisible, isToggle)
-			//				VALUES('$input_ruleType', '$input_nameId', '$input_displayName', '$input_matchRegex', '$input_requireSkillLine', '$input_statRequireId', '$input_factorStatId', '$input_originalId', '$input_version', '$input_icon', '$input_group', '$input_maxTimes', '$input_comment', '$input_description', '$input_disableIds', '$input_isEnabled', '$input_isVisible', '$input_enableOffBar', '$input_matchSkillName', '$input_updateBuffValue', '$input_toggleVisible', '$input_toggle');";
+			//				VALUES('$input_ruleType', '$input_nameId', '$input_displayName', '$input_matchRegex', '$input_requireSkillLine', '$input_statRequireId', '$input_factorStatId', '$input_originalId', '$input_version', '$input_icon', '$input_groupName', '$input_maxTimes', '$input_comment', '$input_description', '$input_disableIds', '$input_isEnabled', '$input_isVisible', '$input_enableOffBar', '$input_matchSkillName', '$input_updateBuffValue', '$input_toggleVisible', '$input_toggle');";
 
 		$cols = [];
 		$values = [];
@@ -532,7 +532,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$new_originalId = $req->getVal('edit_originalId');
 			$new_version = $req->getVal('edit_version');
 			$new_icon =$req->getVal('edit_icon');
-			$new_group= $req->getVal('edit_groupName');
+			$new_groupName= $req->getVal('edit_groupName');
 			$new_maxTimes = $req->getVal('edit_maxTimes');
 			$new_comment = $req->getVal('edit_comment');
 			$new_description = $req->getVal('edit_description');
@@ -639,7 +639,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 	}
 
 
-	function getGroupName()
+	function getgroupName()
 	{
 		return 'wiki';
 	}
