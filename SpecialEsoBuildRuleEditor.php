@@ -73,7 +73,30 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 										);
 
 		if ($result === false) {
-			return $this->reportError("Error: failed to create table");
+			return $this->reportError("Error: failed to create rules table");
+		}
+
+		$effects_result = $this->db->query("CREATE TABLE IF NOT EXISTS effects (
+                        ruleId INTEGER NOT NULL,
+                        version TINYTEXT NOT NULL,
+                        statId TINYTEXT NOT NULL,
+                        value TINYTEXT,
+                        display TINYTEXT,
+                        category TINYTEXT,
+                        combineAs TINYTEXT,
+                        roundNum TINYTEXT,
+                        factorValue FLOAT,
+                        statDesc TINYTEXT,
+                        buffId TINYTEXT,
+                        INDEX index_ruleId(ruleId),
+                        INDEX index_stat(statId(32)),
+                        INDEX index_version(version(10))
+                    );
+
+								 ");
+
+		if ($effects_result === false) {
+			return $this->reportError("Error: failed to create effects table");
 		}
 
 
@@ -620,6 +643,33 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		return($link);
 	}
 
+//-------------------Effects table functions---------------
+
+	public function OutputShowEffectsTable(){
+		//TODO
+	}
+
+	public function OutpuAddtEffectForm(){
+		//TODO
+
+		$output = $this->getOutput();
+
+		$baselink = $this->GetBaseLink();
+
+		$output->addHTML("<h3>Add New Effect</h3>");
+		$output->addHTML("<form action='$baselink/savesaveeffect' method='POST'>");
+		$output->addHTML("</form>");
+	}
+
+	public function OutputEditEffectForm(){
+		//TODO
+	}
+
+
+
+//-------------------Main page---------------
+
+
 	public function OutputTableOfContents()
 	{
 		$output = $this->getOutput();
@@ -629,6 +679,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<ul>");
 		$output->addHTML("<li><a href='$baselink/showrules'>Show Rules</a></li>");
 		$output->addHTML("<li><a href='$baselink/addrule'>Add Rule</a></li>");
+		$output->addHTML("<li><a href='$baselink/showeffects'>Show Effects</a></li>");
+		$output->addHTML("<li><a href='$baselink/addeffect'>Add Effect</a></li>");
 		$output->addHTML("</ul>");
 	}
 
@@ -653,6 +705,16 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$this->SaveNewRule();
 		elseif ($parameter == "saveedits")
 			$this->SaveEdits();
+		elseif ($parameter == "showeffects")
+			$this->OutputShowEffectsTable();
+		elseif ($parameter == "addeffects")
+			$this->OutpuAddtEffectForm();
+		elseif ($parameter == "editeffect")
+			$this->OutputEditEffectForm();
+		elseif ($parameter == "saveeffect")
+			$this->SaveNewEffect();
+		elseif ($parameter == "saveeffectedits")
+			$this->SaveEffectEdits();
 		else
 			$this->OutputTableOfContents();
 	}
