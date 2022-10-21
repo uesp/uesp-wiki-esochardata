@@ -166,6 +166,15 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$matchSkillName = $this->escapeHtml($rulesData['matchSkillName']);
 			$updateBuffValue = $this->escapeHtml($rulesData['updateBuffValue']);
 
+
+			$isEnabledDisplay = $this->GetBooleanDispaly($isEnabled);
+			$toggleVisibleDisplay = $this->GetBooleanDispaly($toggleVisible);
+			$toggleDisplay = $this->GetBooleanDispaly($toggle);
+			$isVisibleDisplay = $this->GetBooleanDispaly($isVisible);
+			$enableOffBarDisplay = $this->GetBooleanDispaly($enableOffBar);
+			$matchSkillNameDisplay = $this->GetBooleanDispaly($matchSkillName);
+			$updateBuffValueDisplay = $this->GetBooleanDispaly($updateBuffValue);
+
 			$output->addHTML("<tr>");
 			$output->addHTML("<td><a href='$baselink/editrule?ruleid=$id'>Edit</a></td>");
 			$output->addHTML("<td>$id</td>");
@@ -178,13 +187,13 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<td>$groupName</td>");
 			$output->addHTML("<td>$description</td>");
 			$output->addHTML("<td>$version</td>");
-			$output->addHTML("<td>$isEnabled</td>");
-			$output->addHTML("<td>$toggle</td>");
-			$output->addHTML("<td>$toggleVisible</td>");
-			$output->addHTML("<td>$isVisible</td>");
-			$output->addHTML("<td>$enableOffBar</td>");
-			$output->addHTML("<td>$matchSkillName</td>");
-			$output->addHTML("<td>$updateBuffValue</td>");
+			$output->addHTML("<td>$isEnabledDisplay</td>");
+			$output->addHTML("<td>$toggleDisplay</td>");
+			$output->addHTML("<td>$toggleVisibleDisplay</td>");
+			$output->addHTML("<td>$isVisibleDisplay</td>");
+			$output->addHTML("<td>$enableOffBarDisplay</td>");
+			$output->addHTML("<td>$matchSkillNameDisplay</td>");
+			$output->addHTML("<td>$updateBuffValueDisplay</td>");
 			$output->addHTML("</tr>");
 			}
 
@@ -404,6 +413,16 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 			if($boolValue === '1') {
 				$returnVal = "checked";
+			}
+			return $returnVal;
+	}
+
+	public function GetBooleanDispaly ($boolValue)
+	{
+			$returnVal = "";
+
+			if($boolValue === '1') {
+				$returnVal = "Yes";
 			}
 			return $returnVal;
 	}
