@@ -350,7 +350,11 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<input $toggleBoxCheck type='checkbox' id='edit_toggle' name='edit_toggle' value='1'><br>");
 
 			$output->addHTML("<br><input type='submit' value='Save Edits'>");
-			$output->addHTML("</form>");
+			$output->addHTML("</form><br>");
+
+			$this->OutputShowEffectsTable();
+
+
 
 
 	}
@@ -690,7 +694,28 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 //-------------------Effects table functions---------------
 
 	public function OutputShowEffectsTable(){
-		//TODO
+
+		$output = $this->getOutput();
+
+		$output->addHTML("<hr><h3>Rule Effects:</h3>");
+
+		$output->addHTML("<tableclass='wikitable sortable jquery-tablesorter' id='effects'><thead>");
+		$output->addHTML("<tr>");
+		$output->addHTML("<th>Edit</th>");
+		$output->addHTML("<th>version</th>");
+		$output->addHTML("<th>statId</th>");
+		$output->addHTML("<th>value</th>");
+		$output->addHTML("<th>display</th>");
+		$output->addHTML("<th>category</th>");
+		$output->addHTML("<th>combineAs</th>");
+		$output->addHTML("<th>round</th>");
+		$output->addHTML("<th>factorValue</th>");
+		$output->addHTML("<th>statDesc</th>");
+		$output->addHTML("<th>buffId</th>");
+
+		$output->addHTML("</tr></thead>");
+		$output->addHTML("</table>");
+
 	}
 
 	public function OutpuAddtEffectForm(){
@@ -747,18 +772,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$this->SaveNewRule();
 		elseif ($parameter == "saveeditruleform")
 			$this->SaveEditRuleForm();
-		elseif ($parameter == "showeffects")
-			$this->OutputShowEffectsTable();
-		elseif ($parameter == "addeffects")
-			$this->OutpuAddtEffectForm();
-		elseif ($parameter == "editeffect")
-			$this->OutputEditEffectForm();
-		elseif ($parameter == "saveeffect")
-			$this->SaveNewEffect();
-		elseif ($parameter == "saveeffectedits")
-			$this->SaveEffectEdits();
-		else
-			$this->OutputTableOfContents();
 	}
 
 
