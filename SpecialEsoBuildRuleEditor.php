@@ -696,10 +696,14 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 	public function OutputShowEffectsTable(){
 
 		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
+
+		$id = $this->GetRowId();
 
 		$output->addHTML("<hr><h3>Rule Effects:</h3>");
+		$output->addHTML("<a href='$baselink/addneweffect?ruleid=$id'>Add new effect</a>");
 
-		$output->addHTML("<tableclass='wikitable sortable jquery-tablesorter' id='effects'><thead>");
+		$output->addHTML("<table class='wikitable sortable jquery-tablesorter' id='effects'><thead>");
 		$output->addHTML("<tr>");
 		$output->addHTML("<th>Edit</th>");
 		$output->addHTML("<th>version</th>");
@@ -719,14 +723,36 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 	}
 
 	public function OutpuAddtEffectForm(){
-		//TODO
 
 		$output = $this->getOutput();
-
 		$baselink = $this->GetBaseLink();
+		$id = $this->GetRowId();
 
-		$output->addHTML("<h3>Add New Effect</h3>");
-		$output->addHTML("<form action='$baselink/savesaveeffect' method='POST'>");
+
+		$output->addHTML("<a href='$baselink/editrule?ruleid=$id'>Go Back to Effects Table</a>");
+		$output->addHTML("<h3>Add New Effect For Rule: $id</h3>");
+		$output->addHTML("<form action='$baselink/savenewffect?ruleid=$id' method='POST'>");
+		$output->addHTML("<label for='statId'>statId: </label>");
+		$output->addHTML("<input type='text' id='statId' name='statId'><br>");
+		$output->addHTML("<label for='value'>value: </label>");
+		$output->addHTML("<input type='text' id='value' name='value'><br>");
+		$output->addHTML("<label for='display'>display: </label>");
+		$output->addHTML("<input type='text' id='display' name='display'><br>");
+		$output->addHTML("<label for='category'>category: </label>");
+		$output->addHTML("<input type='text' id='category' name='category'><br>");
+		$output->addHTML("<label for='combineAs'>combineAs: </label>");
+		$output->addHTML("<input type='text' id='combineAs' name='combineAs'><br>");
+		$output->addHTML("<label for='round'>round: </label>");
+		$output->addHTML("<input type='number' id='round' name='round'><br>");
+		$output->addHTML("<label for='factorValue'>factorValue: </label>");
+		$output->addHTML("<input type='text' id='factorValue' name='factorValue'><br>");
+		$output->addHTML("<label for='statDesc'>statDesc: </label>");
+		$output->addHTML("<input type='text' id='statDesc' name='statDesc'><br>");
+		$output->addHTML("<label for='buffId'>buffId: </label>");
+		$output->addHTML("<input type='text' id='buffId' name='buffId'><br>");
+
+		$output->addHTML("<br><input type='submit' value='Save Effect'>");
+
 		$output->addHTML("</form>");
 	}
 
@@ -772,6 +798,12 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$this->SaveNewRule();
 		elseif ($parameter == "saveeditruleform")
 			$this->SaveEditRuleForm();
+		elseif ($parameter == "addneweffect")
+			$this->OutpuAddtEffectForm();
+		elseif ($parameter == "savenewffect")
+			$this->SaveNewEffect();
+		elseif ($parameter == "saveediteffectform")
+			$this->SaveEditEffectForm();
 	}
 
 
