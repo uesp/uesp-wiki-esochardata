@@ -37,190 +37,190 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 	protected function CreateTables()
 	{
-		//TODO:
+			//TODO:
 
-		$result = $this->db->query("CREATE TABLE IF NOT EXISTS rules (
-                        id INTEGER AUTO_INCREMENT NOT NULL,
-                        version TINYTEXT NOT NULL,
-                        ruleType TINYTEXT NOT NULL,
-                        nameId TINYTEXT,
-                        displayName TINYTEXT,
-                        matchRegex TINYTEXT NOT NULL,
-                        displayRegex TINYTEXT,
-                        requireSkillLine TINYTEXT,
-                        statRequireId TINYTEXT,
-                        statRequireValue TINYTEXT,
-                        factorStatId TINYTEXT,
-                        isEnabled TINYINT(1) NOT NULL,
-                        isVisible TINYINT(1) NOT NULL,
-                        toggleVisible TINYINT(1) NOT NULL,
-                        isToggle TINYINT(1) NOT NULL,
-                        enableOffBar TINYINT(1) NOT NULL,
-                        matchSkillName TINYINT(1) NOT NULL,
-                        updateBuffValue TINYINT(1) NOT NULL,
-                        originalId TINYTEXT,
-                        icon TINYTEXT,
-                        groupName TINYTEXT,
-                        maxTimes INTEGER,
-                        comment TINYTEXT NOT NULL,
-                        description TINYTEXT NOT NULL,
-                        disableIds TINYTEXT,
-                        PRIMARY KEY (id),
-                        INDEX index_version(version(10)),
-                        INDEX index_ruleId(originalId(30))
-                    	);"
+			$result = $this->db->query("CREATE TABLE IF NOT EXISTS rules (
+	                        id INTEGER AUTO_INCREMENT NOT NULL,
+	                        version TINYTEXT NOT NULL,
+	                        ruleType TINYTEXT NOT NULL,
+	                        nameId TINYTEXT,
+	                        displayName TINYTEXT,
+	                        matchRegex TINYTEXT NOT NULL,
+	                        displayRegex TINYTEXT,
+	                        requireSkillLine TINYTEXT,
+	                        statRequireId TINYTEXT,
+	                        statRequireValue TINYTEXT,
+	                        factorStatId TINYTEXT,
+	                        isEnabled TINYINT(1) NOT NULL,
+	                        isVisible TINYINT(1) NOT NULL,
+	                        toggleVisible TINYINT(1) NOT NULL,
+	                        isToggle TINYINT(1) NOT NULL,
+	                        enableOffBar TINYINT(1) NOT NULL,
+	                        matchSkillName TINYINT(1) NOT NULL,
+	                        updateBuffValue TINYINT(1) NOT NULL,
+	                        originalId TINYTEXT,
+	                        icon TINYTEXT,
+	                        groupName TINYTEXT,
+	                        maxTimes INTEGER,
+	                        comment TINYTEXT NOT NULL,
+	                        description TINYTEXT NOT NULL,
+	                        disableIds TINYTEXT,
+	                        PRIMARY KEY (id),
+	                        INDEX index_version(version(10)),
+	                        INDEX index_ruleId(originalId(30))
+	                    	);"
 
-										);
+											);
 
-		if ($result === false) {
-			return $this->reportError("Error: failed to create rules table");
-		}
+			if ($result === false) {
+				return $this->reportError("Error: failed to create rules table");
+			}
 
-		$effects_result = $this->db->query("CREATE TABLE IF NOT EXISTS effects (
-                        ruleId INTEGER NOT NULL,
-                        version TINYTEXT NOT NULL,
-                        statId TINYTEXT NOT NULL,
-                        value TINYTEXT,
-                        display TINYTEXT,
-                        category TINYTEXT,
-                        combineAs TINYTEXT,
-                        roundNum TINYTEXT,
-                        factorValue FLOAT,
-                        statDesc TINYTEXT,
-                        buffId TINYTEXT,
-                        INDEX index_ruleId(ruleId),
-                        INDEX index_stat(statId(32)),
-                        INDEX index_version(version(10))
-                    );
+			$effects_result = $this->db->query("CREATE TABLE IF NOT EXISTS effects (
+	                        ruleId INTEGER NOT NULL,
+	                        version TINYTEXT NOT NULL,
+	                        statId TINYTEXT NOT NULL,
+	                        value TINYTEXT,
+	                        display TINYTEXT,
+	                        category TINYTEXT,
+	                        combineAs TINYTEXT,
+	                        roundNum TINYTEXT,
+	                        factorValue FLOAT,
+	                        statDesc TINYTEXT,
+	                        buffId TINYTEXT,
+	                        INDEX index_ruleId(ruleId),
+	                        INDEX index_stat(statId(32)),
+	                        INDEX index_version(version(10))
+	                    );
 
-								 ");
+									 ");
 
-		if ($effects_result === false) {
-			return $this->reportError("Error: failed to create effects table");
-		}
+			if ($effects_result === false) {
+				return $this->reportError("Error: failed to create effects table");
+			}
 
 
-		return true;
+			return true;
 	}
 
 
 	public function InitDatabase()
 	{
-		global $uespEsoBuildDataWriteDBHost, $uespEsoBuildDataWriteUser, $uespEsoBuildDataWritePW, $uespEsoBuildDataDatabase;
+			global $uespEsoBuildDataWriteDBHost, $uespEsoBuildDataWriteUser, $uespEsoBuildDataWritePW, $uespEsoBuildDataDatabase;
 
-		$this->db = new mysqli($uespEsoBuildDataWriteDBHost, $uespEsoBuildDataWriteUser, $uespEsoBuildDataWritePW, $uespEsoBuildDataDatabase);
-		if ($this->db->connect_error) {
-			return $this->reportError("Error: failed to initialize database");;
-		}
-		$this->CreateTables();
-		return true;
+			$this->db = new mysqli($uespEsoBuildDataWriteDBHost, $uespEsoBuildDataWriteUser, $uespEsoBuildDataWritePW, $uespEsoBuildDataDatabase);
+			if ($this->db->connect_error) {
+				return $this->reportError("Error: failed to initialize database");;
+			}
+			$this->CreateTables();
+			return true;
 	}
 
 
 	public function LoadRules()
 	{
-		$query = "SELECT * FROM rules;";
-		$result = $this->db->query($query);
+			$query = "SELECT * FROM rules;";
+			$result = $this->db->query($query);
 
-		if ($result === false) {
-			return $this->reportError("Error: failed to load rules from database");
-		}
+			if ($result === false) {
+				return $this->reportError("Error: failed to load rules from database");
+			}
 
-		$this->rulesDatas =[];
+			$this->rulesDatas =[];
 
-		while($row = mysqli_fetch_assoc($result)) {
-				$this->rulesDatas[] = $row;
-		}
+			while($row = mysqli_fetch_assoc($result)) {
+					$this->rulesDatas[] = $row;
+			}
 
-		return true;
+			return true;
 	}
 
 
 	public function OutputShowRulesTable()
 	{
-		$this->LoadRules();
+			$this->LoadRules();
 
-		$output = $this->getOutput();
-		$baselink = $this->GetBaseLink();
+			$output = $this->getOutput();
+			$baselink = $this->GetBaseLink();
 
-		$output->addHTML("<a href='$baselink'>Go Back to Table Of Content</a>");
+			$output->addHTML("<a href='$baselink'>Go Back to Table Of Content</a>");
 
-		$output->addHTML("<table class='wikitable sortable jquery-tablesorter' id='rules'><thead>");
-
-		$output->addHTML("<tr>");
-		$output->addHTML("<th>Edit</th>");
-		$output->addHTML("<th>Id</th>");
-		$output->addHTML("<th>Rule Type</th>");
-		$output->addHTML("<th>Name ID</th>");
-		$output->addHTML("<th>Display Name</th>");
-		$output->addHTML("<th>Match Regex</th>");
-		$output->addHTML("<th>statRequireId</th>");
-		$output->addHTML("<th>Original Id</th>");
-		$output->addHTML("<th>groupName</th>");
-		$output->addHTML("<th>Description</th>");
-		$output->addHTML("<th>Version</th>");
-		$output->addHTML("<th>Enabled</th>");
-		$output->addHTML("<th>Toggle</th>");
-		$output->addHTML("<th>Toggle Visible</th>");
-		$output->addHTML("<th>Visible</th>");
-		$output->addHTML("<th>Enable Off Bar</th>");
-		$output->addHTML("<th>Match Skill Name</th>");
-		$output->addHTML("<th>Update Buff Value</th>");
-		$output->addHTML("</tr></thead><tbody>");
-
-
-		foreach ($this->rulesDatas as $rulesData) {
-
-			$id = $this->escapeHtml($rulesData['id']);
-			$ruleType = $this->escapeHtml($rulesData['ruleType']);
-			$nameId = $this->escapeHtml($rulesData['nameId']);
-			$displayName = $this->escapeHtml($rulesData['displayName']);
-			$matchRegex = $this->escapeHtml($rulesData['matchRegex']);
-			$statRequireId = $this->escapeHtml($rulesData['statRequireId']);
-			$originalId = $this->escapeHtml($rulesData['originalId']);
-			$groupName = $this->escapeHtml($rulesData['groupName']);
-			$description = $this->escapeHtml($rulesData['description']);
-			$version = $this->escapeHtml($rulesData['version']);
-			$isEnabled = $this->escapeHtml($rulesData['isEnabled']);
-			$toggleVisible = $this->escapeHtml($rulesData['toggleVisible']);
-			$toggle = $this->escapeHtml($rulesData['isToggle']);
-			$isVisible = $this->escapeHtml($rulesData['isVisible']);
-			$enableOffBar = $this->escapeHtml($rulesData['enableOffBar']);
-			$matchSkillName = $this->escapeHtml($rulesData['matchSkillName']);
-			$updateBuffValue = $this->escapeHtml($rulesData['updateBuffValue']);
-
-
-			$isEnabledDisplay = $this->GetBooleanDispaly($isEnabled);
-			$toggleVisibleDisplay = $this->GetBooleanDispaly($toggleVisible);
-			$toggleDisplay = $this->GetBooleanDispaly($toggle);
-			$isVisibleDisplay = $this->GetBooleanDispaly($isVisible);
-			$enableOffBarDisplay = $this->GetBooleanDispaly($enableOffBar);
-			$matchSkillNameDisplay = $this->GetBooleanDispaly($matchSkillName);
-			$updateBuffValueDisplay = $this->GetBooleanDispaly($updateBuffValue);
+			$output->addHTML("<table class='wikitable sortable jquery-tablesorter' id='rules'><thead>");
 
 			$output->addHTML("<tr>");
-			$output->addHTML("<td><a href='$baselink/editrule?ruleid=$id'>Edit</a></td>");
-			$output->addHTML("<td>$id</td>");
-			$output->addHTML("<td>$ruleType</td>");
-			$output->addHTML("<td>$nameId</td>");
-			$output->addHTML("<td>$displayName</td>");
-			$output->addHTML("<td>$matchRegex</td>");
-			$output->addHTML("<td>$statRequireId</td>");
-			$output->addHTML("<td>$originalId</td>");
-			$output->addHTML("<td>$groupName</td>");
-			$output->addHTML("<td>$description</td>");
-			$output->addHTML("<td>$version</td>");
-			$output->addHTML("<td>$isEnabledDisplay</td>");
-			$output->addHTML("<td>$toggleDisplay</td>");
-			$output->addHTML("<td>$toggleVisibleDisplay</td>");
-			$output->addHTML("<td>$isVisibleDisplay</td>");
-			$output->addHTML("<td>$enableOffBarDisplay</td>");
-			$output->addHTML("<td>$matchSkillNameDisplay</td>");
-			$output->addHTML("<td>$updateBuffValueDisplay</td>");
-			$output->addHTML("</tr>");
-			}
+			$output->addHTML("<th>Edit</th>");
+			$output->addHTML("<th>Id</th>");
+			$output->addHTML("<th>Rule Type</th>");
+			$output->addHTML("<th>Name ID</th>");
+			$output->addHTML("<th>Display Name</th>");
+			$output->addHTML("<th>Match Regex</th>");
+			$output->addHTML("<th>statRequireId</th>");
+			$output->addHTML("<th>Original Id</th>");
+			$output->addHTML("<th>groupName</th>");
+			$output->addHTML("<th>Description</th>");
+			$output->addHTML("<th>Version</th>");
+			$output->addHTML("<th>Enabled</th>");
+			$output->addHTML("<th>Toggle</th>");
+			$output->addHTML("<th>Toggle Visible</th>");
+			$output->addHTML("<th>Visible</th>");
+			$output->addHTML("<th>Enable Off Bar</th>");
+			$output->addHTML("<th>Match Skill Name</th>");
+			$output->addHTML("<th>Update Buff Value</th>");
+			$output->addHTML("</tr></thead><tbody>");
 
-		$output->addHTML("</table>");
+
+			foreach ($this->rulesDatas as $rulesData) {
+
+				$id = $this->escapeHtml($rulesData['id']);
+				$ruleType = $this->escapeHtml($rulesData['ruleType']);
+				$nameId = $this->escapeHtml($rulesData['nameId']);
+				$displayName = $this->escapeHtml($rulesData['displayName']);
+				$matchRegex = $this->escapeHtml($rulesData['matchRegex']);
+				$statRequireId = $this->escapeHtml($rulesData['statRequireId']);
+				$originalId = $this->escapeHtml($rulesData['originalId']);
+				$groupName = $this->escapeHtml($rulesData['groupName']);
+				$description = $this->escapeHtml($rulesData['description']);
+				$version = $this->escapeHtml($rulesData['version']);
+				$isEnabled = $this->escapeHtml($rulesData['isEnabled']);
+				$toggleVisible = $this->escapeHtml($rulesData['toggleVisible']);
+				$toggle = $this->escapeHtml($rulesData['isToggle']);
+				$isVisible = $this->escapeHtml($rulesData['isVisible']);
+				$enableOffBar = $this->escapeHtml($rulesData['enableOffBar']);
+				$matchSkillName = $this->escapeHtml($rulesData['matchSkillName']);
+				$updateBuffValue = $this->escapeHtml($rulesData['updateBuffValue']);
+
+
+				$isEnabledDisplay = $this->GetBooleanDispaly($isEnabled);
+				$toggleVisibleDisplay = $this->GetBooleanDispaly($toggleVisible);
+				$toggleDisplay = $this->GetBooleanDispaly($toggle);
+				$isVisibleDisplay = $this->GetBooleanDispaly($isVisible);
+				$enableOffBarDisplay = $this->GetBooleanDispaly($enableOffBar);
+				$matchSkillNameDisplay = $this->GetBooleanDispaly($matchSkillName);
+				$updateBuffValueDisplay = $this->GetBooleanDispaly($updateBuffValue);
+
+				$output->addHTML("<tr>");
+				$output->addHTML("<td><a href='$baselink/editrule?ruleid=$id'>Edit</a></td>");
+				$output->addHTML("<td>$id</td>");
+				$output->addHTML("<td>$ruleType</td>");
+				$output->addHTML("<td>$nameId</td>");
+				$output->addHTML("<td>$displayName</td>");
+				$output->addHTML("<td>$matchRegex</td>");
+				$output->addHTML("<td>$statRequireId</td>");
+				$output->addHTML("<td>$originalId</td>");
+				$output->addHTML("<td>$groupName</td>");
+				$output->addHTML("<td>$description</td>");
+				$output->addHTML("<td>$version</td>");
+				$output->addHTML("<td>$isEnabledDisplay</td>");
+				$output->addHTML("<td>$toggleDisplay</td>");
+				$output->addHTML("<td>$toggleVisibleDisplay</td>");
+				$output->addHTML("<td>$isVisibleDisplay</td>");
+				$output->addHTML("<td>$enableOffBarDisplay</td>");
+				$output->addHTML("<td>$matchSkillNameDisplay</td>");
+				$output->addHTML("<td>$updateBuffValueDisplay</td>");
+				$output->addHTML("</tr>");
+				}
+
+			$output->addHTML("</table>");
 	}
 
 	public function LoadRule($primaryKey)
@@ -232,9 +232,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 				return $this->reportError("Error: failed to load rule from database");
 			}
 
-			$this->row=[];
-			$this->row[] = $result->fetch_assoc();
-			$this->rule = $this->row[0];
+			$row=[];
+			$row[] = $result->fetch_assoc();
+			$this->rule = $row[0];
 
 			return true;
 	}
@@ -274,21 +274,23 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 			$output->addHTML("<a href='$baselink/showrules'>Go Back To Rules Table</a><br>");
 			$output->addHTML("<h3>Edit Rule: $id</h3>");
-			$output->addHTML("<form action='$baselink/saveedits?ruleid=$id' method='POST'>");
+			$output->addHTML("<form action='$baselink/saveeditruleform?ruleid=$id' method='POST'>");
+
+			$this->GetSelectedOption($ruleType);
 
 			$output->addHTML("<label for='edit_ruleType'>Rule Type: </label>");
 			$output->addHTML("<select id='edit_ruleType' name='edit_ruleType'>");
-			$output->addHTML("<option value='$ruleType'>$ruleType</option>");
-			$output->addHTML("<option value='buff'>buff</option>");
-			$output->addHTML("<option value='mundus'>mundus</option>");
-			$output->addHTML("<option value='set'>set</option>");
-			$output->addHTML("<option value='active'>active</option>");
-			$output->addHTML("<option value='passive'>passive</option>");
-			$output->addHTML("<option value='cp'>cp</option>");
-			$output->addHTML("<option value='armorEnchant'>armorEnchant</option>");
-			$output->addHTML("<option value='weaponEnchant'>weaponEnchant</option>");
-			$output->addHTML("<option value='offHandEnchant'>offHandEnchant</option>");
-			$output->addHTML("<option value='abilityDesc'>abilityDesc</option>");
+			$output->addHTML("<option value='' $this->selectEmpty></option>");
+			$output->addHTML("<option value='buff' $this->selectBuff>buff</option>");
+			$output->addHTML("<option value='mundus' $this->selectMundus>mundus</option>");
+			$output->addHTML("<option value='set' $this->selectSet>set</option>");
+			$output->addHTML("<option value='active' $this->selectActive>active</option>");
+			$output->addHTML("<option value='passive' $this->selectPassive>passive</option>");
+			$output->addHTML("<option value='cp' $this->selectCp>cp</option>");
+			$output->addHTML("<option value='armorEnchant' $this->selectArmorEnchant>armorEnchant</option>");
+			$output->addHTML("<option value='weaponEnchant' $this->selectWeaponEnchant>weaponEnchant</option>");
+			$output->addHTML("<option value='offHandEnchant' $this->selectOffHandEnchant>offHandEnchant</option>");
+			$output->addHTML("<option value='abilityDesc' $this->selectAbilityDesc>abilityDesc</option>");
 			$output->addHTML("</select><br>");
 
 			$output->addHTML("<label for='edit_nameId'>Name ID: </label>");
@@ -440,6 +442,44 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			return $returnVal;
 	}
 
+
+	public function GetSelectedOption ($option)
+	{
+			$this->selectBuff = "";
+			$this->selectMundus = "";
+			$this->selectSet = "";
+			$this->selectActive = "";
+			$this->selectPassive = "";
+			$this->selectCp = "";
+			$this->selectArmorEnchant = "";
+			$this->selectWeaponEnchant = "";
+			$this->selectOffHandEnchant ="";
+			$this->selectAbilityDesc =  "";
+			$this->selectEmpty = "";
+
+			if($option == 'buff')
+				$this->selectBuff = "selected";
+			elseif($option == "mundus")
+				$this->selectMundus = "selected";
+			elseif($option == "set")
+				$this->selectSet = "selected";
+			elseif($option == "passive")
+				$this->selectPassive = "selected";
+			elseif($option == "cp")
+				$this->selectCp= "selected";
+			elseif($option == "armorEnchant")
+				$this->selectArmorEnchant = "selected";
+			elseif($option == "weaponEnchant")
+				$this->selectWeaponEnchant = "selected";
+			elseif($option == "offHandEnchant")
+				$this->selectOffHandEnchant = "selected";
+			elseif($option == "abilityDesc")
+				$this->selectAbilityDesc = "selected";
+			elseif($option == "")
+				$this->selectEmpty = "selected";
+
+	}
+
 	public function GetBooleanDispaly ($boolValue)
 	{
 			$returnVal = "";
@@ -556,13 +596,17 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<a href='$baselink'>Go Back to Table Of Content</a>");
 	}
 
-	public function SaveEdits()
+	public function SaveEditRuleForm()
 	{
 			$output = $this->getOutput();
 			$baselink = $this->GetBaseLink();
 			$req = $this->getRequest();
 
 			$id = $this->GetRowId();
+
+			if ($id <= 0) {
+				return $this->reportError("Error: invalid rule ID");
+			}
 
 			$new_ruleType = $req->getVal('edit_ruleType');
 			$new_nameId = $req->getVal('edit_nameId');
@@ -679,8 +723,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<ul>");
 		$output->addHTML("<li><a href='$baselink/showrules'>Show Rules</a></li>");
 		$output->addHTML("<li><a href='$baselink/addrule'>Add Rule</a></li>");
-		$output->addHTML("<li><a href='$baselink/showeffects'>Show Effects</a></li>");
-		$output->addHTML("<li><a href='$baselink/addeffect'>Add Effect</a></li>");
 		$output->addHTML("</ul>");
 	}
 
@@ -703,8 +745,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$this->OutputEditRuleForm();
 		elseif ($parameter == "saverule")
 			$this->SaveNewRule();
-		elseif ($parameter == "saveedits")
-			$this->SaveEdits();
+		elseif ($parameter == "saveeditruleform")
+			$this->SaveEditRuleForm();
 		elseif ($parameter == "showeffects")
 			$this->OutputShowEffectsTable();
 		elseif ($parameter == "addeffects")
