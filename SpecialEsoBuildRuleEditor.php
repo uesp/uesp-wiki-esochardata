@@ -722,6 +722,64 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 	}
 
+	public function SaveNewEffect(){
+
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
+		$req = $this->getRequest();
+
+		$id = $this->GetRowId();
+		$input_statId = $req->getVal('statId');
+		$input_value = $req->getVal('value');
+		$input_display = $req->getVal('display');
+		$input_category = $req->getVal('category');
+		$input_combineAs = $req->getVal('combineAs');
+		$input_round = $req->getVal('roundNum');
+		$input_factorValue = $req->getVal('factorValue');
+		$input_statDesc = $req->getVal('statDesc');
+		$input_buffId = $req->getVal('buffId');
+
+		$cols = [];
+		$values = [];
+		$cols[] = 'ruleId';
+		$cols[] = 'statId';
+		$cols[] = 'value';
+		$cols[] = 'display';
+		$cols[] = 'category';
+		$cols[] = 'combineAs';
+		$cols[] = 'roundNum';
+		$cols[] = 'factorValue';
+		$cols[] = 'statDesc';
+		$cols[] = 'buffId';
+
+		$values[] = "'" . $this->db->real_escape_string($id). "'";
+		$values[] = "'" . $this->db->real_escape_string($input_statId). "'";
+		$values[] = "'" . $this->db->real_escape_string($input_value). "'";
+		$values[] = "'" . $this->db->real_escape_string($input_display). "'";
+		$values[] = "'" . $this->db->real_escape_string($input_category). "'";
+		$values[] = "'" . $this->db->real_escape_string($input_combineAs). "'";
+		$values[] = "'" . $this->db->real_escape_string($input_round). "'";
+		$values[] = "'" . $this->db->real_escape_string($input_factorValue). "'";
+		$values[] = "'" . $this->db->real_escape_string($input_statDesc). "'";
+		$values[] = "'" . $this->db->real_escape_string($input_buffId). "'";
+
+		$cols = implode(',', $cols);
+		$values = implode(',', $values);
+		$query = "INSERT INTO effects($cols) VALUES($values);";
+
+
+		$effects_result = $this->db->query($query);
+
+		if ($effects_result === false) {
+			return $this->reportError("Error: failed to INSERT into database");
+		}
+
+		$output->addHTML("<p>New effect added</p><br>");
+		$output->addHTML("<a href='$baselink/editrule?ruleid=$id'>Go Back to Effects Table</a><br>");
+		$output->addHTML("<a href='$baselink'>Go Back to Table Of Content</a><br>");
+
+	}
+
 	public function OutpuAddtEffectForm(){
 
 		$output = $this->getOutput();
@@ -742,8 +800,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<input type='text' id='category' name='category'><br>");
 		$output->addHTML("<label for='combineAs'>combineAs: </label>");
 		$output->addHTML("<input type='text' id='combineAs' name='combineAs'><br>");
-		$output->addHTML("<label for='round'>round: </label>");
-		$output->addHTML("<input type='number' id='round' name='round'><br>");
+		$output->addHTML("<label for='roundNum'>round: </label>");
+		$output->addHTML("<input type='number' id='roundNum' name='roundNum'><br>");
 		$output->addHTML("<label for='factorValue'>factorValue: </label>");
 		$output->addHTML("<input type='text' id='factorValue' name='factorValue'><br>");
 		$output->addHTML("<label for='statDesc'>statDesc: </label>");
@@ -755,6 +813,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 		$output->addHTML("</form>");
 	}
+
 
 	public function OutputEditEffectForm(){
 		//TODO
