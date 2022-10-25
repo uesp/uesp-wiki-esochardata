@@ -693,10 +693,32 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 //-------------------Effects table functions---------------
 
+	public function loadEffects(){
+
+		$id = $this->GetRowId();
+		$query = "SELECT * FROM effects where ruleId =$id;";
+		$effects_result = $this->db->query($query);
+
+		if ($effects_result === false) {
+			return $this->reportError("Error: failed to load effects from database");
+		}
+
+		$this->effectsDatas =[];
+
+		while($row = mysqli_fetch_assoc($effects_result)) {
+				$this->effectsDatas[] = $row;
+		}
+
+		return true;
+	}
+
+
+
 	public function OutputShowEffectsTable(){
 
 		$output = $this->getOutput();
 		$baselink = $this->GetBaseLink();
+		$this->loadEffects();
 
 		$id = $this->GetRowId();
 
@@ -716,8 +738,35 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<th>factorValue</th>");
 		$output->addHTML("<th>statDesc</th>");
 		$output->addHTML("<th>buffId</th>");
+		$output->addHTML("</tr></thead><tbody>");
 
-		$output->addHTML("</tr></thead>");
+		foreach ($this->effectsDatas as $effectsData) {
+
+			$version = $this->escapeHtml($effectsData['version']);
+			$statId = $this->escapeHtml($effectsData['statId']);
+			$value = $this->escapeHtml($effectsData['value']);
+			$display = $this->escapeHtml($effectsData['display']);
+			$category = $this->escapeHtml($effectsData['category']);
+			$combineAs = $this->escapeHtml($effectsData['combineAs']);
+			$round = $this->escapeHtml($effectsData['roundNum']);
+			$factorValue = $this->escapeHtml($effectsData['factorValue']);
+			$statDesc = $this->escapeHtml($effectsData['statDesc']);
+			$buffId = $this->escapeHtml($effectsData['buffId']);
+
+			$output->addHTML("<tr>");
+			$output->addHTML("<td><a href='$baselink/editeffect?ruleid=$id'>Edit</a></td>");
+			$output->addHTML("<td>$version</td>");
+			$output->addHTML("<td>$statId</td>");
+			$output->addHTML("<td>$value</td>");
+			$output->addHTML("<td>$display</td>");
+			$output->addHTML("<td>$category</td>");
+			$output->addHTML("<td>$combineAs</td>");
+			$output->addHTML("<td>$round</td>");
+			$output->addHTML("<td>$factorValue</td>");
+			$output->addHTML("<td>$statDesc</td>");
+			$output->addHTML("<td>$buffId</td>");
+		}
+
 		$output->addHTML("</table>");
 
 	}
@@ -729,6 +778,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$req = $this->getRequest();
 
 		$id = $this->GetRowId();
+		$input_version = $req->getVal('version');
 		$input_statId = $req->getVal('statId');
 		$input_value = $req->getVal('value');
 		$input_display = $req->getVal('display');
@@ -742,6 +792,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$cols = [];
 		$values = [];
 		$cols[] = 'ruleId';
+		$cols[] = 'version';
 		$cols[] = 'statId';
 		$cols[] = 'value';
 		$cols[] = 'display';
@@ -753,6 +804,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$cols[] = 'buffId';
 
 		$values[] = "'" . $this->db->real_escape_string($id). "'";
+		$values[] = "'" . $this->db->real_escape_string($input_version). "'";
 		$values[] = "'" . $this->db->real_escape_string($input_statId). "'";
 		$values[] = "'" . $this->db->real_escape_string($input_value). "'";
 		$values[] = "'" . $this->db->real_escape_string($input_display). "'";
@@ -790,6 +842,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<a href='$baselink/editrule?ruleid=$id'>Go Back to Effects Table</a>");
 		$output->addHTML("<h3>Add New Effect For Rule: $id</h3>");
 		$output->addHTML("<form action='$baselink/savenewffect?ruleid=$id' method='POST'>");
+		$output->addHTML("<label for='version'>version: </label>");
+		$output->addHTML("<input type='text' id='version' name='version'><br>");
 		$output->addHTML("<label for='statId'>statId: </label>");
 		$output->addHTML("<input type='text' id='statId' name='statId'><br>");
 		$output->addHTML("<label for='value'>value: </label>");
@@ -863,6 +917,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$this->SaveNewEffect();
 		elseif ($parameter == "saveediteffectform")
 			$this->SaveEditEffectForm();
+		else
+			$this->OutputTableOfContents();
 	}
 
 
