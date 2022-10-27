@@ -102,7 +102,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			}
 
 			$computedStats_result = $this->db->query("CREATE TABLE IF NOT EXISTS computedStats (
-                        statId TINYTEXT NOT NULL,
+                        statId INTEGER AUTO_INCREMENT NOT NULL,
                         version TINYTEXT NOT NULL,
                         title TINYTEXT NOT NULL,
                         roundNum TINYTEXT,
@@ -113,7 +113,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
                         deferLevel TINYINT,
                         display TINYTEXT,
                         compute TEXT NOT NULL,
-                        PRIMARY KEY (statId(24)),
+                        PRIMARY KEY (statId),
                         INDEX index_version(version(10))
                     );
 
@@ -1036,8 +1036,29 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 //-------------------computedStats functions---------------
 
+	public function loadComputedStats()
+	{
+		$query = "SELECT * FROM computedStats;";
+		$computedStats_result = $this->db->query($query);
+
+		if ($computedStats_result === false) {
+			return $this->reportError("Error: failed to load computedStats from database");
+		}
+
+		$this->computedStatsDatas = [];
+
+		while($row = mysqli_fetch_assoc($computedStats_result)) {
+				$this->computedStatsDatas[] = $row;
+		}
+
+		return true;
+	}
+
+
 	public function OutputShowComputedStatsTable()
 	{
+		$this->loadComputedStats();
+
 		$output = $this->getOutput();
 		$baselink = $this->GetBaseLink();
 
@@ -1058,6 +1079,34 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<th>display</th>");
 		$output->addHTML("<th>compute</th>");
 		$output->addHTML("</tr></thead><tbody>");
+
+		foreach ($this->computedStatsDatas as $computedStatsData) {
+
+			$statId = $this->escapeHtml($computedStatsData['statId']);
+			$version = $this->escapeHtml($computedStatsData['version']);
+			$roundNum = $this->escapeHtml($computedStatsData['roundNum']);
+			$addClass = $this->escapeHtml($computedStatsData['addClass']);
+			$comment = $this->escapeHtml($computedStatsData['comment']);
+			$minimumValue = $this->escapeHtml($computedStatsData['minimumValue']);
+			$maximumValue = $this->escapeHtml($computedStatsData['maximumValue']);
+			$deferLevel = $this->escapeHtml($computedStatsData['deferLevel']);
+			$display = $this->escapeHtml($computedStatsData['display']);
+			$compute = $this->escapeHtml($computedStatsData['compute']);
+
+			$output->addHTML("<tr>");
+			$output->addHTML("<td><a href='$baselink/editcomputedstat?statid=$statId'>Edit</a></td>");
+			$output->addHTML("<td>$statId</td>");
+			$output->addHTML("<td>$version</td>");
+			$output->addHTML("<td>$roundNum</td>");
+			$output->addHTML("<td>$addClass</td>");
+			$output->addHTML("<td>$comment</td>");
+			$output->addHTML("<td>$minimumValue</td>");
+			$output->addHTML("<td>$maximumValue</td>");
+			$output->addHTML("<td>$deferLevel</td>");
+			$output->addHTML("<td>$display</td>");
+			$output->addHTML("<td>$compute</td>");
+
+		}
 
 		$output->addHTML("</table>");
 	}
@@ -1152,6 +1201,11 @@ public function SaveNewComputedStat()
 
 }
 
+public function OutputEditComputedStatForm()
+{
+
+}
+
 //-------------------Main page---------------
 
 
@@ -1205,6 +1259,8 @@ public function SaveNewComputedStat()
 			$this->OutputAddComputedStatsForm();
 		elseif($parameter == "savenewcomputedstat")
 			$this->SaveNewComputedStat();
+		elseif($parameter == "editcomputedstat")
+		  $this->OutputEditComputedStatForm();
 		else
 			$this->OutputTableOfContents();
 	}
