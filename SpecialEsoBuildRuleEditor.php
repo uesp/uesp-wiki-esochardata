@@ -101,6 +101,27 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 				return $this->reportError("Error: failed to create effects table");
 			}
 
+			$computedStats_result = $this->db->query("CREATE TABLE IF NOT EXISTS computedStats (
+                        statId TINYTEXT NOT NULL,
+                        version TINYTEXT NOT NULL,
+                        title TINYTEXT NOT NULL,
+                        roundNum TINYTEXT,
+                        addClass TINYTEXT,
+                        comment TINYTEXT,
+                        minimumValue FLOAT,
+                        maximumValue FLOAT,
+                        deferLevel TINYINT,
+                        display TINYTEXT,
+                        compute TEXT NOT NULL,
+                        PRIMARY KEY (statId(24)),
+                        INDEX index_version(version(10))
+                    );
+
+								");
+
+			if ($computedStats_result === false) {
+				return $this->reportError("Error: failed to create computedStats table");
+			}
 
 			return true;
 	}
@@ -675,7 +696,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 	}
 
-	public function GetRowId() {
+	public function GetRowId()
+	{
 
 		$req = $this->getRequest();
 		$ruleId = $req->getVal('ruleid');
@@ -697,7 +719,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 //-------------------Effects table functions---------------
 
-	public function loadEffects(){
+	public function loadEffects()
+	{
 
 		$id = $this->GetRowId();
 		$query = "SELECT * FROM effects where ruleId =$id;";
@@ -716,10 +739,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		return true;
 	}
 
-
-
-	public function OutputShowEffectsTable(){
-
+	public function OutputShowEffectsTable()
+	{
 		$output = $this->getOutput();
 		$baselink = $this->GetBaseLink();
 		$this->loadEffects();
@@ -780,7 +801,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 	}
 
-  public function SaveNewEffect(){
+  public function SaveNewEffect()
+	{
 
 		$output = $this->getOutput();
 		$baselink = $this->GetBaseLink();
@@ -841,7 +863,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 	}
 
-  public function OutpuAddtEffectForm(){
+  public function OutpuAddtEffectForm()
+	{
 
 		$output = $this->getOutput();
 		$baselink = $this->GetBaseLink();
@@ -1011,7 +1034,123 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 	}
 
 
+//-------------------computedStats functions---------------
 
+	public function OutputShowComputedStatsTable()
+	{
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
+
+		$output->addHTML("<a href='$baselink'>Go Back to Table Of Content</a>");
+
+		$output->addHTML("<table class='wikitable sortable jquery-tablesorter' id='computedStats'><thead>");
+
+		$output->addHTML("<tr>");
+		$output->addHTML("<th>Edit</th>");
+		$output->addHTML("<th>id</th>");
+		$output->addHTML("<th>version</th>");
+		$output->addHTML("<th>round</th>");
+		$output->addHTML("<th>addClass</th>");
+		$output->addHTML("<th>comment</th>");
+		$output->addHTML("<th>minimumValue</th>");
+		$output->addHTML("<th>maximumValue</th>");
+		$output->addHTML("<th>deferLevel</th>");
+		$output->addHTML("<th>display</th>");
+		$output->addHTML("<th>compute</th>");
+		$output->addHTML("</tr></thead><tbody>");
+
+		$output->addHTML("</table>");
+	}
+
+
+	public function OutputAddComputedStatsForm()
+	{
+		$output = $this->getOutput();
+
+		$baselink = $this->GetBaseLink();
+
+		$output->addHTML("<h3>Add New computedStat</h3>");
+		$output->addHTML("<form action='$baselink/savenewcomputedstat' method='POST'>");
+
+		$output->addHTML("<label for='version'>version: </label>");
+		$output->addHTML("<input type='text' id='version' name='version'><br>");
+		$output->addHTML("<label for='roundNum'>round: </label>");
+		$output->addHTML("<input type='text' id='roundNum' name='roundNum'><br>");
+		$output->addHTML("<label for='addClass'>addClass: </label>");
+		$output->addHTML("<input type='text' id='addClass' name='addClass'><br>");
+		$output->addHTML("<label for='comment'>comment: </label>");
+		$output->addHTML("<input type='text' id='comment' name='comment'><br>");
+		$output->addHTML("<label for='minimumValue'>minimumValue: </label>");
+		$output->addHTML("<input type='number' id='minimumValue' name='minimumValue'><br>");
+		$output->addHTML("<label for='maximumValue'>maximumValue: </label>");
+		$output->addHTML("<input type='number' id='maximumValue' name='maximumValue'><br>");
+		$output->addHTML("<label for='deferLevel'>deferLevel: </label>");
+		$output->addHTML("<input type='text' id='deferLevel' name='deferLevel'><br>");
+		$output->addHTML("<label for='display'>display: </label>");
+		$output->addHTML("<input type='text' id='display' name='display'><br>");
+		$output->addHTML("<label for='compute'>compute: </label>");
+		$output->addHTML("<input type='text' id='compute' name='compute'><br>");
+
+		$output->addHTML("<br><input type='submit' value='Save computedStat'>");
+		$output->addHTML("</form>");
+	}
+
+
+public function SaveNewComputedStat()
+{
+	$output = $this->getOutput();
+	$baselink = $this->GetBaseLink();
+	$req = $this->getRequest();
+
+
+	$input_version = $req->getVal('version');
+	$input_roundNum = $req->getVal('roundNum');
+	$input_addClass = $req->getVal('addClass');
+	$input_comment = $req->getVal('comment');
+	$input_minimumValue = $req->getVal('minimumValue');
+	$input_maximumValue = $req->getVal('maximumValue');
+	$input_deferLevel = $req->getVal('deferLevel');
+	$input_display = $req->getVal('display');
+	$input_compute = $req->getVal('compute');
+
+	$cols = [];
+	$values = [];
+	$cols[] = 'version';
+	$cols[] = 'roundNum';
+	$cols[] = 'addClass';
+	$cols[] = 'comment';
+	$cols[] = 'minimumValue';
+	$cols[] = 'maximumValue';
+	$cols[] = 'deferLevel';
+	$cols[] = 'display';
+	$cols[] = 'compute';
+
+	$values[] = "'" . $this->db->real_escape_string($input_version) . "'";
+	$values[] = "'" . $this->db->real_escape_string($input_roundNum) . "'";
+	$values[] = "'" . $this->db->real_escape_string($input_addClass) . "'";
+	$values[] = "'" . $this->db->real_escape_string($input_comment) . "'";
+	$values[] = "'" . $this->db->real_escape_string($input_minimumValue) . "'";
+	$values[] = "'" . $this->db->real_escape_string($input_maximumValue) . "'";
+	$values[] = "'" . $this->db->real_escape_string($input_deferLevel) . "'";
+	$values[] = "'" . $this->db->real_escape_string($input_display) . "'";
+	$values[] = "'" . $this->db->real_escape_string($input_compute) . "'";
+
+	$cols = implode(',', $cols);
+	$values = implode(',', $values);
+	$query = "INSERT INTO computedStats($cols) VALUES($values);";
+
+
+	$computedStats_result = $this->db->query($query);
+
+	if ($computedStats_result === false) {
+		return $this->reportError("Error: failed to INSERT into database");
+	}
+
+	$output->addHTML("<p>New computedStat added</p><br>");
+	$output->addHTML("<a href='$baselink'>Go Back to Table Of Content</a>");
+
+
+}
 
 //-------------------Main page---------------
 
@@ -1025,6 +1164,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<ul>");
 		$output->addHTML("<li><a href='$baselink/showrules'>Show Rules</a></li>");
 		$output->addHTML("<li><a href='$baselink/addrule'>Add Rule</a></li>");
+		$output->addHTML("<br>");
+		$output->addHTML("<li><a href='$baselink/showcomputedstats'>Show ComputedStats</a></li>");
+		$output->addHTML("<li><a href='$baselink/addcomputedstat'>Add ComputedStat</a></li>");
 		$output->addHTML("</ul>");
 	}
 
@@ -1057,6 +1199,12 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$this->SaveEditEffectForm();
 		elseif($parameter == "editeffect")
 			$this->OutputEditEffectForm();
+		elseif($parameter == "showcomputedstats")
+			$this->OutputShowComputedStatsTable();
+		elseif($parameter == "addcomputedstat")
+			$this->OutputAddComputedStatsForm();
+		elseif($parameter == "savenewcomputedstat")
+			$this->SaveNewComputedStat();
 		else
 			$this->OutputTableOfContents();
 	}
