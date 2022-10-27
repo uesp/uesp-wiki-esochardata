@@ -77,6 +77,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			}
 
 			$effects_result = $this->db->query("CREATE TABLE IF NOT EXISTS effects (
+													effectId INTEGER AUTO_INCREMENT NOT NULL,
 	                        ruleId INTEGER NOT NULL,
 	                        version TINYTEXT NOT NULL,
 	                        statId TINYTEXT NOT NULL,
@@ -88,6 +89,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 	                        factorValue FLOAT,
 	                        statDesc TINYTEXT,
 	                        buffId TINYTEXT,
+													PRIMARY KEY (effectId),
 	                        INDEX index_ruleId(ruleId),
 	                        INDEX index_stat(statId(32)),
 	                        INDEX index_version(version(10))
@@ -353,9 +355,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("</form><br>");
 
 			$this->OutputShowEffectsTable();
-
-
-
 
 	}
 
@@ -678,10 +677,15 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 	public function GetRowId() {
 
-		$url = "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
-		$rowId = substr($url, strpos($url, "=") + 1);
+		$req = $this->getRequest();
+		$ruleId = $req->getVal('ruleid');
 
-		return $rowId;
+		return $ruleId;
+
+		//$url = "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+		//$rowId = substr($url, strpos($url, "=") + 1);
+
+		//return $rowId;
 	}
 
 	public static function GetBaseLink()
@@ -719,8 +723,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output = $this->getOutput();
 		$baselink = $this->GetBaseLink();
 		$this->loadEffects();
+		$req = $this->getRequest();
 
 		$id = $this->GetRowId();
+		$effectId = $req->getVal('effectid');
 
 		$output->addHTML("<hr><h3>Rule Effects:</h3>");
 		$output->addHTML("<a href='$baselink/addneweffect?ruleid=$id'>Add new effect</a>");
@@ -728,6 +734,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<table class='wikitable sortable jquery-tablesorter' id='effects'><thead>");
 		$output->addHTML("<tr>");
 		$output->addHTML("<th>Edit</th>");
+		$output->addHTML("<th>Id</th>");
 		$output->addHTML("<th>version</th>");
 		$output->addHTML("<th>statId</th>");
 		$output->addHTML("<th>value</th>");
@@ -742,6 +749,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 		foreach ($this->effectsDatas as $effectsData) {
 
+			$effectId = $this->escapeHtml($effectsData['effectId']);
 			$version = $this->escapeHtml($effectsData['version']);
 			$statId = $this->escapeHtml($effectsData['statId']);
 			$value = $this->escapeHtml($effectsData['value']);
@@ -754,7 +762,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$buffId = $this->escapeHtml($effectsData['buffId']);
 
 			$output->addHTML("<tr>");
-			$output->addHTML("<td><a href='$baselink/editeffect?ruleid=$id'>Edit</a></td>");
+			$output->addHTML("<td><a href='$baselink/editeffect?effectid=$effectId'>Edit</a></td>");
+			$output->addHTML("<td>$effectId</td>");
 			$output->addHTML("<td>$version</td>");
 			$output->addHTML("<td>$statId</td>");
 			$output->addHTML("<td>$value</td>");
@@ -771,7 +780,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 	}
 
-	public function SaveNewEffect(){
+  public function SaveNewEffect(){
 
 		$output = $this->getOutput();
 		$baselink = $this->GetBaseLink();
@@ -832,7 +841,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 	}
 
-	public function OutpuAddtEffectForm(){
+  public function OutpuAddtEffectForm(){
 
 		$output = $this->getOutput();
 		$baselink = $this->GetBaseLink();
@@ -868,10 +877,136 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("</form>");
 	}
 
+  public function loadEffect($effectId) {
+
+		 $query = "SELECT * FROM effects WHERE effectId = '$effectId';";
+		 $effects_result = $this->db->query($query);
+
+		 if ($effects_result === false) {
+			 return $this->reportError("Error: failed to load effect from database");
+		 }
+
+		 $row=[];
+		 $row[] = $effects_result->fetch_assoc();
+		 $this->effect = $row[0];
+
+		 return true;
+	 }
 
 	public function OutputEditEffectForm(){
-		//TODO
+
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
+		$req = $this->getRequest();
+		$effectId = $req->getVal('effectid');
+
+		$this->loadEffect($effectId);
+
+		$version = $this->escapeHtml($this->effect['version']);
+		$statId = $this->escapeHtml($this->effect['statId']);
+		$value = $this->escapeHtml($this->effect['value']);
+		$display = $this->escapeHtml($this->effect['display']);
+		$category = $this->escapeHtml($this->effect['category']);
+		$combineAs = $this->escapeHtml($this->effect['combineAs']);
+		$round = $this->escapeHtml($this->effect['roundNum']);
+		$factorValue = $this->escapeHtml($this->effect['factorValue']);
+		$statDesc = $this->escapeHtml($this->effect['statDesc']);
+		$buffId = $this->escapeHtml($this->effect['buffId']);
+
+		$output->addHTML("<a href='$baselink/showrules'>Go Back To Rules Table</a><br>");
+		$output->addHTML("<h3>Edit Effect: $effectId</h3>");
+		$output->addHTML("<form action='$baselink/saveediteffectform?effectid=$effectId' method='POST'>");
+
+		$output->addHTML("<label for='edit_version'>version: </label>");
+		$output->addHTML("<input type='text' id='edit_version' name='edit_version' value='$version'><br>");
+		$output->addHTML("<label for='edit_statId'>statId: </label>");
+		$output->addHTML("<input type='text' id='edit_statId' name='edit_statId' value='$statId'><br>");
+		$output->addHTML("<label for='edit_value'>value: </label>");
+		$output->addHTML("<input type='text' id='edit_value' name='edit_value' value='$value'><br>");
+		$output->addHTML("<label for='edit_display'>display: </label>");
+		$output->addHTML("<input type='text' id='edit_display' name='edit_display' value='$display'><br>");
+		$output->addHTML("<label for='edit_category'>category: </label>");
+		$output->addHTML("<input type='text' id='edit_category' name='edit_category' value='$category'><br>");
+		$output->addHTML("<label for='edit_combineAs'>combineAs: </label>");
+		$output->addHTML("<input type='text' id='edit_combineAs' name='edit_combineAs' value='$combineAs'><br>");
+		$output->addHTML("<label for='edit_round'>round: </label>");
+		$output->addHTML("<input type='text' id='edit_round' name='edit_round' value='$round'><br>");
+		$output->addHTML("<label for='edit_factorValue'>factorValue: </label>");
+		$output->addHTML("<input type='text' id='edit_factorValue' name='edit_factorValue' value='$factorValue'><br>");
+		$output->addHTML("<label for='edit_statDesc'>statDesc: </label>");
+		$output->addHTML("<input type='text' id='edit_statDesc' name='edit_statDesc' value='$statDesc'><br>");
+		$output->addHTML("<label for='edit_buffId'>buffId: </label>");
+		$output->addHTML("<input type='text' id='edit_buffId' name='edit_buffId' value='$buffId'><br>");
+
+		$output->addHTML("<br><input type='submit' value='Save Edits'>");
+		$output->addHTML("</form><br>");
 	}
+
+	public function SaveEditEffectForm() {
+
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
+		$req = $this->getRequest();
+
+		$effectId = $req->getVal('effectid');
+
+		if ($effectId <= 0) {
+			return $this->reportError("Error: invalid effect ID");
+		}
+
+		$new_version = $req->getVal('edit_version');
+		$new_statId = $req->getVal('edit_statId');
+		$new_value = $req->getVal('edit_value');
+		$new_display = $req->getVal('edit_display');
+		$new_category = $req->getVal('edit_category');
+		$new_combineAs = $req->getVal('edit_combineAs');
+		$new_round = $req->getVal('edit_round');
+		$new_factorValue = $req->getVal('edit_factorValue');
+		$new_statDesc = $req->getVal('edit_statDesc');
+		$new_buffId = $req->getVal('edit_buffId');
+
+
+		$values = [];
+
+		$values[] = "version='" . $this->db->real_escape_string($new_version) . "'";
+		$values[] = "statId='" . $this->db->real_escape_string($new_statId) . "'";
+		$values[] = "value='" . $this->db->real_escape_string($new_value) . "'";
+		$values[] = "display='" . $this->db->real_escape_string($new_display) . "'";
+		$values[] = "category='" . $this->db->real_escape_string($new_category) . "'";
+		$values[] = "combineAs='" . $this->db->real_escape_string($new_combineAs) . "'";
+		$values[] = "roundNum='" . $this->db->real_escape_string($new_round) . "'";
+		$values[] = "factorValue='" . $this->db->real_escape_string($new_factorValue) . "'";
+		$values[] = "statDesc='" . $this->db->real_escape_string($new_statDesc) . "'";
+		$values[] = "buffId='" . $this->db->real_escape_string($new_buffId) . "'";
+
+		$values = implode(',', $values);
+
+
+		$query = "UPDATE effects SET $values WHERE effectId='$effectId';";
+
+		$effects_result = $this->db->query($query);
+
+		if ($effects_result === false) {
+			return $this->reportError("Error: failed to UPDATE data in database");
+		}
+
+		$output->addHTML("<p>Edits saved for effect #$effectId</p><br>");
+		$output->addHTML("<a href='$baselink'>Go Back to Table Of Content</a>");
+
+	}
+
+	public function GetEffectId() {
+
+		$req = $this->getRequest();
+		$effectId = $req->getVal('effectid');
+		return $effectId;
+
+		//$url = "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+		//$rowId = substr($url, strpos($url, "=") + 1);
+
+		//return $rowId;
+	}
+
 
 
 
@@ -917,6 +1052,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$this->SaveNewEffect();
 		elseif ($parameter == "saveediteffectform")
 			$this->SaveEditEffectForm();
+		elseif($parameter == "editeffect")
+			$this->OutputEditEffectForm();
 		else
 			$this->OutputTableOfContents();
 	}
