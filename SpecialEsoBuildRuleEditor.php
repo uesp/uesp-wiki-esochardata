@@ -762,7 +762,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$buffId = $this->escapeHtml($effectsData['buffId']);
 
 			$output->addHTML("<tr>");
-			$output->addHTML("<td><a href='$baselink/editeffect?effectid=$effectId'>Edit</a></td>");
+			$output->addHTML("<td><a href='$baselink/editeffect?effectid=$effectId&ruleid=$id'>Edit</a></td>");
 			$output->addHTML("<td>$effectId</td>");
 			$output->addHTML("<td>$version</td>");
 			$output->addHTML("<td>$statId</td>");
@@ -898,7 +898,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output = $this->getOutput();
 		$baselink = $this->GetBaseLink();
 		$req = $this->getRequest();
+
 		$effectId = $req->getVal('effectid');
+		$ruleId = $this->GetRowId();
 
 		$this->loadEffect($effectId);
 
@@ -915,7 +917,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 		$output->addHTML("<a href='$baselink/showrules'>Go Back To Rules Table</a><br>");
 		$output->addHTML("<h3>Edit Effect: $effectId</h3>");
-		$output->addHTML("<form action='$baselink/saveediteffectform?effectid=$effectId' method='POST'>");
+		$output->addHTML("<form action='$baselink/saveediteffectform?effectid=$effectId&ruleid=$ruleId' method='POST'>");
 
 		$output->addHTML("<label for='edit_version'>version: </label>");
 		$output->addHTML("<input type='text' id='edit_version' name='edit_version' value='$version'><br>");
@@ -948,6 +950,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$baselink = $this->GetBaseLink();
 		$req = $this->getRequest();
 
+		$ruleId = $this->GetRowId();
 		$effectId = $req->getVal('effectid');
 
 		if ($effectId <= 0) {
@@ -991,7 +994,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		}
 
 		$output->addHTML("<p>Edits saved for effect #$effectId</p><br>");
-		$output->addHTML("<a href='$baselink'>Go Back to Table Of Content</a>");
+		$output->addHTML("<a href='$baselink/editrule?ruleid=$ruleId'>Go Back to Effects Table</a><br>");
 
 	}
 
