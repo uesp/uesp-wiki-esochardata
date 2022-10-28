@@ -103,6 +103,23 @@ $wgResourceModules['ext.EsoBuildData.itemsearchpopup.scripts'] = array(
 	//'dependencies' => array(),
 );
 
+$wgResourceModules['ext.EsoBuildData.ruleseditor.styles'] = array(
+	'position' => 'top',
+	'styles' => array( 'modules/esobuildrules.css' ),
+	'localBasePath' => __DIR__,
+	'remoteBasePath' => "$wgScriptPath/extensions/EsoCharData/",
+	'targets' => array( 'desktop', 'mobile' ),
+);
+
+$wgResourceModules['ext.EsoBuildData.ruleseditor.scripts'] = array(
+	'position' => 'top',
+	'scripts' => array( 'modules/esobuildrules.js' ),
+	'localBasePath' => __DIR__,
+	'remoteBasePath' => "$wgScriptPath/extensions/EsoCharData/",
+	'targets' => array( 'desktop', 'mobile' ),
+	//'dependencies' => array(),
+);
+
 $wgGroupPermissions['*']['esochardata_edit'] = false;
 $wgGroupPermissions['*']['esochardata_delete'] = false;
 $wgGroupPermissions['sysop']['esochardata_edit'] = true;

@@ -6,35 +6,49 @@ require_once("/home/uesp/secrets/esobuilddata.secrets");
 
 class SpecialEsoBuildRuleEditor extends SpecialPage
 {
-
-
+	
+	
 	public $db = null;
-
-
+	
+	
 	function __construct()
 	{
 		global $wgOut;
 		global $uespIsMobile;
-
+		
 		parent::__construct( 'EsoBuildRuleEditor' );
-
-			// TODO: Add style/script modules as needed in this format
-		//$wgOut->addModules( 'ext.EsoBuildData.itemsearchpopup.scripts' );
-		//$wgOut->addModuleStyles( 'ext.EsoBuildData.itemsearchpopup.styles' );
-
+		
+		$wgOut->addModules( 'ext.EsoBuildData.ruleseditor.scripts' );
+		$wgOut->addModuleStyles( 'ext.EsoBuildData.ruleseditor.styles' );
+		
 		if ($uespIsMobile || (class_exists("MobileContext") && MobileContext::singleton()->isMobileDevice()))
 		{
 			// TODO: Add any mobile specific CSS/scripts resource modules here
 		}
-
+		
 		$this->InitDatabase();
 	}
-
-
+	
+	
 	public static function escapeHtml($html) {
 		return htmlspecialchars($html);
 	}
-
+	
+	
+	public function canUserEdit()
+	{
+		$context = $this->getContext();
+		if ($context == null) return false;
+		
+		$user = $context->getUser();
+		if ($user == null) return false;
+		
+		if (!$user->isLoggedIn()) return false;
+		
+		return $user->isAllowedAny('esochardata_ruleedit');
+	}
+	
+	
 	protected function CreateTables()
 	{
 			//TODO:
@@ -1338,7 +1352,11 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output = $this->getOutput();
 		$this->setHeaders();
 
-			// TODO: Check permission for "esochardata_ruleedit"
+			// TODO: Remove after testing
+		if ($this->canUserEdit())
+			$output->addHTML("Use can edit</br>");
+		else
+			$output->addHTML("Use CANNOT edit</br>");
 
 			// TODO: Determine action/output based on the input $parameter
 
