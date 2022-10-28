@@ -514,7 +514,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			return $returnVal;
 	}
 
-
 	public function ReportError ($msg)
   {
 	    $output = $this->getOutput();
@@ -1145,8 +1144,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 	}
 
 
-public function SaveNewComputedStat()
-{
+	public function SaveNewComputedStat()
+	{
 	$output = $this->getOutput();
 	$baselink = $this->GetBaseLink();
 	$req = $this->getRequest();
@@ -1201,10 +1200,118 @@ public function SaveNewComputedStat()
 
 }
 
-public function OutputEditComputedStatForm()
-{
+	public function LoadComputedStat($primaryKey)
+	{
+		$query = "SELECT * FROM computedStats WHERE statId= '$primaryKey';";
+		$computedStats_result = $this->db->query($query);
 
-}
+		if ($computedStats_result === false) {
+			return $this->reportError("Error: failed to load computedStat from database");
+		}
+
+		$row=[];
+		$row[] = $computedStats_result->fetch_assoc();
+		$this->computedStat = $row[0];
+
+		return true;
+	}
+
+  public function OutputEditComputedStatForm()
+  {
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
+		$req = $this->getRequest();
+
+		$statId = $req->getVal('statid');
+
+		$this->LoadComputedStat($statId);
+
+		$version = $this->escapeHtml($this->computedStat['version']);
+		$roundNum = $this->escapeHtml($this->computedStat['roundNum']);
+		$addClass = $this->escapeHtml($this->computedStat['addClass']);
+		$comment = $this->escapeHtml($this->computedStat['comment']);
+		$minimumValue = $this->escapeHtml($this->computedStat['minimumValue']);
+		$maximumValue = $this->escapeHtml($this->computedStat['maximumValue']);
+		$deferLevel = $this->escapeHtml($this->computedStat['deferLevel']);
+		$display = $this->escapeHtml($this->computedStat['display']);
+		$compute = $this->escapeHtml($this->computedStat['compute']);
+
+
+		$output->addHTML("<a href='$baselink/showcomputedstats'>Go Back To ComputedStats Table</a><br>");
+		$output->addHTML("<h3>Edit ComputedStat: $statId</h3>");
+		$output->addHTML("<form action='$baselink/saveeditcomputedstatsform?statid=$statId' method='POST'>");
+		$output->addHTML("<label for='edit_version'>version: </label>");
+		$output->addHTML("<input type='text' id='edit_version' name='edit_version' value='$version'><br>");
+		$output->addHTML("<label for='edit_roundNum'>roundNum: </label>");
+		$output->addHTML("<input type='text' id='edit_roundNum' name='edit_roundNum' value='$roundNum'><br>");
+		$output->addHTML("<label for='edit_addClass'>addClass: </label>");
+		$output->addHTML("<input type='text' id='edit_addClass' name='edit_addClass' value='$addClass'><br>");
+		$output->addHTML("<label for='edit_comment'>comment: </label>");
+		$output->addHTML("<input type='text' id='edit_comment' name='edit_comment' value='$comment'><br>");
+		$output->addHTML("<label for='edit_minimumValue'>minimumValue: </label>");
+		$output->addHTML("<input type='text' id='edit_minimumValue' name='edit_minimumValue' value='$minimumValue'><br>");
+		$output->addHTML("<label for='edit_maximumValue'>maximumValue: </label>");
+		$output->addHTML("<input type='text' id='edit_maximumValue' name='edit_maximumValue' value='$maximumValue'><br>");
+		$output->addHTML("<label for='edit_deferLevel'>deferLevel: </label>");
+		$output->addHTML("<input type='text' id='edit_deferLevel' name='edit_deferLevel' value='$deferLevel'><br>");
+		$output->addHTML("<label for='edit_display'>display: </label>");
+		$output->addHTML("<input type='text' id='edit_display' name='edit_display' value='$display'><br>");
+		$output->addHTML("<label for='edit_compute'>compute: </label>");
+		$output->addHTML("<input type='text' id='edit_compute' name='edit_compute' value='$compute'><br>");
+
+		$output->addHTML("<br><input type='submit' value='Save Edits'>");
+		$output->addHTML("</form><br>");
+
+  }
+
+	public function SaveEditComputedStatsForm()
+	{
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
+		$req = $this->getRequest();
+
+		$statId = $req->getVal('statid');
+
+		if ($statId <= 0) {
+			return $this->reportError("Error: invalid computedStat ID");
+		}
+
+		$new_version = $req->getVal('edit_version');
+		$new_roundNum = $req->getVal('edit_roundNum');
+		$new_addClass = $req->getVal('edit_addClass');
+		$new_comment = $req->getVal('edit_comment');
+		$new_minimumValue = $req->getVal('edit_minimumValue');
+		$new_maximumValue = $req->getVal('edit_maximumValue');
+		$new_deferLevel = $req->getVal('edit_deferLevel');
+		$new_display = $req->getVal('edit_display');
+		$new_compute = $req->getVal('edit_compute');
+
+		$values = [];
+
+		$values[] = "version='" . $this->db->real_escape_string($new_version) . "'";
+		$values[] = "roundNum='" . $this->db->real_escape_string($new_roundNum) . "'";
+		$values[] = "addClass='" . $this->db->real_escape_string($new_addClass) . "'";
+		$values[] = "comment='" . $this->db->real_escape_string($new_comment) . "'";
+		$values[] = "minimumValue='" . $this->db->real_escape_string($new_minimumValue) . "'";
+		$values[] = "maximumValue='" . $this->db->real_escape_string($new_maximumValue) . "'";
+		$values[] = "deferLevel='" . $this->db->real_escape_string($new_deferLevel) . "'";
+		$values[] = "display='" . $this->db->real_escape_string($new_display) . "'";
+		$values[] = "compute='" . $this->db->real_escape_string($new_compute) . "'";
+
+		$values = implode(',', $values);
+
+		$query = "UPDATE computedStats SET $values WHERE statId='$statId';";
+
+		$computedStats_result = $this->db->query($query);
+
+		if ($computedStats_result === false) {
+			return $this->reportError("Error: failed to UPDATE data in database");
+		}
+
+		$output->addHTML("<p>Edits saved for computedStat #$statId</p><br>");
+		$output->addHTML("<a href='$baselink'>Go Back to Table Of Content</a>");
+
+	}
 
 //-------------------Main page---------------
 
@@ -1261,6 +1368,8 @@ public function OutputEditComputedStatForm()
 			$this->SaveNewComputedStat();
 		elseif($parameter == "editcomputedstat")
 		  $this->OutputEditComputedStatForm();
+		elseif($parameter == "saveeditcomputedstatsform")
+			$this->SaveEditComputedStatsForm();
 		else
 			$this->OutputTableOfContents();
 	}
