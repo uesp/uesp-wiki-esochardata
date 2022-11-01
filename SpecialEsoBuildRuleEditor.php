@@ -6,49 +6,49 @@ require_once("/home/uesp/secrets/esobuilddata.secrets");
 
 class SpecialEsoBuildRuleEditor extends SpecialPage
 {
-	
-	
+
+
 	public $db = null;
-	
-	
+
+
 	function __construct()
 	{
 		global $wgOut;
 		global $uespIsMobile;
-		
+
 		parent::__construct( 'EsoBuildRuleEditor' );
-		
+
 		$wgOut->addModules( 'ext.EsoBuildData.ruleseditor.scripts' );
 		$wgOut->addModuleStyles( 'ext.EsoBuildData.ruleseditor.styles' );
-		
+
 		if ($uespIsMobile || (class_exists("MobileContext") && MobileContext::singleton()->isMobileDevice()))
 		{
 			// TODO: Add any mobile specific CSS/scripts resource modules here
 		}
-		
+
 		$this->InitDatabase();
 	}
-	
-	
+
+
 	public static function escapeHtml($html) {
 		return htmlspecialchars($html);
 	}
-	
-	
+
+
 	public function canUserEdit()
 	{
 		$context = $this->getContext();
 		if ($context == null) return false;
-		
+
 		$user = $context->getUser();
 		if ($user == null) return false;
-		
+
 		if (!$user->isLoggedIn()) return false;
-		
+
 		return $user->isAllowedAny('esochardata_ruleedit');
 	}
-	
-	
+
+
 	protected function CreateTables()
 	{
 			//TODO:
@@ -137,6 +137,44 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 				return $this->reportError("Error: failed to create computedStats table");
 			}
 
+			$deleteRule_result = $this->db->query("CREATE TABLE IF NOT EXISTS rulesArchive (
+	                        archiveId INTEGER AUTO_INCREMENT NOT NULL,
+													id INTEGER NOT NULL,
+	                        version TINYTEXT NOT NULL,
+	                        ruleType TINYTEXT NOT NULL,
+	                        nameId TINYTEXT,
+	                        displayName TINYTEXT,
+	                        matchRegex TINYTEXT NOT NULL,
+	                        displayRegex TINYTEXT,
+	                        requireSkillLine TINYTEXT,
+	                        statRequireId TINYTEXT,
+	                        statRequireValue TINYTEXT,
+	                        factorStatId TINYTEXT,
+	                        isEnabled TINYINT(1) NOT NULL,
+	                        isVisible TINYINT(1) NOT NULL,
+	                        toggleVisible TINYINT(1) NOT NULL,
+	                        isToggle TINYINT(1) NOT NULL,
+	                        enableOffBar TINYINT(1) NOT NULL,
+	                        matchSkillName TINYINT(1) NOT NULL,
+	                        updateBuffValue TINYINT(1) NOT NULL,
+	                        originalId TINYTEXT,
+	                        icon TINYTEXT,
+	                        groupName TINYTEXT,
+	                        maxTimes INTEGER,
+	                        comment TINYTEXT NOT NULL,
+	                        description TINYTEXT NOT NULL,
+	                        disableIds TINYTEXT,
+	                        PRIMARY KEY (archiveId),
+	                        INDEX index_version(version(10)),
+	                        INDEX index_ruleId(originalId(30))
+	                    	);"
+
+											);
+
+			if ($deleteRule_result === false) {
+				return $this->reportError("Error: failed to create rules archive table");
+			}
+
 			return true;
 	}
 
@@ -180,7 +218,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output = $this->getOutput();
 			$baselink = $this->GetBaseLink();
 
-			$output->addHTML("<a href='$baselink'>Go Back to Table Of Content</a>");
+			$output->addHTML("<a href='$baselink'>Home</a>");
 
 			$output->addHTML("<table class='wikitable sortable jquery-tablesorter' id='rules'><thead>");
 
@@ -203,6 +241,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<th>Enable Off Bar</th>");
 			$output->addHTML("<th>Match Skill Name</th>");
 			$output->addHTML("<th>Update Buff Value</th>");
+			$output->addHTML("<th>Delete</th>");
 			$output->addHTML("</tr></thead><tbody>");
 
 
@@ -254,14 +293,149 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 				$output->addHTML("<td>$enableOffBarDisplay</td>");
 				$output->addHTML("<td>$matchSkillNameDisplay</td>");
 				$output->addHTML("<td>$updateBuffValueDisplay</td>");
+				$output->addHTML("<td><a href='$baselink/deleterule?ruleid=$id'>Delete</a></td>");
 				$output->addHTML("</tr>");
 				}
 
 			$output->addHTML("</table>");
 	}
 
+	public function OutputDeleteRule()
+	{
+		$permission = $this->canUserEdit();
+
+		if($permission === False) {
+			return $this->reportError("Error: you have no permission to delete rules");
+		}
+
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
+
+		$id = $this->GetRowId();
+		$id = $this->escapeHtml($id);
+
+		if ($id <= 0) {
+			return $this->reportError("Error: invalid rule ID");
+		}
+
+		$this->LoadRule($id);
+
+		$ruleType = $this->escapeHtml($this->rule['ruleType']);
+		$nameId = $this->escapeHtml($this->rule['nameId']);
+		$displayName = $this->escapeHtml($this->rule['displayName']);
+		$matchRegex = $this->escapeHtml($this->rule['matchRegex']);
+		$displayRegex = $this->escapeHtml($this->rule['displayRegex']);
+		$requireSkillLine = $this->escapeHtml($this->rule['requireSkillLine']);
+		$statRequireId = $this->escapeHtml($this->rule['statRequireId']);
+		$factorStatId = $this->escapeHtml($this->rule['factorStatId']);
+		$originalId = $this->escapeHtml($this->rule['originalId']);
+		$version = $this->escapeHtml($this->rule['version']);
+		$icon = $this->escapeHtml($this->rule['icon']);
+		$groupName = $this->escapeHtml($this->rule['groupName']);
+		$maxTimes = $this->escapeHtml($this->rule['maxTimes']);
+		$comment = $this->escapeHtml($this->rule['comment']);
+		$description = $this->escapeHtml($this->rule['description']);
+		$disableIds = $this->escapeHtml($this->rule['disableIds']);
+		$isEnabled = $this->escapeHtml($this->rule['isEnabled']);
+		$isVisible = $this->escapeHtml($this->rule['isVisible']);
+		$enableOffBar = $this->escapeHtml($this->rule['enableOffBar']);
+		$matchSkillName = $this->escapeHtml($this->rule['matchSkillName']);
+		$updateBuffValue = $this->escapeHtml($this->rule['updateBuffValue']);
+		$toggleVisible = $this->escapeHtml($this->rule['toggleVisible']);
+		$toggle = $this->escapeHtml($this->rule['isToggle']);
+
+
+		$cols = [];
+		$values = [];
+		$cols[] = 'id';
+		$cols[] = 'ruleType';
+		$cols[] = 'nameId';
+		$cols[] = 'displayName';
+		$cols[] = 'matchRegex';
+		$cols[] = 'requireSkillLine';
+		$cols[] = 'statRequireId';
+		$cols[] = 'factorStatId';
+		$cols[] = 'originalId';
+		$cols[] = 'version';
+		$cols[] = 'icon';
+		$cols[] = 'groupName';
+		$cols[] = 'maxTimes';
+		$cols[] = 'comment';
+		$cols[] = 'description';
+		$cols[] = 'disableIds';
+		$cols[] = 'isEnabled';
+		$cols[] = 'isVisible';
+		$cols[] = 'enableOffBar';
+		$cols[] = 'matchSkillName';
+		$cols[] = 'updateBuffValue';
+		$cols[] = 'toggleVisible';
+		$cols[] = 'isToggle';
+
+		$values[] = "'" . $this->db->real_escape_string($id) . "'";
+		$values[] = "'" . $this->db->real_escape_string($ruleType) . "'";
+		$values[] = "'" . $this->db->real_escape_string($displayName) . "'";
+		$values[] = "'" . $this->db->real_escape_string($displayName) . "'";
+		$values[] = "'" . $this->db->real_escape_string($matchRegex) . "'";
+		$values[] = "'" . $this->db->real_escape_string($requireSkillLine) . "'";
+		$values[] = "'" . $this->db->real_escape_string($statRequireId) . "'";
+		$values[] = "'" . $this->db->real_escape_string($factorStatId) . "'";
+		$values[] = "'" . $this->db->real_escape_string($originalId) . "'";
+		$values[] = "'" . $this->db->real_escape_string($version) . "'";
+		$values[] = "'" . $this->db->real_escape_string($icon) . "'";
+		$values[] = "'" . $this->db->real_escape_string($groupName) . "'";
+		$values[] = "'" . $this->db->real_escape_string($maxTimes) . "'";
+		$values[] = "'" . $this->db->real_escape_string($comment) . "'";
+		$values[] = "'" . $this->db->real_escape_string($description) . "'";
+		$values[] = "'" . $this->db->real_escape_string($disableIds) . "'";
+		$values[] = "'" . $this->db->real_escape_string($isEnabled) . "'";
+		$values[] = "'" . $this->db->real_escape_string($isVisible) . "'";
+		$values[] = "'" . $this->db->real_escape_string($enableOffBar) . "'";
+		$values[] = "'" . $this->db->real_escape_string($matchSkillName) . "'";
+		$values[] = "'" . $this->db->real_escape_string($updateBuffValue) . "'";
+		$values[] = "'" . $this->db->real_escape_string($toggleVisible) . "'";
+		$values[] = "'" . $this->db->real_escape_string($isToggle) . "'";
+
+		$PermissionToDelete = $this->OutputDeleteCheck();
+		if ($PermissionToDelete == False)
+		{
+			$output->addHTML("<a href='$baselink'>Home</a><br>");
+			return $this->reportError("Delete Cancelled");
+		}
+		else {
+			$cols = implode(',', $cols);
+			$values = implode(',', $values);
+			$insert_query = "INSERT INTO rulesArchive($cols) VALUES($values);";
+
+
+			$rulesArchive_result = $this->db->query($insert_query);
+
+			if ($rulesArchive_result === false) {
+				return $this->reportError("Error: failed to INSERT archived rule into database");
+			}
+
+			$delete_query = "DELETE FROM rules WHERE id='$id';";
+
+			if ($delete_query === false) {
+				return $this->reportError("Error: failed to DELETE rule");
+			}
+
+			$output->addHTML("<p>rule #$id deleted</p>");
+			$output->addHTML("<a href='$baselink'>Home</a>");
+		}
+
+	}
+
+	public function OutputDeleteCheck()
+	{
+		//TODO: remove once finished testing
+		$confirm = False;
+
+		return $confirm;
+	}
+
 	public function LoadRule($primaryKey)
 	{
+			$primaryKey = $this->escapeHtml($primaryKey);
 			$query = "SELECT * FROM rules WHERE id= '$primaryKey';";
 			$result = $this->db->query($query);
 
@@ -278,6 +452,12 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 	public function OutputEditRuleForm()
 	{
+			$permission = $this->canUserEdit();
+
+			if($permission === False) {
+				return $this->reportError("Error: you have no permission to edit rules");
+			}
+
 			$output = $this->getOutput();
 			$baselink = $this->GetBaseLink();
 
@@ -309,7 +489,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$toggleVisible = $this->escapeHtml($this->rule['toggleVisible']);
 			$toggle = $this->escapeHtml($this->rule['isToggle']);
 
-			$output->addHTML("<a href='$baselink/showrules'>Go Back To Rules Table</a><br>");
+			$output->addHTML("<a href='$baselink/showrules'>Show Rules</a><br>");
 			$output->addHTML("<h3>Edit Rule: $id</h3>");
 			$output->addHTML("<form action='$baselink/saveeditruleform?ruleid=$id' method='POST'>");
 
@@ -630,7 +810,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		}
 
 		$output->addHTML("<p>New rule added</p><br>");
-		$output->addHTML("<a href='$baselink'>Go Back to Table Of Content</a>");
+		$output->addHTML("<a href='$baselink'>Home</a>");
 	}
 
 	public function SaveEditRuleForm()
@@ -640,6 +820,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$req = $this->getRequest();
 
 			$id = $this->GetRowId();
+			$id = $this->escapeHtml($id);
 
 			if ($id <= 0) {
 				return $this->reportError("Error: invalid rule ID");
@@ -705,7 +886,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			}
 
 			$output->addHTML("<p>Edits saved for rule #$id</p><br>");
-			$output->addHTML("<a href='$baselink'>Go Back to Table Of Content</a>");
+			$output->addHTML("<a href='$baselink'>Home</a>");
 
 	}
 
@@ -736,6 +917,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 	{
 
 		$id = $this->GetRowId();
+		$id = $this->escapeHtml($id);
 		$query = "SELECT * FROM effects where ruleId =$id;";
 		$effects_result = $this->db->query($query);
 
@@ -872,7 +1054,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 		$output->addHTML("<p>New effect added</p><br>");
 		$output->addHTML("<a href='$baselink/editrule?ruleid=$id'>Go Back to Effects Table</a><br>");
-		$output->addHTML("<a href='$baselink'>Go Back to Table Of Content</a><br>");
+		$output->addHTML("<a href='$baselink'>Home</a><br>");
 
 	}
 
@@ -915,6 +1097,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
   public function loadEffect($effectId) {
 
+	   $effectId = $this->escapeHtml($effectId);
 		 $query = "SELECT * FROM effects WHERE effectId = '$effectId';";
 		 $effects_result = $this->db->query($query);
 
@@ -929,7 +1112,13 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		 return true;
 	 }
 
-	public function OutputEditEffectForm(){
+	public function OutputEditEffectForm()
+	{
+		$permission = $this->canUserEdit();
+
+		if($permission === False) {
+			return $this->reportError("Error: you have no permission to edit effects");
+		}
 
 		$output = $this->getOutput();
 		$baselink = $this->GetBaseLink();
@@ -951,7 +1140,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$statDesc = $this->escapeHtml($this->effect['statDesc']);
 		$buffId = $this->escapeHtml($this->effect['buffId']);
 
-		$output->addHTML("<a href='$baselink/showrules'>Go Back To Rules Table</a><br>");
+		$output->addHTML("<a href='$baselink/showrules'>Show Rules</a><br>");
 		$output->addHTML("<h3>Edit Effect: $effectId</h3>");
 		$output->addHTML("<form action='$baselink/saveediteffectform?effectid=$effectId&ruleid=$ruleId' method='POST'>");
 
@@ -988,6 +1177,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 		$ruleId = $this->GetRowId();
 		$effectId = $req->getVal('effectid');
+
+		$effectId = $this->escapeHtml($effectId);
 
 		if ($effectId <= 0) {
 			return $this->reportError("Error: invalid effect ID");
@@ -1030,7 +1221,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		}
 
 		$output->addHTML("<p>Edits saved for effect #$effectId</p><br>");
-		$output->addHTML("<a href='$baselink/editrule?ruleid=$ruleId'>Go Back to Effects Table</a><br>");
+		$output->addHTML("<a href='$baselink/editrule?ruleid=$ruleId'>Rule #$ruleId</a><br>");
 
 	}
 
@@ -1075,7 +1266,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output = $this->getOutput();
 		$baselink = $this->GetBaseLink();
 
-		$output->addHTML("<a href='$baselink'>Go Back to Table Of Content</a>");
+		$output->addHTML("<a href='$baselink'>Home</a>");
 
 		$output->addHTML("<table class='wikitable sortable jquery-tablesorter' id='computedStats'><thead>");
 
@@ -1160,62 +1351,61 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 	public function SaveNewComputedStat()
 	{
-	$output = $this->getOutput();
-	$baselink = $this->GetBaseLink();
-	$req = $this->getRequest();
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
+		$req = $this->getRequest();
 
 
-	$input_version = $req->getVal('version');
-	$input_roundNum = $req->getVal('roundNum');
-	$input_addClass = $req->getVal('addClass');
-	$input_comment = $req->getVal('comment');
-	$input_minimumValue = $req->getVal('minimumValue');
-	$input_maximumValue = $req->getVal('maximumValue');
-	$input_deferLevel = $req->getVal('deferLevel');
-	$input_display = $req->getVal('display');
-	$input_compute = $req->getVal('compute');
+		$input_version = $req->getVal('version');
+		$input_roundNum = $req->getVal('roundNum');
+		$input_addClass = $req->getVal('addClass');
+		$input_comment = $req->getVal('comment');
+		$input_minimumValue = $req->getVal('minimumValue');
+		$input_maximumValue = $req->getVal('maximumValue');
+		$input_deferLevel = $req->getVal('deferLevel');
+		$input_display = $req->getVal('display');
+		$input_compute = $req->getVal('compute');
 
-	$cols = [];
-	$values = [];
-	$cols[] = 'version';
-	$cols[] = 'roundNum';
-	$cols[] = 'addClass';
-	$cols[] = 'comment';
-	$cols[] = 'minimumValue';
-	$cols[] = 'maximumValue';
-	$cols[] = 'deferLevel';
-	$cols[] = 'display';
-	$cols[] = 'compute';
+		$cols = [];
+		$values = [];
+		$cols[] = 'version';
+		$cols[] = 'roundNum';
+		$cols[] = 'addClass';
+		$cols[] = 'comment';
+		$cols[] = 'minimumValue';
+		$cols[] = 'maximumValue';
+		$cols[] = 'deferLevel';
+		$cols[] = 'display';
+		$cols[] = 'compute';
 
-	$values[] = "'" . $this->db->real_escape_string($input_version) . "'";
-	$values[] = "'" . $this->db->real_escape_string($input_roundNum) . "'";
-	$values[] = "'" . $this->db->real_escape_string($input_addClass) . "'";
-	$values[] = "'" . $this->db->real_escape_string($input_comment) . "'";
-	$values[] = "'" . $this->db->real_escape_string($input_minimumValue) . "'";
-	$values[] = "'" . $this->db->real_escape_string($input_maximumValue) . "'";
-	$values[] = "'" . $this->db->real_escape_string($input_deferLevel) . "'";
-	$values[] = "'" . $this->db->real_escape_string($input_display) . "'";
-	$values[] = "'" . $this->db->real_escape_string($input_compute) . "'";
+		$values[] = "'" . $this->db->real_escape_string($input_version) . "'";
+		$values[] = "'" . $this->db->real_escape_string($input_roundNum) . "'";
+		$values[] = "'" . $this->db->real_escape_string($input_addClass) . "'";
+		$values[] = "'" . $this->db->real_escape_string($input_comment) . "'";
+		$values[] = "'" . $this->db->real_escape_string($input_minimumValue) . "'";
+		$values[] = "'" . $this->db->real_escape_string($input_maximumValue) . "'";
+		$values[] = "'" . $this->db->real_escape_string($input_deferLevel) . "'";
+		$values[] = "'" . $this->db->real_escape_string($input_display) . "'";
+		$values[] = "'" . $this->db->real_escape_string($input_compute) . "'";
 
-	$cols = implode(',', $cols);
-	$values = implode(',', $values);
-	$query = "INSERT INTO computedStats($cols) VALUES($values);";
+		$cols = implode(',', $cols);
+		$values = implode(',', $values);
+		$query = "INSERT INTO computedStats($cols) VALUES($values);";
 
 
-	$computedStats_result = $this->db->query($query);
+		$computedStats_result = $this->db->query($query);
 
-	if ($computedStats_result === false) {
-		return $this->reportError("Error: failed to INSERT into database");
+		if ($computedStats_result === false) {
+			return $this->reportError("Error: failed to INSERT into database");
+		}
+
+		$output->addHTML("<p>New computedStat added</p><br>");
+		$output->addHTML("<a href='$baselink'>Home</a>");
 	}
-
-	$output->addHTML("<p>New computedStat added</p><br>");
-	$output->addHTML("<a href='$baselink'>Go Back to Table Of Content</a>");
-
-
-}
 
 	public function LoadComputedStat($primaryKey)
 	{
+		$primaryKey = $this->escapeHtml($primaryKey);
 		$query = "SELECT * FROM computedStats WHERE statId= '$primaryKey';";
 		$computedStats_result = $this->db->query($query);
 
@@ -1232,6 +1422,12 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
   public function OutputEditComputedStatForm()
   {
+		$permission = $this->canUserEdit();
+
+		if($permission === False) {
+			return $this->reportError("Error: you have no permission to edit rules");
+		}
+
 		$output = $this->getOutput();
 		$baselink = $this->GetBaseLink();
 		$req = $this->getRequest();
@@ -1285,6 +1481,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$req = $this->getRequest();
 
 		$statId = $req->getVal('statid');
+		$statId = $this->escapeHtml($statId);
 
 		if ($statId <= 0) {
 			return $this->reportError("Error: invalid computedStat ID");
@@ -1323,7 +1520,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		}
 
 		$output->addHTML("<p>Edits saved for computedStat #$statId</p><br>");
-		$output->addHTML("<a href='$baselink'>Go Back to Table Of Content</a>");
+		$output->addHTML("<a href='$baselink'>Home</a>");
 
 	}
 
@@ -1353,10 +1550,11 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$this->setHeaders();
 
 			// TODO: Remove after testing
-		if ($this->canUserEdit())
+		/*if ($this->canUserEdit())
 			$output->addHTML("Use can edit</br>");
 		else
 			$output->addHTML("Use CANNOT edit</br>");
+		*/
 
 			// TODO: Determine action/output based on the input $parameter
 
@@ -1388,6 +1586,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		  $this->OutputEditComputedStatForm();
 		elseif($parameter == "saveeditcomputedstatsform")
 			$this->SaveEditComputedStatsForm();
+		elseif($parameter == "deleterule")
+			$this->OutputDeleteRule();
 		else
 			$this->OutputTableOfContents();
 	}
