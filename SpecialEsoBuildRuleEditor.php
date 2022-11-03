@@ -344,94 +344,167 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$toggleVisible = $this->escapeHtml($this->rule['toggleVisible']);
 		$toggle = $this->escapeHtml($this->rule['isToggle']);
 
+		$output->addHTML("<h2>Are you sure you want to delete this rule: </h2>");
+		$output->addHTML("<label><b>id:</b> $id </label><br>");
+		$output->addHTML("<label><b>Rule Type:</b> $ruleType </label><br>");
+		$output->addHTML("<label><b>nameId:</b> $nameId </label><br>");
+		$output->addHTML("<label><b>displayName:</b> $displayName </label><br>");
+		$output->addHTML("<label><b>matchRegex:</b> $matchRegex </label><br>");
+		$output->addHTML("<label><b>requireSkillLine:</b> $requireSkillLine </label><br>");
+		$output->addHTML("<label><b>statRequireId:</b> $statRequireId </label><br>");
+		$output->addHTML("<label><b>factorStatId:</b> $factorStatId </label><br>");
+		$output->addHTML("<label><b>originalId:</b> $originalId </label><br>");
+		$output->addHTML("<label><b>originalId:</b> $version </label><br>");
+		$output->addHTML("<label><b>icon:</b> $icon </label><br>");
+		$output->addHTML("<label><b>groupName:</b> $groupName </label><br>");
+		$output->addHTML("<label><b>maxTimes:</b> $maxTimes </label><br>");
+		$output->addHTML("<label><b>comment:</b> $comment </label><br>");
+		$output->addHTML("<label><b>description:</b> $description </label><br>");
+		$output->addHTML("<label><b>disableIds:</b> $disableIds </label><br>");
+		$output->addHTML("<label><b>isEnabled:</b> $isEnabled </label><br>");
+		$output->addHTML("<label><b>isVisible:</b> $isVisible </label><br>");
+		$output->addHTML("<label><b>enableOffBar:</b> $enableOffBar </label><br>");
+		$output->addHTML("<label><b>matchSkillName:</b> $matchSkillName </label><br>");
+		$output->addHTML("<label><b>updateBuffValue:</b> $updateBuffValue </label><br>");
+		$output->addHTML("<label><b>toggleVisible:</b> $toggleVisible </label><br>");
+		$output->addHTML("<label><b>isToggle:</b> $isToggle </label><br>");
 
-		$cols = [];
-		$values = [];
-		$cols[] = 'id';
-		$cols[] = 'ruleType';
-		$cols[] = 'nameId';
-		$cols[] = 'displayName';
-		$cols[] = 'matchRegex';
-		$cols[] = 'requireSkillLine';
-		$cols[] = 'statRequireId';
-		$cols[] = 'factorStatId';
-		$cols[] = 'originalId';
-		$cols[] = 'version';
-		$cols[] = 'icon';
-		$cols[] = 'groupName';
-		$cols[] = 'maxTimes';
-		$cols[] = 'comment';
-		$cols[] = 'description';
-		$cols[] = 'disableIds';
-		$cols[] = 'isEnabled';
-		$cols[] = 'isVisible';
-		$cols[] = 'enableOffBar';
-		$cols[] = 'matchSkillName';
-		$cols[] = 'updateBuffValue';
-		$cols[] = 'toggleVisible';
-		$cols[] = 'isToggle';
+		$output->addHTML("<br><a href='$baselink/ruledeleteconfirm?ruleid=$id&confirm=True'>Delete </a>");
+		$output->addHTML("<a href='$baselink/ruledeleteconfirm?ruleid=$id&confirm=False'> Cancel</a>");
 
-		$values[] = "'" . $this->db->real_escape_string($id) . "'";
-		$values[] = "'" . $this->db->real_escape_string($ruleType) . "'";
-		$values[] = "'" . $this->db->real_escape_string($displayName) . "'";
-		$values[] = "'" . $this->db->real_escape_string($displayName) . "'";
-		$values[] = "'" . $this->db->real_escape_string($matchRegex) . "'";
-		$values[] = "'" . $this->db->real_escape_string($requireSkillLine) . "'";
-		$values[] = "'" . $this->db->real_escape_string($statRequireId) . "'";
-		$values[] = "'" . $this->db->real_escape_string($factorStatId) . "'";
-		$values[] = "'" . $this->db->real_escape_string($originalId) . "'";
-		$values[] = "'" . $this->db->real_escape_string($version) . "'";
-		$values[] = "'" . $this->db->real_escape_string($icon) . "'";
-		$values[] = "'" . $this->db->real_escape_string($groupName) . "'";
-		$values[] = "'" . $this->db->real_escape_string($maxTimes) . "'";
-		$values[] = "'" . $this->db->real_escape_string($comment) . "'";
-		$values[] = "'" . $this->db->real_escape_string($description) . "'";
-		$values[] = "'" . $this->db->real_escape_string($disableIds) . "'";
-		$values[] = "'" . $this->db->real_escape_string($isEnabled) . "'";
-		$values[] = "'" . $this->db->real_escape_string($isVisible) . "'";
-		$values[] = "'" . $this->db->real_escape_string($enableOffBar) . "'";
-		$values[] = "'" . $this->db->real_escape_string($matchSkillName) . "'";
-		$values[] = "'" . $this->db->real_escape_string($updateBuffValue) . "'";
-		$values[] = "'" . $this->db->real_escape_string($toggleVisible) . "'";
-		$values[] = "'" . $this->db->real_escape_string($isToggle) . "'";
+	}
 
-		$PermissionToDelete = $this->OutputDeleteCheck();
-		if ($PermissionToDelete == False)
+	public function ConfirmDeleteRule()
+	{
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
+		$req = $this->getRequest();
+
+		$confirm = $req->getVal('confirm');
+		$id = $this->GetRowId();
+		$id = $this->escapeHtml($id);
+
+		if ($id <= 0) {
+			return $this->reportError("Error: invalid rule ID");
+		}
+
+		if ($confirm == 'False')
 		{
-			$output->addHTML("<a href='$baselink'>Home</a><br>");
-			return $this->reportError("Delete Cancelled");
+			$output->addHTML("<p>Delete cancelled</p><br>");
+			$output->addHTML("<a href='$baselink'>Home</a>");
 		}
 		else {
+			$this->LoadRule($id);
+
+			$ruleType = $this->escapeHtml($this->rule['ruleType']);
+			$nameId = $this->escapeHtml($this->rule['nameId']);
+			$displayName = $this->escapeHtml($this->rule['displayName']);
+			$matchRegex = $this->escapeHtml($this->rule['matchRegex']);
+			$displayRegex = $this->escapeHtml($this->rule['displayRegex']);
+			$requireSkillLine = $this->escapeHtml($this->rule['requireSkillLine']);
+			$statRequireId = $this->escapeHtml($this->rule['statRequireId']);
+			$factorStatId = $this->escapeHtml($this->rule['factorStatId']);
+			$originalId = $this->escapeHtml($this->rule['originalId']);
+			$version = $this->escapeHtml($this->rule['version']);
+			$icon = $this->escapeHtml($this->rule['icon']);
+			$groupName = $this->escapeHtml($this->rule['groupName']);
+			$maxTimes = $this->escapeHtml($this->rule['maxTimes']);
+			$comment = $this->escapeHtml($this->rule['comment']);
+			$description = $this->escapeHtml($this->rule['description']);
+			$disableIds = $this->escapeHtml($this->rule['disableIds']);
+			$isEnabled = $this->escapeHtml($this->rule['isEnabled']);
+			$isVisible = $this->escapeHtml($this->rule['isVisible']);
+			$enableOffBar = $this->escapeHtml($this->rule['enableOffBar']);
+			$matchSkillName = $this->escapeHtml($this->rule['matchSkillName']);
+			$updateBuffValue = $this->escapeHtml($this->rule['updateBuffValue']);
+			$toggleVisible = $this->escapeHtml($this->rule['toggleVisible']);
+			$toggle = $this->escapeHtml($this->rule['isToggle']);
+
+
+			$cols = [];
+			$values = [];
+			$cols[] = 'id';
+			$cols[] = 'ruleType';
+			$cols[] = 'nameId';
+			$cols[] = 'displayName';
+			$cols[] = 'matchRegex';
+			$cols[] = 'requireSkillLine';
+			$cols[] = 'statRequireId';
+			$cols[] = 'factorStatId';
+			$cols[] = 'originalId';
+			$cols[] = 'version';
+			$cols[] = 'icon';
+			$cols[] = 'groupName';
+			$cols[] = 'maxTimes';
+			$cols[] = 'comment';
+			$cols[] = 'description';
+			$cols[] = 'disableIds';
+			$cols[] = 'isEnabled';
+			$cols[] = 'isVisible';
+			$cols[] = 'enableOffBar';
+			$cols[] = 'matchSkillName';
+			$cols[] = 'updateBuffValue';
+			$cols[] = 'toggleVisible';
+			$cols[] = 'isToggle';
+
+			$values[] = "'" . $this->db->real_escape_string($id) . "'";
+			$values[] = "'" . $this->db->real_escape_string($ruleType) . "'";
+			$values[] = "'" . $this->db->real_escape_string($displayName) . "'";
+			$values[] = "'" . $this->db->real_escape_string($displayName) . "'";
+			$values[] = "'" . $this->db->real_escape_string($matchRegex) . "'";
+			$values[] = "'" . $this->db->real_escape_string($requireSkillLine) . "'";
+			$values[] = "'" . $this->db->real_escape_string($statRequireId) . "'";
+			$values[] = "'" . $this->db->real_escape_string($factorStatId) . "'";
+			$values[] = "'" . $this->db->real_escape_string($originalId) . "'";
+			$values[] = "'" . $this->db->real_escape_string($version) . "'";
+			$values[] = "'" . $this->db->real_escape_string($icon) . "'";
+			$values[] = "'" . $this->db->real_escape_string($groupName) . "'";
+			$values[] = "'" . $this->db->real_escape_string($maxTimes) . "'";
+			$values[] = "'" . $this->db->real_escape_string($comment) . "'";
+			$values[] = "'" . $this->db->real_escape_string($description) . "'";
+			$values[] = "'" . $this->db->real_escape_string($disableIds) . "'";
+			$values[] = "'" . $this->db->real_escape_string($isEnabled) . "'";
+			$values[] = "'" . $this->db->real_escape_string($isVisible) . "'";
+			$values[] = "'" . $this->db->real_escape_string($enableOffBar) . "'";
+			$values[] = "'" . $this->db->real_escape_string($matchSkillName) . "'";
+			$values[] = "'" . $this->db->real_escape_string($updateBuffValue) . "'";
+			$values[] = "'" . $this->db->real_escape_string($toggleVisible) . "'";
+			$values[] = "'" . $this->db->real_escape_string($isToggle) . "'";
+
 			$cols = implode(',', $cols);
 			$values = implode(',', $values);
 			$insert_query = "INSERT INTO rulesArchive($cols) VALUES($values);";
 
 
-			$rulesArchive_result = $this->db->query($insert_query);
+			$insert_result = $this->db->query($insert_query);
 
-			if ($rulesArchive_result === false) {
-				return $this->reportError("Error: failed to INSERT archived rule into database");
+			if ($insert_result === false) {
+				return $this->reportError("Error: failed to INSERT deleted data into database");
 			}
 
-			$delete_query = "DELETE FROM rules WHERE id='$id';";
+			$deleteRule_query = "DELETE FROM rules WHERE id=$id;";
+			$deleteRule_result = $this->db->query($deleteRule_query);
 
-			if ($delete_query === false) {
-				return $this->reportError("Error: failed to DELETE rule");
+			if ($deleteRule_result === false) {
+				return $this->reportError("Error: failed to DELETE rule from database");
 			}
 
-			$output->addHTML("<p>rule #$id deleted</p>");
+			$deleteEffects_query = "DELETE FROM effects WHERE ruleId=$id;";
+			$deleteEffects_result = $this->db->query($deleteEffects_query);
+
+			if ($deleteEffects_result === false) {
+				return $this->reportError("Error: failed to DELETE effects from database");
+			}
+
+			$output->addHTML("<p>Rule deleted</p><br>");
 			$output->addHTML("<a href='$baselink'>Home</a>");
+
 		}
 
+
 	}
 
-	public function OutputDeleteCheck()
-	{
-		//TODO: remove once finished testing
-		$confirm = False;
 
-		return $confirm;
-	}
 
 	public function LoadRule($primaryKey)
 	{
@@ -1588,6 +1661,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$this->SaveEditComputedStatsForm();
 		elseif($parameter == "deleterule")
 			$this->OutputDeleteRule();
+		elseif($parameter == "ruledeleteconfirm")
+			$this->ConfirmDeleteRule();
 		else
 			$this->OutputTableOfContents();
 	}
