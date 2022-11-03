@@ -175,6 +175,29 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 				return $this->reportError("Error: failed to create rules archive table");
 			}
 
+			$DeletedcomputedStats_result = $this->db->query("CREATE TABLE IF NOT EXISTS computedStatsArchives (
+                        id INTEGER AUTO_INCREMENT NOT NULL,
+												statId INTEGER NOT NULL,
+                        version TINYTEXT NOT NULL,
+                        title TINYTEXT NOT NULL,
+                        roundNum TINYTEXT,
+                        addClass TINYTEXT,
+                        comment TINYTEXT,
+                        minimumValue FLOAT,
+                        maximumValue FLOAT,
+                        deferLevel TINYINT,
+                        display TINYTEXT,
+                        compute TEXT NOT NULL,
+                        PRIMARY KEY (id),
+                        INDEX index_version(version(10))
+                    );
+
+								");
+
+			if ($computedStats_result === false) {
+				return $this->reportError("Error: failed to create computedStats table");
+			}
+
 			return true;
 	}
 
@@ -344,7 +367,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$toggleVisible = $this->escapeHtml($this->rule['toggleVisible']);
 		$toggle = $this->escapeHtml($this->rule['isToggle']);
 
-		$output->addHTML("<h2>Are you sure you want to delete this rule: </h2>");
+		$output->addHTML("<h3>Are you sure you want to delete this rule: </h3>");
 		$output->addHTML("<label><b>id:</b> $id </label><br>");
 		$output->addHTML("<label><b>Rule Type:</b> $ruleType </label><br>");
 		$output->addHTML("<label><b>nameId:</b> $nameId </label><br>");
@@ -1355,6 +1378,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<th>deferLevel</th>");
 		$output->addHTML("<th>display</th>");
 		$output->addHTML("<th>compute</th>");
+		$output->addHTML("<th>Delete</th>");
 		$output->addHTML("</tr></thead><tbody>");
 
 		foreach ($this->computedStatsDatas as $computedStatsData) {
@@ -1382,6 +1406,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<td>$deferLevel</td>");
 			$output->addHTML("<td>$display</td>");
 			$output->addHTML("<td>$compute</td>");
+			$output->addHTML("<td><a href='$baselink/deletcomputedstat?statid=$statId'>Delete</a></td>");
 
 		}
 
@@ -1494,7 +1519,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 	}
 
   public function OutputEditComputedStatForm()
-  {
+	{
 		$permission = $this->canUserEdit();
 
 		if($permission === False) {
@@ -1597,6 +1622,122 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 	}
 
+	public function OutputDeleteComputedStat()
+	{
+		$permission = $this->canUserEdit();
+
+		if($permission === False) {
+			return $this->reportError("Error: you have no permission to delete computed stats");
+		}
+
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
+		$req = $this->getRequest();
+
+		$statId = $req->getVal('statid');
+		$statId = $this->escapeHtml($statId);
+
+		if ($statId <= 0) {
+			return $this->reportError("Error: invalid ID");
+		}
+
+		$this->LoadComputedStat($statId);
+
+		$version = $this->escapeHtml($this->computedStat['version']);
+		$roundNum = $this->escapeHtml($this->computedStat['roundNum']);
+		$addClass = $this->escapeHtml($this->computedStat['addClass']);
+		$comment = $this->escapeHtml($this->computedStat['comment']);
+		$minimumValue = $this->escapeHtml($this->computedStat['minimumValue']);
+		$maximumValue = $this->escapeHtml($this->computedStat['maximumValue']);
+		$deferLevel = $this->escapeHtml($this->computedStat['deferLevel']);
+		$display = $this->escapeHtml($this->computedStat['display']);
+		$compute = $this->escapeHtml($this->computedStat['compute']);
+
+		$output->addHTML("<h3>Are you sure you want to delete this computedStat: </h3>");
+		$output->addHTML("<label><b>id:</b> $statId </label><br>");
+		$output->addHTML("<label><b>version:</b> $version </label><br>");
+		$output->addHTML("<label><b>roundNum:</b> $roundNum </label><br>");
+		$output->addHTML("<label><b>addClass:</b> $addClass </label><br>");
+		$output->addHTML("<label><b>comment:</b> $comment </label><br>");
+		$output->addHTML("<label><b>minimumValue:</b> $minimumValue </label><br>");
+		$output->addHTML("<label><b>maximumValue:</b> $maximumValue </label><br>");
+		$output->addHTML("<label><b>deferLevel:</b> $deferLevel </label><br>");
+		$output->addHTML("<label><b>display:</b> $display </label><br>");
+		$output->addHTML("<label><b>compute:</b> $compute </label><br>");
+
+		$output->addHTML("<br><a href='$baselink/statdeleteconfirm?statid=$statId&confirm=True'>Delete </a>");
+		$output->addHTML("<a href='$baselink/ruledeleteconfirm?statid=$statId&confirm=False'> Cancel</a>");
+	}
+
+	public function ConfirmDeleteStat()
+	{
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
+		$req = $this->getRequest();
+
+		$confirm = $req->getVal('confirm');
+		$statId = $req->getVal('statid');
+		$statId = $this->escapeHtml($statId);
+
+		if ($statId <= 0) {
+			return $this->reportError("Error: invalid stat ID");
+		}
+
+		if ($confirm == 'False')
+		{
+			$output->addHTML("<p>Delete cancelled</p><br>");
+			$output->addHTML("<a href='$baselink'>Home</a>");
+		}
+		else
+		{
+			$cols = [];
+			$values = [];
+			$cols[] = 'statId';
+			$cols[] = 'version';
+			$cols[] = 'roundNum';
+			$cols[] = 'addClass';
+			$cols[] = 'comment';
+			$cols[] = 'minimumValue';
+			$cols[] = 'maximumValue';
+			$cols[] = 'deferLevel';
+			$cols[] = 'display';
+			$cols[] = 'compute';
+
+			$values[] = "'" . $this->db->real_escape_string($statId) . "'";
+			$values[] = "'" . $this->db->real_escape_string($version) . "'";
+			$values[] = "'" . $this->db->real_escape_string($roundNum) . "'";
+			$values[] = "'" . $this->db->real_escape_string($addClass) . "'";
+			$values[] = "'" . $this->db->real_escape_string($comment) . "'";
+			$values[] = "'" . $this->db->real_escape_string($minimumValue) . "'";
+			$values[] = "'" . $this->db->real_escape_string($maximumValue) . "'";
+			$values[] = "'" . $this->db->real_escape_string($deferLevel) . "'";
+			$values[] = "'" . $this->db->real_escape_string($display) . "'";
+			$values[] = "'" . $this->db->real_escape_string($compute) . "'";
+
+			$cols = implode(',', $cols);
+			$values = implode(',', $values);
+
+			$insert_query = "INSERT INTO computedStatsArchives($cols) VALUES($values);";
+			$insertComputedStats_result = $this->db->query($insert_query);
+
+			if ($insertComputedStats_result === false) {
+				return $this->reportError("Error: failed to INSERT into database");
+			}
+
+			$delete_query = "DELETE FROM computedStats WHERE statId=$statId;";
+			$deleteComputedStat_result = $this->db->query($delete_query);
+
+			if ($deleteComputedStat_result === false) {
+				return $this->reportError("Error: failed to DELETE rule from database");
+			}
+
+			$output->addHTML("<p>computedStat deleted</p><br>");
+			$output->addHTML("<a href='$baselink'>Home</a>");
+
+		}
+
+	}
+
 //-------------------Main page---------------
 
 
@@ -1663,6 +1804,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$this->OutputDeleteRule();
 		elseif($parameter == "ruledeleteconfirm")
 			$this->ConfirmDeleteRule();
+		elseif($parameter == "deletcomputedstat")
+			$this->OutputDeleteComputedStat();
+		elseif($parameter == "statdeleteconfirm")
+			$this->ConfirmDeleteStat();
 		else
 			$this->OutputTableOfContents();
 	}
