@@ -1316,6 +1316,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<label for='edit_combineAs'>combineAs </label>");
 		$output->addHTML("<input type='text' id='edit_combineAs' name='edit_combineAs' value='$combineAs'><br>");
 
+		//TODO: fix issue with round being a number
 		$roundOptions=[
 			'' => 'None',
 			'floor' => 'Floor',
