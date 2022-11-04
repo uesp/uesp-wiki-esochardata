@@ -3,3 +3,9 @@ form label {
 	width: 200px;
 	text-align: right;
 }
+
+.txtArea{
+	display: inline-inline-block;
+	width: 50%;
+	vertical-align: top;
+}

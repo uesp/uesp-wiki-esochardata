@@ -1669,7 +1669,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<input type='text' id='edit_display' name='edit_display' value='$display'><br>");
 
 		$output->addHTML("<label for='edit_compute'>compute: </label>");
-		$output->addHTML("<textarea id='edit_compute' name='edit_compute' rows='4' cols='50'>$compute</textarea><br>");
+		$output->addHTML("<textarea id='edit_compute' name='edit_compute' class='txtArea' rows='4' cols='50'>$compute</textarea><br>");
 
 		$output->addHTML("<br><input type='submit' value='Save Edits'>");
 		$output->addHTML("</form><br>");
