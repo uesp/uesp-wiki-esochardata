@@ -1200,7 +1200,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<label for='combineAs'>combineAs: </label>");
 		$output->addHTML("<input type='text' id='combineAs' name='combineAs'><br>");
 		$output->addHTML("<label for='roundNum'>round: </label>");
-		$output->addHTML("<input type='number' id='roundNum' name='roundNum'><br>");
+		$output->addHTML("<input type='text' id='roundNum' name='roundNum'><br>");
 		$output->addHTML("<label for='factorValue'>factorValue: </label>");
 		$output->addHTML("<input type='text' id='factorValue' name='factorValue'><br>");
 		$output->addHTML("<label for='statDesc'>statDesc: </label>");
@@ -1315,8 +1315,17 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<input type='text' id='edit_category' name='edit_category' value='$category'><br>");
 		$output->addHTML("<label for='edit_combineAs'>combineAs </label>");
 		$output->addHTML("<input type='text' id='edit_combineAs' name='edit_combineAs' value='$combineAs'><br>");
+
+		$roundOptions=[
+			'' => 'None',
+			'floor' => 'Floor',
+			'floor10' => 'Floor10',
+			'floor2' => 'Floor2',
+			'ceil' => 'Ceil'
+      ];
 		$output->addHTML("<label for='edit_round'>round </label>");
-		$output->addHTML("<input type='text' id='edit_round' name='edit_round' value='$round'><br>");
+		$this->OutputLists($round, $roundOptions, 'edit_round');
+
 		$output->addHTML("<label for='edit_factorValue'>factorValue </label>");
 		$output->addHTML("<input type='text' id='edit_factorValue' name='edit_factorValue' value='$factorValue'><br>");
 		$output->addHTML("<label for='edit_statDesc'>statDesc </label>");
