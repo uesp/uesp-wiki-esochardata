@@ -753,8 +753,14 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<input type='text' id='factorStatId' name='factorStatId'><br>");
 			$output->addHTML("<label for='originalId'>Original ID: </label>");
 			$output->addHTML("<input type='text' id='originalId' name='originalId'><br>");
+
 			$output->addHTML("<label for='version'>Version: </label>");
-			$output->addHTML("<input type='number' id='version' name='version'><br>");
+			$output->addHTML("<select id='version' name='version'>");
+			for($i = 1; $i<=36; $i++){
+				$output->addHTML("<option value='$i'>$i</option>");
+			}
+			$output->addHTML("</select><br>");
+
 			$output->addHTML("<label for='icon'>Icon: </label>");
 			$output->addHTML("<input type='text' id='icon' name='icon'><br>");
 			$output->addHTML("<label for='groupName'>groupName: </label>");
@@ -1187,8 +1193,14 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<a href='$baselink/editrule?ruleid=$id'>Go Back to Effects Table</a>");
 		$output->addHTML("<h3>Add New Effect For Rule: $id</h3>");
 		$output->addHTML("<form action='$baselink/savenewffect?ruleid=$id' method='POST'>");
-		$output->addHTML("<label for='version'>version: </label>");
-		$output->addHTML("<input type='text' id='version' name='version'><br>");
+
+		$output->addHTML("<label for='version'>Version: </label>");
+		$output->addHTML("<select id='version' name='version'>");
+		for($i = 1; $i<=36; $i++){
+			$output->addHTML("<option value='$i'>$i</option>");
+		}
+		$output->addHTML("</select><br>");
+
 		$output->addHTML("<label for='statId'>statId: </label>");
 		$output->addHTML("<input type='text' id='statId' name='statId'><br>");
 		$output->addHTML("<label for='value'>value: </label>");
