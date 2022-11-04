@@ -588,47 +588,22 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<form action='$baselink/saveeditruleform?ruleid=$id' method='POST'>");
 
 			$ruleTypeOptions=[
-				'empty' => '',
-				'buff' => '',
-				'mundus' => '',
-				'set' => '',
-				'active' => '',
-				'passive' => '',
-				'cp' => 'test',
-				'armorEnchant' => '',
-				'weaponEnchant' => '',
-				'offHandEnchant' => '',
-				'abilityDesc' => ''
+                '' => 'None',
+                'buff' => 'Buff',
+                'mundus' => 'Mundus',
+								'set' => 'Set',
+								'active' => 'Active',
+								'passive' => 'Passive',
+								'cp' => 'CP',
+								'armorEnchant' => 'Armor Enchantment',
+								'weaponEnchant' => 'Weapon Enchantment',
+								'offHandEnchant' => 'Off-Hand Enchantment',
+								'abilityDesc' => 'Ability Description'
       ];
 
-			$newArray = $this->GetSelectedOption($ruleType, $ruleTypeOptions);
-
-			$emptyOption = $newArray["empty"];
-			$buffOption = $newArray["buff"];
-			$mundusOption = $newArray["mundus"];
-			$setOption = $newArray["set"];
-			$activeOption = $newArray["active"];
-			$passiveOption = $newArray["passive"];
-			$cpOption = $newArray["cp"];
-			$armorEnchantOption = $newArray["armorEnchant"];
-			$weaponEnchantOption = $newArray["weaponEnchant"];
-			$offHandEnchantOption = $newArray["offHandEnchant"];
-			$abilityDescOption = $newArray["abilityDesc"];
-
 			$output->addHTML("<label for='edit_ruleType'>Rule Type: </label>");
-			$output->addHTML("<select id='edit_ruleType' name='edit_ruleType'>");
-			$output->addHTML("<option value='' $emptyOption></option>");
-			$output->addHTML("<option value='buff' $buffOption>buff</option>");
-			$output->addHTML("<option value='mundus' $mundusOption>mundus</option>");
-			$output->addHTML("<option value='set' $setOption>set</option>");
-			$output->addHTML("<option value='active' $activeOption>active</option>");
-			$output->addHTML("<option value='passive'$passiveOption>passive</option>");
-			$output->addHTML("<option value='cp' $cpOption>cp</option>");
-			$output->addHTML("<option value='armorEnchant' $armorEnchantOption>armorEnchant</option>");
-			$output->addHTML("<option value='weaponEnchant' $weaponEnchantOption>weaponEnchant</option>");
-			$output->addHTML("<option value='offHandEnchant' $offHandEnchantOption>offHandEnchant</option>");
-			$output->addHTML("<option value='abilityDesc' $abilityDescOption>abilityDesc</option>");
-			$output->addHTML("</select><br>");
+			$this->OutputLists($ruleType, $ruleTypeOptions, 'edit_ruleType');
+
 
 			$output->addHTML("<label for='edit_nameId'>Name ID: </label>");
 			$output->addHTML("<input type='text' id='edit_nameId' name='edit_nameId' value='$nameId'><br>");
@@ -646,8 +621,51 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<input type='text' id='edit_factorStatId' name='edit_factorStatId' value='$factorStatId'><br>");
 			$output->addHTML("<label for='edit_originalId'>Original ID: </label>");
 			$output->addHTML("<input type='text' id='edit_originalId' name='edit_originalId' value='$originalId'><br>");
+
+
+			$ruleVersionOptions=[
+				'1' => '1',
+				'2' => '2',
+				'3' => '3',
+				'4' => '4',
+				'5' => '5',
+				'6' => '6',
+				'7' => '7',
+				'8' => '8',
+				'9' => '9',
+				'10' => '10',
+				'11' => '11',
+				'12' => '12',
+				'13' => '13',
+				'14' => '14',
+				'15' => '15',
+				'16' => '16',
+				'17' => '17',
+				'18' => '18',
+				'19' => '19',
+				'20' => '20',
+				'21' => '21',
+				'22' => '22',
+				'23' => '23',
+				'24' => '24',
+				'25' => '25',
+				'26' => '26',
+				'27' => '27',
+				'28' => '28',
+				'29' => '29',
+				'30' => '30',
+				'31' => '31',
+				'32' => '32',
+				'33' => '33',
+				'34' => '34',
+				'35' => '35',
+				'36' => '36'
+      ];
+
+
 			$output->addHTML("<label for='edit_version'>Version: </label>");
-			$output->addHTML("<input type='number' id='edit_version' name='edit_version' value='$version'><br>");
+			$this->OutputLists($version, $ruleVersionOptions, 'edit_version');
+
 			$output->addHTML("<label for='edit_icon'>Icon: </label>");
 			$output->addHTML("<input type='text' id='edit_icon' name='edit_icon' value='$icon'><br>");
 			$output->addHTML("<label for='edit_groupName'>groupName: </label>");
@@ -780,57 +798,19 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			return $returnVal;
 	}
 
-
-	public function GetSelectedOption ($option, $array)
+	public function OutputLists($option, $array, $listName)
 	{
-		$names = array_keys($array);
+		$output = $this->getOutput();
 		$numOfDatas = count($names);
-		$selected = "";
 
-		for($i = 0; $i<$numOfDatas; $i++)
+		$output->addHTML("<select id='$listName' name='$listName'>");
+		foreach ($array as $key => $value)
 		{
-		if ($names[$i] == $option)
-				$selected = $names[$i];
+				$selected = "";
+				if ($key == $option) $selected = "selected";
+				$output->addHTML("<option value='$key' $selected >$value</option>");
 		}
-
-		$array[$selected] = "selected";
-
-		return $array;
-
-			/*
-			$this->selectBuff = "";
-			$this->selectMundus = "";
-			$this->selectSet = "";
-			$this->selectActive = "";
-			$this->selectPassive = "";
-			$this->selectCp = "";
-			$this->selectArmorEnchant = "";
-			$this->selectWeaponEnchant = "";
-			$this->selectOffHandEnchant ="";
-			$this->selectAbilityDesc =  "";
-			$this->selectEmpty = "";
-
-			if($option == 'buff')
-				$this->selectBuff = "selected";
-			elseif($option == "mundus")
-				$this->selectMundus = "selected";
-			elseif($option == "set")
-				$this->selectSet = "selected";
-			elseif($option == "passive")
-				$this->selectPassive = "selected";
-			elseif($option == "cp")
-				$this->selectCp= "selected";
-			elseif($option == "armorEnchant")
-				$this->selectArmorEnchant = "selected";
-			elseif($option == "weaponEnchant")
-				$this->selectWeaponEnchant = "selected";
-			elseif($option == "offHandEnchant")
-				$this->selectOffHandEnchant = "selected";
-			elseif($option == "abilityDesc")
-				$this->selectAbilityDesc = "selected";
-			elseif($option == "")
-				$this->selectEmpty = "selected";
-			*/
+		$output->addHTML("</select><br>");
 
 	}
 
@@ -1280,8 +1260,49 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<h3>Edit Effect: $effectId</h3>");
 		$output->addHTML("<form action='$baselink/saveediteffectform?effectid=$effectId&ruleid=$ruleId' method='POST'>");
 
-		$output->addHTML("<label for='edit_version'>version: </label>");
-		$output->addHTML("<input type='text' id='edit_version' name='edit_version' value='$version'><br>");
+		$ruleVersionOptions=[
+			'1' => '1',
+			'2' => '2',
+			'3' => '3',
+			'4' => '4',
+			'5' => '5',
+			'6' => '6',
+			'7' => '7',
+			'8' => '8',
+			'9' => '9',
+			'10' => '10',
+			'11' => '11',
+			'12' => '12',
+			'13' => '13',
+			'14' => '14',
+			'15' => '15',
+			'16' => '16',
+			'17' => '17',
+			'18' => '18',
+			'19' => '19',
+			'20' => '20',
+			'21' => '21',
+			'22' => '22',
+			'23' => '23',
+			'24' => '24',
+			'25' => '25',
+			'26' => '26',
+			'27' => '27',
+			'28' => '28',
+			'29' => '29',
+			'30' => '30',
+			'31' => '31',
+			'32' => '32',
+			'33' => '33',
+			'34' => '34',
+			'35' => '35',
+			'36' => '36'
+		];
+
+
+		$output->addHTML("<label for='edit_version'>Version: </label>");
+		$this->OutputLists($version, $ruleVersionOptions, 'edit_version');
+
 		$output->addHTML("<label for='edit_statId'>statId: </label>");
 		$output->addHTML("<input type='text' id='edit_statId' name='edit_statId' value='$statId'><br>");
 		$output->addHTML("<label for='edit_value'>value: </label>");
@@ -1588,8 +1609,50 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<a href='$baselink/showcomputedstats'>Go Back To ComputedStats Table</a><br>");
 		$output->addHTML("<h3>Edit ComputedStat: $statId</h3>");
 		$output->addHTML("<form action='$baselink/saveeditcomputedstatsform?statid=$statId' method='POST'>");
-		$output->addHTML("<label for='edit_version'>version: </label>");
-		$output->addHTML("<input type='text' id='edit_version' name='edit_version' value='$version'><br>");
+
+		$ruleVersionOptions=[
+			'1' => '1',
+			'2' => '2',
+			'3' => '3',
+			'4' => '4',
+			'5' => '5',
+			'6' => '6',
+			'7' => '7',
+			'8' => '8',
+			'9' => '9',
+			'10' => '10',
+			'11' => '11',
+			'12' => '12',
+			'13' => '13',
+			'14' => '14',
+			'15' => '15',
+			'16' => '16',
+			'17' => '17',
+			'18' => '18',
+			'19' => '19',
+			'20' => '20',
+			'21' => '21',
+			'22' => '22',
+			'23' => '23',
+			'24' => '24',
+			'25' => '25',
+			'26' => '26',
+			'27' => '27',
+			'28' => '28',
+			'29' => '29',
+			'30' => '30',
+			'31' => '31',
+			'32' => '32',
+			'33' => '33',
+			'34' => '34',
+			'35' => '35',
+			'36' => '36'
+		];
+
+
+		$output->addHTML("<label for='edit_version'>Version: </label>");
+		$this->OutputLists($version, $ruleVersionOptions, 'edit_version');
+
 		$output->addHTML("<label for='edit_roundNum'>roundNum: </label>");
 		$output->addHTML("<input type='text' id='edit_roundNum' name='edit_roundNum' value='$roundNum'><br>");
 		$output->addHTML("<label for='edit_addClass'>addClass: </label>");
@@ -1604,8 +1667,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<input type='text' id='edit_deferLevel' name='edit_deferLevel' value='$deferLevel'><br>");
 		$output->addHTML("<label for='edit_display'>display: </label>");
 		$output->addHTML("<input type='text' id='edit_display' name='edit_display' value='$display'><br>");
+
 		$output->addHTML("<label for='edit_compute'>compute: </label>");
-		$output->addHTML("<input type='text' id='edit_compute' name='edit_compute' value='$compute'><br>");
+		$output->addHTML("<textarea id='edit_compute' name='edit_compute' rows='4' cols='50'>$compute</textarea><br>");
 
 		$output->addHTML("<br><input type='submit' value='Save Edits'>");
 		$output->addHTML("</form><br>");
