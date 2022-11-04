@@ -2,10 +2,18 @@ form label {
 	display: inline-block;
 	width: 200px;
 	text-align: right;
+	margin-right: 20px;
+	margin-top: 10px;
+	margin-bottom: 10px;
 }
 
 .txtArea{
 	display: inline-inline-block;
 	width: 50%;
 	vertical-align: top;
+}
+
+.btn {
+	border:1px solid black;
+	text-align: right;
 }
