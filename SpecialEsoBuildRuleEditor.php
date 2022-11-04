@@ -134,7 +134,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 								");
 
 			if ($computedStats_result === false) {
-				return $this->reportError("Error: failed to create computedStats table");
+				return $this->reportError("Error: failed to create computed Stats table");
 			}
 
 			$deleteRule_result = $this->db->query("CREATE TABLE IF NOT EXISTS rulesArchive (
@@ -195,7 +195,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 								");
 
 			if ($computedStats_result === false) {
-				return $this->reportError("Error: failed to create computedStats table");
+				return $this->reportError("Error: failed to create computed Stats table");
 			}
 
 			return true;
@@ -666,17 +666,19 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<label for='edit_version'>Version: </label>");
 			$this->OutputLists($version, $ruleVersionOptions, 'edit_version');
 
-			$output->addHTML("<label for='edit_icon'>Icon: </label>");
-			$output->addHTML("<input type='text' id='edit_icon' name='edit_icon' value='$icon'><br>");
-			$output->addHTML("<label for='edit_groupName'>groupName: </label>");
+			$output->addHTML("<label for='edit_icon'>Icon </label>");
+			$output->addHTML("<input type='text' id='edit_icon' class='iconFld' name='edit_icon' value='$icon'><br>");
+			$output->addHTML("<label for='edit_groupName'>groupName </label>");
 			$output->addHTML("<input type='text' id='edit_groupName' name='edit_groupName' value='$groupName'><br>");
-			$output->addHTML("<label for='edit_maxTimes'>Maximum Times: </label>");
+			$output->addHTML("<label for='edit_maxTimes'>Maximum Times </label>");
 			$output->addHTML("<input type='text' id='edit_maxTimes' name='edit_maxTimes' value='$maxTimes'><br>");
-			$output->addHTML("<label for='edit_comment'>Comment: </label>");
+			$output->addHTML("<label for='edit_comment'>Comment </label>");
 			$output->addHTML("<input type='text' id='edit_comment' name='edit_comment' value='$comment'><br>");
-			$output->addHTML("<label for='edit_description'>Description: </label>");
-			$output->addHTML("<input type='text' id='edit_description' name='edit_description' value='$description'><br>");
-			$output->addHTML("<label for='edit_disableIds'>Disable IDs: </label>");
+
+			$output->addHTML("<label for='edit_description'>Description </label>");
+			$output->addHTML("<textarea id='edit_description' name='edit_description' class='txtArea' rows='4' cols='50'>$description</textarea><br>");
+
+			$output->addHTML("<label for='edit_disableIds'>Disable IDs </label>");
 			$output->addHTML("<input type='text' id='edit_disableIds' name='edit_disableIds' value='$disableIds'><br>");
 
 
@@ -1303,23 +1305,23 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<label for='edit_version'>Version: </label>");
 		$this->OutputLists($version, $ruleVersionOptions, 'edit_version');
 
-		$output->addHTML("<label for='edit_statId'>statId: </label>");
+		$output->addHTML("<label for='edit_statId'>statId </label>");
 		$output->addHTML("<input type='text' id='edit_statId' name='edit_statId' value='$statId'><br>");
-		$output->addHTML("<label for='edit_value'>value: </label>");
+		$output->addHTML("<label for='edit_value'>value </label>");
 		$output->addHTML("<input type='text' id='edit_value' name='edit_value' value='$value'><br>");
-		$output->addHTML("<label for='edit_display'>display: </label>");
+		$output->addHTML("<label for='edit_display'>display </label>");
 		$output->addHTML("<input type='text' id='edit_display' name='edit_display' value='$display'><br>");
-		$output->addHTML("<label for='edit_category'>category: </label>");
+		$output->addHTML("<label for='edit_category'>category </label>");
 		$output->addHTML("<input type='text' id='edit_category' name='edit_category' value='$category'><br>");
-		$output->addHTML("<label for='edit_combineAs'>combineAs: </label>");
+		$output->addHTML("<label for='edit_combineAs'>combineAs </label>");
 		$output->addHTML("<input type='text' id='edit_combineAs' name='edit_combineAs' value='$combineAs'><br>");
-		$output->addHTML("<label for='edit_round'>round: </label>");
+		$output->addHTML("<label for='edit_round'>round </label>");
 		$output->addHTML("<input type='text' id='edit_round' name='edit_round' value='$round'><br>");
-		$output->addHTML("<label for='edit_factorValue'>factorValue: </label>");
+		$output->addHTML("<label for='edit_factorValue'>factorValue </label>");
 		$output->addHTML("<input type='text' id='edit_factorValue' name='edit_factorValue' value='$factorValue'><br>");
-		$output->addHTML("<label for='edit_statDesc'>statDesc: </label>");
+		$output->addHTML("<label for='edit_statDesc'>statDesc </label>");
 		$output->addHTML("<input type='text' id='edit_statDesc' name='edit_statDesc' value='$statDesc'><br>");
-		$output->addHTML("<label for='edit_buffId'>buffId: </label>");
+		$output->addHTML("<label for='edit_buffId'>buffId </label>");
 		$output->addHTML("<input type='text' id='edit_buffId' name='edit_buffId' value='$buffId'><br>");
 
 		$output->addHTML("<br><input type='submit' value='Save Edits'>");
@@ -1403,7 +1405,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$computedStats_result = $this->db->query($query);
 
 		if ($computedStats_result === false) {
-			return $this->reportError("Error: failed to load computedStats from database");
+			return $this->reportError("Error: failed to load computed Stats from database");
 		}
 
 		$this->computedStatsDatas = [];
@@ -1481,7 +1483,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 		$baselink = $this->GetBaseLink();
 
-		$output->addHTML("<h3>Add New computedStat</h3>");
+		$output->addHTML("<h3>Add New computed Stat</h3>");
 		$output->addHTML("<form action='$baselink/savenewcomputedstat' method='POST'>");
 
 		$output->addHTML("<label for='version'>version: </label>");
@@ -1503,7 +1505,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<label for='compute'>compute: </label>");
 		$output->addHTML("<input type='text' id='compute' name='compute'><br>");
 
-		$output->addHTML("<br><input type='submit' value='Save computedStat'>");
+		$output->addHTML("<br><input type='submit' value='Save computed Stat'>");
 		$output->addHTML("</form>");
 	}
 
@@ -1558,7 +1560,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			return $this->reportError("Error: failed to INSERT into database");
 		}
 
-		$output->addHTML("<p>New computedStat added</p><br>");
+		$output->addHTML("<p>New computed Stat added</p><br>");
 		$output->addHTML("<a href='$baselink'>Home</a>");
 	}
 
@@ -1569,7 +1571,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$computedStats_result = $this->db->query($query);
 
 		if ($computedStats_result === false) {
-			return $this->reportError("Error: failed to load computedStat from database");
+			return $this->reportError("Error: failed to load computed Stat from database");
 		}
 
 		$row=[];
@@ -1606,8 +1608,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$compute = $this->escapeHtml($this->computedStat['compute']);
 
 
-		$output->addHTML("<a href='$baselink/showcomputedstats'>Go Back To ComputedStats Table</a><br>");
-		$output->addHTML("<h3>Edit ComputedStat: $statId</h3>");
+		$output->addHTML("<a href='$baselink/showcomputedstats'>Go Back To Computed Stats Table</a><br>");
+		$output->addHTML("<h3>Edit Computed Stat: $statId</h3>");
 		$output->addHTML("<form action='$baselink/saveeditcomputedstatsform?statid=$statId' method='POST'>");
 
 		$ruleVersionOptions=[
@@ -1653,22 +1655,22 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<label for='edit_version'>Version: </label>");
 		$this->OutputLists($version, $ruleVersionOptions, 'edit_version');
 
-		$output->addHTML("<label for='edit_roundNum'>roundNum: </label>");
+		$output->addHTML("<label for='edit_roundNum'>roundNum </label>");
 		$output->addHTML("<input type='text' id='edit_roundNum' name='edit_roundNum' value='$roundNum'><br>");
-		$output->addHTML("<label for='edit_addClass'>addClass: </label>");
+		$output->addHTML("<label for='edit_addClass'>addClass </label>");
 		$output->addHTML("<input type='text' id='edit_addClass' name='edit_addClass' value='$addClass'><br>");
-		$output->addHTML("<label for='edit_comment'>comment: </label>");
+		$output->addHTML("<label for='edit_comment'>comment </label>");
 		$output->addHTML("<input type='text' id='edit_comment' name='edit_comment' value='$comment'><br>");
-		$output->addHTML("<label for='edit_minimumValue'>minimumValue: </label>");
+		$output->addHTML("<label for='edit_minimumValue'>minimumValue </label>");
 		$output->addHTML("<input type='text' id='edit_minimumValue' name='edit_minimumValue' value='$minimumValue'><br>");
-		$output->addHTML("<label for='edit_maximumValue'>maximumValue: </label>");
+		$output->addHTML("<label for='edit_maximumValue'>maximumValue </label>");
 		$output->addHTML("<input type='text' id='edit_maximumValue' name='edit_maximumValue' value='$maximumValue'><br>");
-		$output->addHTML("<label for='edit_deferLevel'>deferLevel: </label>");
+		$output->addHTML("<label for='edit_deferLevel'>deferLevel </label>");
 		$output->addHTML("<input type='text' id='edit_deferLevel' name='edit_deferLevel' value='$deferLevel'><br>");
-		$output->addHTML("<label for='edit_display'>display: </label>");
+		$output->addHTML("<label for='edit_display'>display </label>");
 		$output->addHTML("<input type='text' id='edit_display' name='edit_display' value='$display'><br>");
 
-		$output->addHTML("<label for='edit_compute'>compute: </label>");
+		$output->addHTML("<label for='edit_compute'>compute </label>");
 		$output->addHTML("<textarea id='edit_compute' name='edit_compute' class='txtArea' rows='4' cols='50'>$compute</textarea><br>");
 
 		$output->addHTML("<br><input class='btn' type='submit' value='Save Edits'>");
@@ -1686,7 +1688,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$statId = $this->escapeHtml($statId);
 
 		if ($statId <= 0) {
-			return $this->reportError("Error: invalid computedStat ID");
+			return $this->reportError("Error: invalid computed Stat ID");
 		}
 
 		$new_version = $req->getVal('edit_version');
@@ -1721,7 +1723,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			return $this->reportError("Error: failed to UPDATE data in database");
 		}
 
-		$output->addHTML("<p>Edits saved for computedStat #$statId</p><br>");
+		$output->addHTML("<p>Edits saved for computed Stat #$statId</p><br>");
 		$output->addHTML("<a href='$baselink'>Home</a>");
 
 	}
@@ -1757,7 +1759,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$display = $this->escapeHtml($this->computedStat['display']);
 		$compute = $this->escapeHtml($this->computedStat['compute']);
 
-		$output->addHTML("<h3>Are you sure you want to delete this computedStat: </h3>");
+		$output->addHTML("<h3>Are you sure you want to delete this computed Stat: </h3>");
 		$output->addHTML("<label><b>id:</b> $statId </label><br>");
 		$output->addHTML("<label><b>version:</b> $version </label><br>");
 		$output->addHTML("<label><b>roundNum:</b> $roundNum </label><br>");
@@ -1835,7 +1837,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 				return $this->reportError("Error: failed to DELETE rule from database");
 			}
 
-			$output->addHTML("<p>computedStat deleted</p><br>");
+			$output->addHTML("<p>computed Stat deleted</p><br>");
 			$output->addHTML("<a href='$baselink'>Home</a>");
 
 		}
@@ -1855,8 +1857,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<li><a href='$baselink/showrules'>Show Rules</a></li>");
 		$output->addHTML("<li><a href='$baselink/addrule'>Add Rule</a></li>");
 		$output->addHTML("<br>");
-		$output->addHTML("<li><a href='$baselink/showcomputedstats'>Show ComputedStats</a></li>");
-		$output->addHTML("<li><a href='$baselink/addcomputedstat'>Add ComputedStat</a></li>");
+		$output->addHTML("<li><a href='$baselink/showcomputedstats'>Show Computed Stats</a></li>");
+		$output->addHTML("<li><a href='$baselink/addcomputedstat'>Add Computed Stat</a></li>");
 		$output->addHTML("</ul>");
 	}
 

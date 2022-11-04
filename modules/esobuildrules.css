@@ -17,3 +17,7 @@ form label {
 	border:1px solid black;
 	text-align: right;
 }
+
+.iconFld{
+	width: 60%
+}
