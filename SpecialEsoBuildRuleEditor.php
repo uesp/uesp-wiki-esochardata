@@ -527,8 +527,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 	}
 
-
-
 	public function LoadRule($primaryKey)
 	{
 			$primaryKey = $this->escapeHtml($primaryKey);
@@ -589,21 +587,47 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<h3>Edit Rule: $id</h3>");
 			$output->addHTML("<form action='$baselink/saveeditruleform?ruleid=$id' method='POST'>");
 
-			$this->GetSelectedOption($ruleType);
+			$ruleTypeOptions=[
+				'empty' => '',
+				'buff' => '',
+				'mundus' => '',
+				'set' => '',
+				'active' => '',
+				'passive' => '',
+				'cp' => 'test',
+				'armorEnchant' => '',
+				'weaponEnchant' => '',
+				'offHandEnchant' => '',
+				'abilityDesc' => ''
+      ];
+
+			$newArray = $this->GetSelectedOption($ruleType, $ruleTypeOptions);
+
+			$emptyOption = $newArray["empty"];
+			$buffOption = $newArray["buff"];
+			$mundusOption = $newArray["mundus"];
+			$setOption = $newArray["set"];
+			$activeOption = $newArray["active"];
+			$passiveOption = $newArray["passive"];
+			$cpOption = $newArray["cp"];
+			$armorEnchantOption = $newArray["armorEnchant"];
+			$weaponEnchantOption = $newArray["weaponEnchant"];
+			$offHandEnchantOption = $newArray["offHandEnchant"];
+			$abilityDescOption = $newArray["abilityDesc"];
 
 			$output->addHTML("<label for='edit_ruleType'>Rule Type: </label>");
 			$output->addHTML("<select id='edit_ruleType' name='edit_ruleType'>");
-			$output->addHTML("<option value='' $this->selectEmpty></option>");
-			$output->addHTML("<option value='buff' $this->selectBuff>buff</option>");
-			$output->addHTML("<option value='mundus' $this->selectMundus>mundus</option>");
-			$output->addHTML("<option value='set' $this->selectSet>set</option>");
-			$output->addHTML("<option value='active' $this->selectActive>active</option>");
-			$output->addHTML("<option value='passive' $this->selectPassive>passive</option>");
-			$output->addHTML("<option value='cp' $this->selectCp>cp</option>");
-			$output->addHTML("<option value='armorEnchant' $this->selectArmorEnchant>armorEnchant</option>");
-			$output->addHTML("<option value='weaponEnchant' $this->selectWeaponEnchant>weaponEnchant</option>");
-			$output->addHTML("<option value='offHandEnchant' $this->selectOffHandEnchant>offHandEnchant</option>");
-			$output->addHTML("<option value='abilityDesc' $this->selectAbilityDesc>abilityDesc</option>");
+			$output->addHTML("<option value='' $emptyOption></option>");
+			$output->addHTML("<option value='buff' $buffOption>buff</option>");
+			$output->addHTML("<option value='mundus' $mundusOption>mundus</option>");
+			$output->addHTML("<option value='set' $setOption>set</option>");
+			$output->addHTML("<option value='active' $activeOption>active</option>");
+			$output->addHTML("<option value='passive'$passiveOption>passive</option>");
+			$output->addHTML("<option value='cp' $cpOption>cp</option>");
+			$output->addHTML("<option value='armorEnchant' $armorEnchantOption>armorEnchant</option>");
+			$output->addHTML("<option value='weaponEnchant' $weaponEnchantOption>weaponEnchant</option>");
+			$output->addHTML("<option value='offHandEnchant' $offHandEnchantOption>offHandEnchant</option>");
+			$output->addHTML("<option value='abilityDesc' $abilityDescOption>abilityDesc</option>");
 			$output->addHTML("</select><br>");
 
 			$output->addHTML("<label for='edit_nameId'>Name ID: </label>");
@@ -757,8 +781,23 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 	}
 
 
-	public function GetSelectedOption ($option)
+	public function GetSelectedOption ($option, $array)
 	{
+		$names = array_keys($array);
+		$numOfDatas = count($names);
+		$selected = "";
+
+		for($i = 0; $i<$numOfDatas; $i++)
+		{
+		if ($names[$i] == $option)
+				$selected = $names[$i];
+		}
+
+		$array[$selected] = "selected";
+
+		return $array;
+
+			/*
 			$this->selectBuff = "";
 			$this->selectMundus = "";
 			$this->selectSet = "";
@@ -791,6 +830,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 				$this->selectAbilityDesc = "selected";
 			elseif($option == "")
 				$this->selectEmpty = "selected";
+			*/
 
 	}
 
