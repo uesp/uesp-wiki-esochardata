@@ -175,6 +175,32 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 				return $this->reportError("Error: failed to create rules archive table");
 			}
 
+			$deletedEffects_result = $this->db->query("CREATE TABLE IF NOT EXISTS effectsArchive (
+													archiveId INTEGER AUTO_INCREMENT NOT NULL,
+													effectId INTEGER NOT NULL,
+													ruleId INTEGER NOT NULL,
+													version TINYTEXT NOT NULL,
+													statId TINYTEXT NOT NULL,
+													value TINYTEXT,
+													display TINYTEXT,
+													category TINYTEXT,
+													combineAs TINYTEXT,
+													roundNum TINYTEXT,
+													factorValue FLOAT,
+													statDesc TINYTEXT,
+													buffId TINYTEXT,
+													PRIMARY KEY (archiveId),
+													INDEX index_ruleId(ruleId),
+													INDEX index_stat(statId(32)),
+													INDEX index_version(version(10))
+											);
+
+									 ");
+
+			if ($deletedEffects_result === false) {
+				return $this->reportError("Error: failed to create effects archive table");
+			}
+
 			$DeletedcomputedStats_result = $this->db->query("CREATE TABLE IF NOT EXISTS computedStatsArchives (
                         id INTEGER AUTO_INCREMENT NOT NULL,
 												statId INTEGER NOT NULL,
@@ -343,6 +369,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 		$this->LoadRule($id);
 
+		if ($this->LoadRule($id) == False){
+			return $this->reportError("Error: cannot load Rule");
+		}
+
 		$ruleType = $this->escapeHtml($this->rule['ruleType']);
 		$nameId = $this->escapeHtml($this->rule['nameId']);
 		$displayName = $this->escapeHtml($this->rule['displayName']);
@@ -405,13 +435,12 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 		$confirm = $req->getVal('confirm');
 		$id = $this->GetRowId();
-		$id = $this->escapeHtml($id);
 
 		if ($id <= 0) {
 			return $this->reportError("Error: invalid rule ID");
 		}
 
-		if ($confirm == 'False')
+		if ($confirm !== 'True')
 		{
 			$output->addHTML("<p>Delete cancelled</p><br>");
 			$output->addHTML("<a href='$baselink'>Home</a>");
@@ -512,6 +541,54 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 				return $this->reportError("Error: failed to DELETE rule from database");
 			}
 
+			$this->loadEffects();
+			foreach ($this->effectsDatas as $effectsData) {
+
+				$effectId = $this->escapeHtml($effectsData['effectId']);
+				$version = $this->escapeHtml($effectsData['version']);
+				$statId = $this->escapeHtml($effectsData['statId']);
+				$value = $this->escapeHtml($effectsData['value']);
+				$display = $this->escapeHtml($effectsData['display']);
+				$category = $this->escapeHtml($effectsData['category']);
+				$combineAs = $this->escapeHtml($effectsData['combineAs']);
+				$roundNum = $this->escapeHtml($effectsData['roundNum']);
+				$factorValue = $this->escapeHtml($effectsData['factorValue']);
+				$statDesc = $this->escapeHtml($effectsData['statDesc']);
+				$buffId = $this->escapeHtml($effectsData['buffId']);
+
+				$cols = [];
+				$values = [];
+				$cols[] = 'effectId';
+				$cols[] = 'ruleId';
+				$cols[] = 'version';
+				$cols[] = 'statId';
+				$cols[] = 'value';
+				$cols[] = 'display';
+				$cols[] = 'category';
+				$cols[] = 'combineAs';
+				$cols[] = 'roundNum';
+				$cols[] = 'factorValue';
+				$cols[] = 'statDesc';
+				$cols[] = 'buffId';
+
+				$values[] = "'" . $this->db->real_escape_string($effectId) . "'";
+				$values[] = "'" . $this->db->real_escape_string($id) . "'";
+				$values[] = "'" . $this->db->real_escape_string($version) . "'";
+				$values[] = "'" . $this->db->real_escape_string($statId) . "'";
+				$values[] = "'" . $this->db->real_escape_string($value) . "'";
+				$values[] = "'" . $this->db->real_escape_string($display) . "'";
+				$values[] = "'" . $this->db->real_escape_string($category) . "'";
+				$values[] = "'" . $this->db->real_escape_string($combineAs) . "'";
+				$values[] = "'" . $this->db->real_escape_string($roundNum) . "'";
+				$values[] = "'" . $this->db->real_escape_string($factorValue) . "'";
+				$values[] = "'" . $this->db->real_escape_string($statDesc) . "'";
+				$values[] = "'" . $this->db->real_escape_string($buffId) . "'";
+
+				$cols = implode(',', $cols);
+				$values = implode(',', $values);
+				$insert_query = "INSERT INTO effectsArchive($cols) VALUES($values);";
+			}
+
 			$deleteEffects_query = "DELETE FROM effects WHERE ruleId=$id;";
 			$deleteEffects_result = $this->db->query($deleteEffects_query);
 
@@ -529,7 +606,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 	public function LoadRule($primaryKey)
 	{
-			$primaryKey = $this->escapeHtml($primaryKey);
+			$primaryKey = $this->db->real_escape_string($primaryKey);
 			$query = "SELECT * FROM rules WHERE id= '$primaryKey';";
 			$result = $this->db->query($query);
 
@@ -944,7 +1021,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$req = $this->getRequest();
 
 			$id = $this->GetRowId();
-			$id = $this->escapeHtml($id);
+			$id = $this->real_escape_string($id);
 
 			if ($id <= 0) {
 				return $this->reportError("Error: invalid rule ID");
@@ -1041,7 +1118,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 	{
 
 		$id = $this->GetRowId();
-		$id = $this->escapeHtml($id);
+		$id = $this->db->real_escape_string($id);
 		$query = "SELECT * FROM effects where ruleId =$id;";
 		$effects_result = $this->db->query($query);
 
@@ -1227,7 +1304,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
   public function loadEffect($effectId) {
 
-	   $effectId = $this->escapeHtml($effectId);
+	   $effectId = $this->db->real_escape_string($effectId);
 		 $query = "SELECT * FROM effects WHERE effectId = '$effectId';";
 		 $effects_result = $this->db->query($query);
 
@@ -1359,7 +1436,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$ruleId = $this->GetRowId();
 		$effectId = $req->getVal('effectid');
 
-		$effectId = $this->escapeHtml($effectId);
+		$effectId = $this->db->real_escape_string($effectId);
 
 		if ($effectId <= 0) {
 			return $this->reportError("Error: invalid effect ID");
@@ -1588,7 +1665,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 	public function LoadComputedStat($primaryKey)
 	{
-		$primaryKey = $this->escapeHtml($primaryKey);
+		$primaryKey = $this->db->real_escape_string($primaryKey);
 		$query = "SELECT * FROM computedStats WHERE statId= '$primaryKey';";
 		$computedStats_result = $this->db->query($query);
 
@@ -1707,7 +1784,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$req = $this->getRequest();
 
 		$statId = $req->getVal('statid');
-		$statId = $this->escapeHtml($statId);
+		$statId = $this->db->real_escape_string($statId);
 
 		if ($statId <= 0) {
 			return $this->reportError("Error: invalid computed Stat ID");
