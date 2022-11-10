@@ -240,6 +240,50 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			return true;
 	}
 
+	public function versions()
+	{
+		$versionOptions=[
+			'1' => '1',
+			'2' => '2',
+			'3' => '3',
+			'4' => '4',
+			'5' => '5',
+			'6' => '6',
+			'7' => '7',
+			'8' => '8',
+			'9' => '9',
+			'10' => '10',
+			'11' => '11',
+			'12' => '12',
+			'13' => '13',
+			'14' => '14',
+			'15' => '15',
+			'16' => '16',
+			'17' => '17',
+			'18' => '18',
+			'19' => '19',
+			'20' => '20',
+			'21' => '21',
+			'22' => '22',
+			'23' => '23',
+			'24' => '24',
+			'25' => '25',
+			'26' => '26',
+			'27' => '27',
+			'28' => '28',
+			'29' => '29',
+			'30' => '30',
+			'31' => '31',
+			'32' => '32',
+			'33' => '33',
+			'34' => '34',
+			'35' => '35',
+			'36' => '36'
+		];
+
+		return $versionOptions;
+	}
+
 
 	public function LoadRules()
 	{
@@ -699,46 +743,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<label for='edit_originalId'>Original ID: </label>");
 			$output->addHTML("<input type='text' id='edit_originalId' name='edit_originalId' value='$originalId'><br>");
 
-
-			$ruleVersionOptions=[
-				'1' => '1',
-				'2' => '2',
-				'3' => '3',
-				'4' => '4',
-				'5' => '5',
-				'6' => '6',
-				'7' => '7',
-				'8' => '8',
-				'9' => '9',
-				'10' => '10',
-				'11' => '11',
-				'12' => '12',
-				'13' => '13',
-				'14' => '14',
-				'15' => '15',
-				'16' => '16',
-				'17' => '17',
-				'18' => '18',
-				'19' => '19',
-				'20' => '20',
-				'21' => '21',
-				'22' => '22',
-				'23' => '23',
-				'24' => '24',
-				'25' => '25',
-				'26' => '26',
-				'27' => '27',
-				'28' => '28',
-				'29' => '29',
-				'30' => '30',
-				'31' => '31',
-				'32' => '32',
-				'33' => '33',
-				'34' => '34',
-				'35' => '35',
-				'36' => '36'
-      ];
-
+			$ruleVersionOptions = $this->versions();
 
 			$output->addHTML("<label for='edit_version'>Version: </label>");
 			$this->OutputLists($version, $ruleVersionOptions, 'edit_version');
@@ -793,6 +798,11 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 	public function OutputAddRuleForm()
 	{
+			$permission = $this->canUserEdit();
+
+			if($permission === False) {
+				return $this->reportError("Error: you have no permission to add rules");
+			}
 			$output = $this->getOutput();
 
 			$baselink = $this->GetBaseLink();
@@ -1021,7 +1031,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$req = $this->getRequest();
 
 			$id = $this->GetRowId();
-			$id = $this->real_escape_string($id);
+			$id = $this->db->real_escape_string($id);
 
 			if ($id <= 0) {
 				return $this->reportError("Error: invalid rule ID");
@@ -1261,6 +1271,11 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
   public function OutpuAddtEffectForm()
 	{
+		$permission = $this->canUserEdit();
+
+		if($permission === False) {
+			return $this->reportError("Error: you have no permission to add effects");
+		}
 
 		$output = $this->getOutput();
 		$baselink = $this->GetBaseLink();
@@ -1351,48 +1366,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<h3>Edit Effect: $effectId</h3>");
 		$output->addHTML("<form action='$baselink/saveediteffectform?effectid=$effectId&ruleid=$ruleId' method='POST'>");
 
-		$ruleVersionOptions=[
-			'1' => '1',
-			'2' => '2',
-			'3' => '3',
-			'4' => '4',
-			'5' => '5',
-			'6' => '6',
-			'7' => '7',
-			'8' => '8',
-			'9' => '9',
-			'10' => '10',
-			'11' => '11',
-			'12' => '12',
-			'13' => '13',
-			'14' => '14',
-			'15' => '15',
-			'16' => '16',
-			'17' => '17',
-			'18' => '18',
-			'19' => '19',
-			'20' => '20',
-			'21' => '21',
-			'22' => '22',
-			'23' => '23',
-			'24' => '24',
-			'25' => '25',
-			'26' => '26',
-			'27' => '27',
-			'28' => '28',
-			'29' => '29',
-			'30' => '30',
-			'31' => '31',
-			'32' => '32',
-			'33' => '33',
-			'34' => '34',
-			'35' => '35',
-			'36' => '36'
-		];
-
+		$effectVersionOptions = $this->versions();
 
 		$output->addHTML("<label for='edit_version'>Version: </label>");
-		$this->OutputLists($version, $ruleVersionOptions, 'edit_version');
+		$this->OutputLists($version, $effectVersionOptions, 'edit_version');
 
 		$output->addHTML("<label for='edit_statId'>statId </label>");
 		$output->addHTML("<input type='text' id='edit_statId' name='edit_statId' value='$statId'><br>");
@@ -1578,6 +1555,11 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 	public function OutputAddComputedStatsForm()
 	{
+		$permission = $this->canUserEdit();
+
+		if($permission === False) {
+			return $this->reportError("Error: you have no permission to add computed stats");
+		}
 		$output = $this->getOutput();
 
 		$baselink = $this->GetBaseLink();
@@ -1685,7 +1667,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$permission = $this->canUserEdit();
 
 		if($permission === False) {
-			return $this->reportError("Error: you have no permission to edit rules");
+			return $this->reportError("Error: you have no permission to edit computed stats");
 		}
 
 		$output = $this->getOutput();
@@ -1711,48 +1693,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<h3>Edit Computed Stat: $statId</h3>");
 		$output->addHTML("<form action='$baselink/saveeditcomputedstatsform?statid=$statId' method='POST'>");
 
-		$ruleVersionOptions=[
-			'1' => '1',
-			'2' => '2',
-			'3' => '3',
-			'4' => '4',
-			'5' => '5',
-			'6' => '6',
-			'7' => '7',
-			'8' => '8',
-			'9' => '9',
-			'10' => '10',
-			'11' => '11',
-			'12' => '12',
-			'13' => '13',
-			'14' => '14',
-			'15' => '15',
-			'16' => '16',
-			'17' => '17',
-			'18' => '18',
-			'19' => '19',
-			'20' => '20',
-			'21' => '21',
-			'22' => '22',
-			'23' => '23',
-			'24' => '24',
-			'25' => '25',
-			'26' => '26',
-			'27' => '27',
-			'28' => '28',
-			'29' => '29',
-			'30' => '30',
-			'31' => '31',
-			'32' => '32',
-			'33' => '33',
-			'34' => '34',
-			'35' => '35',
-			'36' => '36'
-		];
-
+		$statVersionOptions= $this->versions();
 
 		$output->addHTML("<label for='edit_version'>Version: </label>");
-		$this->OutputLists($version, $ruleVersionOptions, 'edit_version');
+		$this->OutputLists($version, $statVersionOptions, 'edit_version');
 
 		$output->addHTML("<label for='edit_roundNum'>roundNum </label>");
 		$output->addHTML("<input type='text' id='edit_roundNum' name='edit_roundNum' value='$roundNum'><br>");
