@@ -319,7 +319,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			return true;
 	}
 
-
 	public function OutputShowRulesTable()
 	{
 			$this->LoadRules();
@@ -1197,6 +1196,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<th>factorValue</th>");
 		$output->addHTML("<th>statDesc</th>");
 		$output->addHTML("<th>buffId</th>");
+		$output->addHTML("<th>Delete</th>");
 		$output->addHTML("</tr></thead><tbody>");
 
 		foreach ($this->effectsDatas as $effectsData) {
@@ -1226,9 +1226,142 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<td>$factorValue</td>");
 			$output->addHTML("<td>$statDesc</td>");
 			$output->addHTML("<td>$buffId</td>");
+			$output->addHTML("<td><a href='$baselink/deleteeffect?effectid=$effectId' >Delete</a></td>");
 		}
 
 		$output->addHTML("</table>");
+
+	}
+
+	public function OutputDeleteEffect()
+	{
+		$permission = $this->canUserEdit();
+
+		if($permission === False) {
+			return $this->reportError("Error: you have no permission to delete effects");
+		}
+
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
+		$this->loadEffects();
+		$req = $this->getRequest();
+
+		$id = $this->GetRowId();
+		$effectId = $req->getVal('effectid');
+
+		$this->loadEffect($effectId);
+
+		$version = $this->escapeHtml($this->effect['version']);
+		$statId = $this->escapeHtml($this->effect['statId']);
+		$value = $this->escapeHtml($this->effect['value']);
+		$display = $this->escapeHtml($this->effect['display']);
+		$category = $this->escapeHtml($this->effect['category']);
+		$combineAs = $this->escapeHtml($this->effect['combineAs']);
+		$round = $this->escapeHtml($this->effect['roundNum']);
+		$factorValue = $this->escapeHtml($this->effect['factorValue']);
+		$statDesc = $this->escapeHtml($this->effect['statDesc']);
+		$buffId = $this->escapeHtml($this->effect['buffId']);
+
+		$output->addHTML("<h3>Are you sure you want to delete this effect: </h3>");
+		$output->addHTML("<label><b>id:</b> $effectId </label><br>");
+		$output->addHTML("<label><b>version:</b> $version </label><br>");
+		$output->addHTML("<label><b>statId:</b> $statId </label><br>");
+		$output->addHTML("<label><b>value:</b> $value </label><br>");
+		$output->addHTML("<label><b>display:</b> $display </label><br>");
+		$output->addHTML("<label><b>category:</b> $category </label><br>");
+		$output->addHTML("<label><b>combineAs:</b> $combineAs </label><br>");
+		$output->addHTML("<label><b>round:</b> $round </label><br>");
+		$output->addHTML("<label><b>factorValue:</b> $factorValue </label><br>");
+		$output->addHTML("<label><b>statDesc:</b> $statDesc </label><br>");
+		$output->addHTML("<label><b>buffId:</b> $buffId </label><br>");
+
+		$output->addHTML("<br><a href='$baselink/effectdeleteconfirm?ruleid=$id&effectid=$effectId&confirm=True'>Delete </a>");
+		$output->addHTML("<a href='$baselink/effectdeleteconfirm?effectid=$effectId&confirm=False'> Cancel</a>");
+	}
+
+	public function ConfirmDeleteEffect()
+	{
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
+		$req = $this->getRequest();
+
+		$confirm = $req->getVal('confirm');
+		$effectId = $req->getVal('effectid');
+		$id = $this->GetRowId();
+
+		if ($statId <= 0) {
+			return $this->reportError("Error: invalid stat ID");
+		}
+
+		if ($confirm !== 'True')
+		{
+			$output->addHTML("<p>Delete cancelled</p><br>");
+			$output->addHTML("<a href='$baselink'>Home</a>");
+		}
+		else
+		{
+			$this->loadEffect($effectId);
+
+			$version = $this->escapeHtml($this->effect['version']);
+			$statId = $this->escapeHtml($this->effect['statId']);
+			$value = $this->escapeHtml($this->effect['value']);
+			$display = $this->escapeHtml($this->effect['display']);
+			$category = $this->escapeHtml($this->effect['category']);
+			$combineAs = $this->escapeHtml($this->effect['combineAs']);
+			$round = $this->escapeHtml($this->effect['roundNum']);
+			$factorValue = $this->escapeHtml($this->effect['factorValue']);
+			$statDesc = $this->escapeHtml($this->effect['statDesc']);
+			$buffId = $this->escapeHtml($this->effect['buffId']);
+
+			$cols = [];
+			$values = [];
+			$cols[] = 'ruleId';
+			$cols[] = 'version';
+			$cols[] = 'statId';
+			$cols[] = 'value';
+			$cols[] = 'display';
+			$cols[] = 'category';
+			$cols[] = 'combineAs';
+			$cols[] = 'roundNum';
+			$cols[] = 'factorValue';
+			$cols[] = 'statDesc';
+			$cols[] = 'buffId';
+
+			$values[] = "'" . $this->db->real_escape_string($id). "'";
+			$values[] = "'" . $this->db->real_escape_string($version). "'";
+			$values[] = "'" . $this->db->real_escape_string($statId). "'";
+			$values[] = "'" . $this->db->real_escape_string($value). "'";
+			$values[] = "'" . $this->db->real_escape_string($display). "'";
+			$values[] = "'" . $this->db->real_escape_string($category). "'";
+			$values[] = "'" . $this->db->real_escape_string($combineAs). "'";
+			$values[] = "'" . $this->db->real_escape_string($round). "'";
+			$values[] = "'" . $this->db->real_escape_string($factorValue). "'";
+			$values[] = "'" . $this->db->real_escape_string($statDesc). "'";
+			$values[] = "'" . $this->db->real_escape_string($buffId). "'";
+
+			$cols = implode(',', $cols);
+			$values = implode(',', $values);
+			$insert_query = "INSERT INTO effectsArchive($cols) VALUES($values);";
+
+
+			$insert_result = $this->db->query($insert_query);
+
+			if ($insert_result === false) {
+				return $this->reportError("Error: failed to INSERT into database");
+			}
+
+			$delete_query = "DELETE FROM effects WHERE ruleId=$id;";
+			$delete_result = $this->db->query($delete_query);
+
+			if ($delete_result === false) {
+				return $this->reportError("Error: failed to DELETE effects from database");
+			}
+
+			$output->addHTML("<p>Effect deleted</p><br>");
+			$output->addHTML("<a href='$baselink'>Home</a>");
+
+
+		}
 
 	}
 
@@ -1339,7 +1472,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("</form>");
 	}
 
-  public function loadEffect($effectId) {
+  public function loadEffect($effectId)
+	{
 
 	   $effectId = $this->db->real_escape_string($effectId);
 		 $query = "SELECT * FROM effects WHERE effectId = '$effectId';";
@@ -1418,7 +1552,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("</form><br>");
 	}
 
-	public function SaveEditEffectForm() {
+	public function SaveEditEffectForm()
+	{
 
 		$output = $this->getOutput();
 		$baselink = $this->GetBaseLink();
@@ -1474,7 +1609,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 	}
 
-	public function GetEffectId() {
+	public function GetEffectId()
+	{
 
 		$req = $this->getRequest();
 		$effectId = $req->getVal('effectid');
@@ -1602,7 +1738,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<br><input type='submit' value='Save computed Stat'>");
 		$output->addHTML("</form>");
 	}
-
 
 	public function SaveNewComputedStat()
 	{
@@ -1828,7 +1963,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<label><b>compute:</b> $compute </label><br>");
 
 		$output->addHTML("<br><a href='$baselink/statdeleteconfirm?statid=$statId&confirm=True'>Delete </a>");
-		$output->addHTML("<a href='$baselink/ruledeleteconfirm?statid=$statId&confirm=False'> Cancel</a>");
+		$output->addHTML("<a href='$baselink/statdeleteconfirm?statid=$statId&confirm=False'> Cancel</a>");
 	}
 
 	public function ConfirmDeleteStat()
@@ -1839,13 +1974,12 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 		$confirm = $req->getVal('confirm');
 		$statId = $req->getVal('statid');
-		$statId = $this->escapeHtml($statId);
 
 		if ($statId <= 0) {
 			return $this->reportError("Error: invalid stat ID");
 		}
 
-		if ($confirm == 'False')
+		if ($confirm !== 'True')
 		{
 			$output->addHTML("<p>Delete cancelled</p><br>");
 			$output->addHTML("<a href='$baselink'>Home</a>");
@@ -1970,6 +2104,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$this->OutputDeleteComputedStat();
 		elseif($parameter == "statdeleteconfirm")
 			$this->ConfirmDeleteStat();
+		elseif($parameter == "deleteeffect")
+			$this->OutputDeleteEffect();
+		elseif($parameter == "effectdeleteconfirm")
+			$this->ConfirmDeleteEffect();
 		else
 			$this->OutputTableOfContents();
 	}
