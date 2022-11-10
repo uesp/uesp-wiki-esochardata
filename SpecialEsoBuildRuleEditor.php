@@ -284,6 +284,21 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		return $versionOptions;
 	}
 
+	public function rounds()
+	{
+		$output = $this->getOutput();
+
+		$roundOptions=[
+			'' => 'None',
+			'floor' => 'Floor',
+			'floor10' => 'Floor10',
+			'floor2' => 'Floor2',
+			'ceil' => 'Ceil'
+      ];
+
+			$output->addHTML("<label for='round'>round </label>");
+			$this->OutputLists($round, $roundOptions, 'round');
+	}
 
 	public function LoadRules()
 	{
@@ -841,12 +856,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<label for='originalId'>Original ID: </label>");
 			$output->addHTML("<input type='text' id='originalId' name='originalId'><br>");
 
-			$output->addHTML("<label for='version'>Version: </label>");
-			$output->addHTML("<select id='version' name='version'>");
-			for($i = 1; $i<=36; $i++){
-				$output->addHTML("<option value='$i'>$i</option>");
-			}
-			$output->addHTML("</select><br>");
+			$this->OutputAddVersionList();
 
 			$output->addHTML("<label for='icon'>Icon: </label>");
 			$output->addHTML("<input type='text' id='icon' name='icon'><br>");
@@ -896,7 +906,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 	public function OutputLists($option, $array, $listName)
 	{
 		$output = $this->getOutput();
-		$numOfDatas = count($names);
 
 		$output->addHTML("<select id='$listName' name='$listName'>");
 		foreach ($array as $key => $value)
@@ -907,6 +916,21 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		}
 		$output->addHTML("</select><br>");
 
+	}
+
+	public function OutputAddVersionList()
+	{
+		$output = $this->getOutput();
+
+		$versionsArray = $this->versions();
+		$numOfDatas = count($versionsArray);
+
+		$output->addHTML("<label for='version'>version: </label>");
+		$output->addHTML("<select id='version' name='version'>");
+		for($i = 1; $i<=$numOfDatas; $i++){
+			$output->addHTML("<option value='$i'>$i</option>");
+		}
+		$output->addHTML("</select><br>");
 	}
 
 	public function GetBooleanDispaly ($boolValue)
@@ -1221,7 +1245,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$input_display = $req->getVal('display');
 		$input_category = $req->getVal('category');
 		$input_combineAs = $req->getVal('combineAs');
-		$input_round = $req->getVal('roundNum');
+		$input_round = $req->getVal('round');
 		$input_factorValue = $req->getVal('factorValue');
 		$input_statDesc = $req->getVal('statDesc');
 		$input_buffId = $req->getVal('buffId');
@@ -1264,8 +1288,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		}
 
 		$output->addHTML("<p>New effect added</p><br>");
-		$output->addHTML("<a href='$baselink/editrule?ruleid=$id'>Go Back to Effects Table</a><br>");
-		$output->addHTML("<a href='$baselink'>Home</a><br>");
+		$output->addHTML("<a href='$baselink'>Home : </a>");
+		$output->addHTML("<a href='$baselink/editrule?ruleid=$id'>Rule #$id</a>");
+
 
 	}
 
@@ -1282,16 +1307,11 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$id = $this->GetRowId();
 
 
-		$output->addHTML("<a href='$baselink/editrule?ruleid=$id'>Go Back to Effects Table</a>");
+		$output->addHTML("<a href='$baselink/editrule?ruleid=$id'>Rule #$id</a>");
 		$output->addHTML("<h3>Add New Effect For Rule: $id</h3>");
 		$output->addHTML("<form action='$baselink/savenewffect?ruleid=$id' method='POST'>");
 
-		$output->addHTML("<label for='version'>Version: </label>");
-		$output->addHTML("<select id='version' name='version'>");
-		for($i = 1; $i<=36; $i++){
-			$output->addHTML("<option value='$i'>$i</option>");
-		}
-		$output->addHTML("</select><br>");
+		$this->OutputAddVersionList();
 
 		$output->addHTML("<label for='statId'>statId: </label>");
 		$output->addHTML("<input type='text' id='statId' name='statId'><br>");
@@ -1303,8 +1323,13 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<input type='text' id='category' name='category'><br>");
 		$output->addHTML("<label for='combineAs'>combineAs: </label>");
 		$output->addHTML("<input type='text' id='combineAs' name='combineAs'><br>");
-		$output->addHTML("<label for='roundNum'>round: </label>");
-		$output->addHTML("<input type='text' id='roundNum' name='roundNum'><br>");
+
+
+		$roundOptions=$this->rounds();
+		$output->addHTML("<label for='round'>round </label>");
+		$this->OutputLists($round, $roundOptions, 'round');
+
+
 		$output->addHTML("<label for='factorValue'>factorValue: </label>");
 		$output->addHTML("<input type='text' id='factorValue' name='factorValue'><br>");
 		$output->addHTML("<label for='statDesc'>statDesc: </label>");
@@ -1382,14 +1407,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<label for='edit_combineAs'>combineAs </label>");
 		$output->addHTML("<input type='text' id='edit_combineAs' name='edit_combineAs' value='$combineAs'><br>");
 
-		//TODO: fix issue with round being a number
-		$roundOptions=[
-			'' => 'None',
-			'floor' => 'Floor',
-			'floor10' => 'Floor10',
-			'floor2' => 'Floor2',
-			'ceil' => 'Ceil'
-      ];
+		$roundOptions= $this->rounds();
 		$output->addHTML("<label for='edit_round'>round </label>");
 		$this->OutputLists($round, $roundOptions, 'edit_round');
 
@@ -1567,10 +1585,12 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<h3>Add New computed Stat</h3>");
 		$output->addHTML("<form action='$baselink/savenewcomputedstat' method='POST'>");
 
-		$output->addHTML("<label for='version'>version: </label>");
-		$output->addHTML("<input type='text' id='version' name='version'><br>");
-		$output->addHTML("<label for='roundNum'>round: </label>");
-		$output->addHTML("<input type='text' id='roundNum' name='roundNum'><br>");
+		$this->OutputAddVersionList();
+
+		$roundOptions=$this->rounds();
+		$output->addHTML("<label for='round'>round </label>");
+		$this->OutputLists($round, $roundOptions, 'round');
+
 		$output->addHTML("<label for='addClass'>addClass: </label>");
 		$output->addHTML("<input type='text' id='addClass' name='addClass'><br>");
 		$output->addHTML("<label for='comment'>comment: </label>");
@@ -1599,7 +1619,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 
 		$input_version = $req->getVal('version');
-		$input_roundNum = $req->getVal('roundNum');
+		$input_roundNum = $req->getVal('round');
 		$input_addClass = $req->getVal('addClass');
 		$input_comment = $req->getVal('comment');
 		$input_minimumValue = $req->getVal('minimumValue');
@@ -1698,8 +1718,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<label for='edit_version'>Version: </label>");
 		$this->OutputLists($version, $statVersionOptions, 'edit_version');
 
-		$output->addHTML("<label for='edit_roundNum'>roundNum </label>");
-		$output->addHTML("<input type='text' id='edit_roundNum' name='edit_roundNum' value='$roundNum'><br>");
+		$roundOptions=$this->rounds();
+		$output->addHTML("<label for='edit_round'>round </label>");
+		$this->OutputLists($roundNum, $roundOptions, 'edit_round');
+
 		$output->addHTML("<label for='edit_addClass'>addClass </label>");
 		$output->addHTML("<input type='text' id='edit_addClass' name='edit_addClass' value='$addClass'><br>");
 		$output->addHTML("<label for='edit_comment'>comment </label>");
@@ -1735,7 +1757,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		}
 
 		$new_version = $req->getVal('edit_version');
-		$new_roundNum = $req->getVal('edit_roundNum');
+		$new_roundNum = $req->getVal('edit_round');
 		$new_addClass = $req->getVal('edit_addClass');
 		$new_comment = $req->getVal('edit_comment');
 		$new_minimumValue = $req->getVal('edit_minimumValue');
