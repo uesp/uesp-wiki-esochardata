@@ -284,7 +284,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		return $versionOptions;
 	}
 
-	public function rounds()
+	public function rounds($param, $round)
 	{
 		$output = $this->getOutput();
 
@@ -296,8 +296,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			'ceil' => 'Ceil'
       ];
 
-			$output->addHTML("<label for='round'>round </label>");
-			$this->OutputLists($round, $roundOptions, 'round');
+		//	$output->addHTML("<p>Test: $round</p>");
+			$output->addHTML("<label for='$param'>round </label>");
+			$this->OutputLists($round, $roundOptions, $param);
 	}
 
 	public function LoadRules()
@@ -1324,11 +1325,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<label for='combineAs'>combineAs: </label>");
 		$output->addHTML("<input type='text' id='combineAs' name='combineAs'><br>");
 
-
-		$roundOptions=$this->rounds();
-		$output->addHTML("<label for='round'>round </label>");
-		$this->OutputLists($round, $roundOptions, 'round');
-
+		$this->rounds('round', '');
 
 		$output->addHTML("<label for='factorValue'>factorValue: </label>");
 		$output->addHTML("<input type='text' id='factorValue' name='factorValue'><br>");
@@ -1387,7 +1384,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$statDesc = $this->escapeHtml($this->effect['statDesc']);
 		$buffId = $this->escapeHtml($this->effect['buffId']);
 
-		$output->addHTML("<a href='$baselink/showrules'>Show Rules</a><br>");
+		$output->addHTML("<a href='$baselink/showrules'>Show Rules : </a>");
+		$output->addHTML("<a href='$baselink/editrule?ruleid=$ruleId'>Rule #$ruleId</a><br>");
 		$output->addHTML("<h3>Edit Effect: $effectId</h3>");
 		$output->addHTML("<form action='$baselink/saveediteffectform?effectid=$effectId&ruleid=$ruleId' method='POST'>");
 
@@ -1407,9 +1405,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<label for='edit_combineAs'>combineAs </label>");
 		$output->addHTML("<input type='text' id='edit_combineAs' name='edit_combineAs' value='$combineAs'><br>");
 
-		$roundOptions= $this->rounds();
-		$output->addHTML("<label for='edit_round'>round </label>");
-		$this->OutputLists($round, $roundOptions, 'edit_round');
+		$this->rounds('edit_round', $round);
 
 		$output->addHTML("<label for='edit_factorValue'>factorValue </label>");
 		$output->addHTML("<input type='text' id='edit_factorValue' name='edit_factorValue' value='$factorValue'><br>");
@@ -1586,10 +1582,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<form action='$baselink/savenewcomputedstat' method='POST'>");
 
 		$this->OutputAddVersionList();
-
-		$roundOptions=$this->rounds();
-		$output->addHTML("<label for='round'>round </label>");
-		$this->OutputLists($round, $roundOptions, 'round');
+		$this->rounds('round', '');
 
 		$output->addHTML("<label for='addClass'>addClass: </label>");
 		$output->addHTML("<input type='text' id='addClass' name='addClass'><br>");
@@ -1699,7 +1692,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$this->LoadComputedStat($statId);
 
 		$version = $this->escapeHtml($this->computedStat['version']);
-		$roundNum = $this->escapeHtml($this->computedStat['roundNum']);
+		$round = $this->escapeHtml($this->computedStat['roundNum']);
 		$addClass = $this->escapeHtml($this->computedStat['addClass']);
 		$comment = $this->escapeHtml($this->computedStat['comment']);
 		$minimumValue = $this->escapeHtml($this->computedStat['minimumValue']);
@@ -1718,9 +1711,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<label for='edit_version'>Version: </label>");
 		$this->OutputLists($version, $statVersionOptions, 'edit_version');
 
-		$roundOptions=$this->rounds();
-		$output->addHTML("<label for='edit_round'>round </label>");
-		$this->OutputLists($roundNum, $roundOptions, 'edit_round');
+		$roundOptions=$this->rounds('edit_round', $round);
 
 		$output->addHTML("<label for='edit_addClass'>addClass </label>");
 		$output->addHTML("<input type='text' id='edit_addClass' name='edit_addClass' value='$addClass'><br>");
