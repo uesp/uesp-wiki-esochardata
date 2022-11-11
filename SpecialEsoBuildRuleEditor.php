@@ -240,8 +240,11 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			return true;
 	}
 
-	public function versions()
+
+	public function versionsList($param, $version)
 	{
+		$output = $this->getOutput();
+
 		$versionOptions=[
 			'1' => '1',
 			'2' => '2',
@@ -281,7 +284,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			'36' => '36'
 		];
 
-		return $versionOptions;
+		$output->addHTML("<label for='$param'>version: </label>");
+		$this->OutputLists($version, $versionOptions, $param);
 	}
 
 	public function rounds($param, $round)
@@ -758,10 +762,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<label for='edit_originalId'>Original ID: </label>");
 			$output->addHTML("<input type='text' id='edit_originalId' name='edit_originalId' value='$originalId'><br>");
 
-			$ruleVersionOptions = $this->versions();
-
-			$output->addHTML("<label for='edit_version'>Version: </label>");
-			$this->OutputLists($version, $ruleVersionOptions, 'edit_version');
+			$this->versionsList('edit_version', $version);
 
 			$output->addHTML("<label for='edit_icon'>Icon </label>");
 			$output->addHTML("<input type='text' id='edit_icon' class='iconFld' name='edit_icon' value='$icon'><br>");
@@ -856,7 +857,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<label for='originalId'>Original ID: </label>");
 			$output->addHTML("<input type='text' id='originalId' name='originalId'><br>");
 
-			$this->OutputAddVersionList();
+			$this->versionsList('version', '1');
 
 			$output->addHTML("<label for='icon'>Icon: </label>");
 			$output->addHTML("<input type='text' id='icon' name='icon'><br>");
@@ -916,21 +917,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		}
 		$output->addHTML("</select><br>");
 
-	}
-
-	public function OutputAddVersionList()
-	{
-		$output = $this->getOutput();
-
-		$versionsArray = $this->versions();
-		$numOfDatas = count($versionsArray);
-
-		$output->addHTML("<label for='version'>version: </label>");
-		$output->addHTML("<select id='version' name='version'>");
-		for($i = 1; $i<=$numOfDatas; $i++){
-			$output->addHTML("<option value='$i'>$i</option>");
-		}
-		$output->addHTML("</select><br>");
 	}
 
 	public function GetBooleanDispaly ($boolValue)
@@ -1445,7 +1431,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<h3>Add New Effect For Rule: $id</h3>");
 		$output->addHTML("<form action='$baselink/savenewffect?ruleid=$id' method='POST'>");
 
-		$this->OutputAddVersionList();
+		$this->versionsList('version', '1');
 
 		$output->addHTML("<label for='statId'>statId: </label>");
 		$output->addHTML("<input type='text' id='statId' name='statId'><br>");
@@ -1523,10 +1509,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<h3>Edit Effect: $effectId</h3>");
 		$output->addHTML("<form action='$baselink/saveediteffectform?effectid=$effectId&ruleid=$ruleId' method='POST'>");
 
-		$effectVersionOptions = $this->versions();
-
-		$output->addHTML("<label for='edit_version'>Version: </label>");
-		$this->OutputLists($version, $effectVersionOptions, 'edit_version');
+		$this->versionsList('edit_version', $version);
 
 		$output->addHTML("<label for='edit_statId'>statId </label>");
 		$output->addHTML("<input type='text' id='edit_statId' name='edit_statId' value='$statId'><br>");
@@ -1717,7 +1700,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<h3>Add New computed Stat</h3>");
 		$output->addHTML("<form action='$baselink/savenewcomputedstat' method='POST'>");
 
-		$this->OutputAddVersionList();
+		$this->versionsList('version', '1');
 		$this->rounds('round', '');
 
 		$output->addHTML("<label for='addClass'>addClass: </label>");
@@ -1841,11 +1824,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<h3>Edit Computed Stat: $statId</h3>");
 		$output->addHTML("<form action='$baselink/saveeditcomputedstatsform?statid=$statId' method='POST'>");
 
-		$statVersionOptions= $this->versions();
-
-		$output->addHTML("<label for='edit_version'>Version: </label>");
-		$this->OutputLists($version, $statVersionOptions, 'edit_version');
-
+		$this->versionsList('edit_version', $version);
 		$roundOptions=$this->rounds('edit_round', $round);
 
 		$output->addHTML("<label for='edit_addClass'>addClass </label>");
