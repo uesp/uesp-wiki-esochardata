@@ -1226,7 +1226,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<td>$factorValue</td>");
 			$output->addHTML("<td>$statDesc</td>");
 			$output->addHTML("<td>$buffId</td>");
-			$output->addHTML("<td><a href='$baselink/deleteeffect?effectid=$effectId' >Delete</a></td>");
+			$output->addHTML("<td><a href='$baselink/deleteeffect?effectid=$effectId&ruleid=$id' >Delete</a></td>");
 		}
 
 		$output->addHTML("</table>");
@@ -1289,7 +1289,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$effectId = $req->getVal('effectid');
 		$id = $this->GetRowId();
 
-		if ($statId <= 0) {
+		if ($effectId <= 0) {
 			return $this->reportError("Error: invalid stat ID");
 		}
 
@@ -1350,7 +1350,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 				return $this->reportError("Error: failed to INSERT into database");
 			}
 
-			$delete_query = "DELETE FROM effects WHERE ruleId=$id;";
+			$delete_query = "DELETE FROM effects WHERE effectId=$effectId;";
 			$delete_result = $this->db->query($delete_query);
 
 			if ($delete_result === false) {
@@ -1358,8 +1358,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			}
 
 			$output->addHTML("<p>Effect deleted</p><br>");
-			$output->addHTML("<a href='$baselink'>Home</a>");
-
+			$output->addHTML("<a href='$baselink'>Home : </a>");
+			$output->addHTML("<a href='$baselink/editrule?ruleid=$id'>Rule #$id</a>");
 
 		}
 
