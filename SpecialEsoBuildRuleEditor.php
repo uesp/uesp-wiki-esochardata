@@ -288,6 +288,42 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$this->OutputLists($version, $versionOptions, $param);
 	}
 
+	public function InsertQueries($tableName, $cols, $values)
+	{
+		$cols = implode(',', $cols);
+		$values = implode(',', $values);
+		$query = "INSERT INTO $tableName($cols) VALUES($values);";
+
+		$result = $this->db->query($query);
+
+		if ($result === false) {
+			return $this->reportError("Error: failed to INSERT deleted data into database");
+		}
+	}
+
+	public function DeleteQueries($tableName, $conditionName, $value)
+	{
+		$query = "DELETE FROM $tableName WHERE $conditionName=$value;";
+		$result = $this->db->query($query);
+
+		if ($result === false) {
+			return $this->reportError("Error: failed to DELETE rule from database");
+		}
+	}
+
+	public function UpdateQueries($tableName, $values, $conditionName, $value)
+	{
+		$values = implode(',', $values);
+
+		$query = "UPDATE $tableName SET $values WHERE $conditionName='$value';";
+
+		$result = $this->db->query($query);
+
+		if ($result === false) {
+			return $this->reportError("Error: failed to UPDATE data in database");
+		}
+	}
+
 	public function rounds($param, $round)
 	{
 		$output = $this->getOutput();
@@ -499,6 +535,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$confirm = $req->getVal('confirm');
 		$id = $this->GetRowId();
 
+		$id = $this->db->real_escape_string($id);
+
 		if ($id <= 0) {
 			return $this->reportError("Error: invalid rule ID");
 		}
@@ -586,23 +624,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$values[] = "'" . $this->db->real_escape_string($toggleVisible) . "'";
 			$values[] = "'" . $this->db->real_escape_string($isToggle) . "'";
 
-			$cols = implode(',', $cols);
-			$values = implode(',', $values);
-			$insert_query = "INSERT INTO rulesArchive($cols) VALUES($values);";
 
-
-			$insert_result = $this->db->query($insert_query);
-
-			if ($insert_result === false) {
-				return $this->reportError("Error: failed to INSERT deleted data into database");
-			}
-
-			$deleteRule_query = "DELETE FROM rules WHERE id=$id;";
-			$deleteRule_result = $this->db->query($deleteRule_query);
-
-			if ($deleteRule_result === false) {
-				return $this->reportError("Error: failed to DELETE rule from database");
-			}
+			$this->InsertQueries('rulesArchive', $cols, $values);
+			$this->DeleteQueries('rules', 'id', $id);
 
 			$this->loadEffects();
 			foreach ($this->effectsDatas as $effectsData) {
@@ -647,17 +671,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 				$values[] = "'" . $this->db->real_escape_string($statDesc) . "'";
 				$values[] = "'" . $this->db->real_escape_string($buffId) . "'";
 
-				$cols = implode(',', $cols);
-				$values = implode(',', $values);
-				$insert_query = "INSERT INTO effectsArchive($cols) VALUES($values);";
+				$this->InsertQueries('effectsArchive', $cols, $values);
 			}
 
-			$deleteEffects_query = "DELETE FROM effects WHERE ruleId=$id;";
-			$deleteEffects_result = $this->db->query($deleteEffects_query);
-
-			if ($deleteEffects_result === false) {
-				return $this->reportError("Error: failed to DELETE effects from database");
-			}
+			$this->DeleteQueries('effects', 'ruleId', $id);
 
 			$output->addHTML("<p>Rule deleted</p><br>");
 			$output->addHTML("<a href='$baselink'>Home</a>");
@@ -968,9 +985,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$input_toggleVisible = $req->getVal('toggleVisible');
 		$input_toggle = $req->getVal('toggle');
 
-		//$query = "INSERT into rules(ruleType, nameId, displayName, matchRegex, requireSkillLine, statRequireId, factorStatId, originalId, version, icon, groupName, maxTimes, comment, description, disableIds, isEnabled, isVisible, enableOffBar, matchSkillName, updateBuffValue, toggleVisible, isToggle)
-			//				VALUES('$input_ruleType', '$input_nameId', '$input_displayName', '$input_matchRegex', '$input_requireSkillLine', '$input_statRequireId', '$input_factorStatId', '$input_originalId', '$input_version', '$input_icon', '$input_groupName', '$input_maxTimes', '$input_comment', '$input_description', '$input_disableIds', '$input_isEnabled', '$input_isVisible', '$input_enableOffBar', '$input_matchSkillName', '$input_updateBuffValue', '$input_toggleVisible', '$input_toggle');";
-
 		$cols = [];
 		$values = [];
 		$cols[] = 'ruleType';
@@ -1019,16 +1033,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$values[] = "'" . $this->db->real_escape_string($input_toggleVisible). "'";
 		$values[] = "'" . $this->db->real_escape_string($input_toggle). "'";
 
-		$cols = implode(',', $cols);
-		$values = implode(',', $values);
-		$query = "INSERT INTO rules($cols) VALUES($values);";
 
-
-		$result = $this->db->query($query);
-
-		if ($result === false) {
-			return $this->reportError("Error: failed to INSERT into database");
-		}
+		$this->InsertQueries('rules', $cols, $values);
 
 		$output->addHTML("<p>New rule added</p><br>");
 		$output->addHTML("<a href='$baselink'>Home</a>");
@@ -1095,16 +1101,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$values[] = "toggleVisible='" . $this->db->real_escape_string($new_toggleVisible). "'";
 			$values[] = "isToggle='" . $this->db->real_escape_string($new_toggle). "'";
 
-			$values = implode(',', $values);
-
-
-			$query = "UPDATE rules SET $values WHERE id='$id';";
-
-			$result = $this->db->query($query);
-
-			if ($result === false) {
-				return $this->reportError("Error: failed to UPDATE data in database");
-			}
+			$this->UpdateQueries('rules', $values, 'id', $id);
 
 			$output->addHTML("<p>Edits saved for rule #$id</p><br>");
 			$output->addHTML("<a href='$baselink'>Home</a>");
@@ -1273,6 +1270,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 		$confirm = $req->getVal('confirm');
 		$effectId = $req->getVal('effectid');
+
+		$effectId = $this->db->real_escape_string($effectId);
 		$id = $this->GetRowId();
 
 		if ($effectId <= 0) {
@@ -1325,23 +1324,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$values[] = "'" . $this->db->real_escape_string($statDesc). "'";
 			$values[] = "'" . $this->db->real_escape_string($buffId). "'";
 
-			$cols = implode(',', $cols);
-			$values = implode(',', $values);
-			$insert_query = "INSERT INTO effectsArchive($cols) VALUES($values);";
 
-
-			$insert_result = $this->db->query($insert_query);
-
-			if ($insert_result === false) {
-				return $this->reportError("Error: failed to INSERT into database");
-			}
-
-			$delete_query = "DELETE FROM effects WHERE effectId=$effectId;";
-			$delete_result = $this->db->query($delete_query);
-
-			if ($delete_result === false) {
-				return $this->reportError("Error: failed to DELETE effects from database");
-			}
+			$this->InsertQueries('effectsArchive', $cols, $values);
+			$this->DeleteQueries('effects', 'effectId', $effectId);
 
 			$output->addHTML("<p>Effect deleted</p><br>");
 			$output->addHTML("<a href='$baselink'>Home : </a>");
@@ -1396,16 +1381,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$values[] = "'" . $this->db->real_escape_string($input_statDesc). "'";
 		$values[] = "'" . $this->db->real_escape_string($input_buffId). "'";
 
-		$cols = implode(',', $cols);
-		$values = implode(',', $values);
-		$query = "INSERT INTO effects($cols) VALUES($values);";
-
-
-		$effects_result = $this->db->query($query);
-
-		if ($effects_result === false) {
-			return $this->reportError("Error: failed to INSERT into database");
-		}
+		$this->InsertQueries('effects', $cols, $values);
 
 		$output->addHTML("<p>New effect added</p><br>");
 		$output->addHTML("<a href='$baselink'>Home : </a>");
@@ -1576,16 +1552,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$values[] = "statDesc='" . $this->db->real_escape_string($new_statDesc) . "'";
 		$values[] = "buffId='" . $this->db->real_escape_string($new_buffId) . "'";
 
-		$values = implode(',', $values);
+		$this->UpdateQueries('effects', $values, 'effectId', $effectId);
 
-
-		$query = "UPDATE effects SET $values WHERE effectId='$effectId';";
-
-		$effects_result = $this->db->query($query);
-
-		if ($effects_result === false) {
-			return $this->reportError("Error: failed to UPDATE data in database");
-		}
 
 		$output->addHTML("<p>Edits saved for effect #$effectId</p><br>");
 		$output->addHTML("<a href='$baselink/editrule?ruleid=$ruleId'>Rule #$ruleId</a><br>");
@@ -1761,16 +1729,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$values[] = "'" . $this->db->real_escape_string($input_display) . "'";
 		$values[] = "'" . $this->db->real_escape_string($input_compute) . "'";
 
-		$cols = implode(',', $cols);
-		$values = implode(',', $values);
-		$query = "INSERT INTO computedStats($cols) VALUES($values);";
 
-
-		$computedStats_result = $this->db->query($query);
-
-		if ($computedStats_result === false) {
-			return $this->reportError("Error: failed to INSERT into database");
-		}
+		$this->InsertQueries('computedStats', $cols, $values);
 
 		$output->addHTML("<p>New computed Stat added</p><br>");
 		$output->addHTML("<a href='$baselink'>Home</a>");
@@ -1883,15 +1843,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$values[] = "display='" . $this->db->real_escape_string($new_display) . "'";
 		$values[] = "compute='" . $this->db->real_escape_string($new_compute) . "'";
 
-		$values = implode(',', $values);
-
-		$query = "UPDATE computedStats SET $values WHERE statId='$statId';";
-
-		$computedStats_result = $this->db->query($query);
-
-		if ($computedStats_result === false) {
-			return $this->reportError("Error: failed to UPDATE data in database");
-		}
+		$this->UpdateQueries('computedStats', $values, 'statId', $statId);
 
 		$output->addHTML("<p>Edits saved for computed Stat #$statId</p><br>");
 		$output->addHTML("<a href='$baselink'>Home</a>");
@@ -1953,6 +1905,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 		$confirm = $req->getVal('confirm');
 		$statId = $req->getVal('statid');
+		$statId = $this->db->real_escape_string($statId);
 
 		if ($statId <= 0) {
 			return $this->reportError("Error: invalid stat ID");
@@ -1989,22 +1942,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$values[] = "'" . $this->db->real_escape_string($display) . "'";
 			$values[] = "'" . $this->db->real_escape_string($compute) . "'";
 
-			$cols = implode(',', $cols);
-			$values = implode(',', $values);
-
-			$insert_query = "INSERT INTO computedStatsArchives($cols) VALUES($values);";
-			$insertComputedStats_result = $this->db->query($insert_query);
-
-			if ($insertComputedStats_result === false) {
-				return $this->reportError("Error: failed to INSERT into database");
-			}
-
-			$delete_query = "DELETE FROM computedStats WHERE statId=$statId;";
-			$deleteComputedStat_result = $this->db->query($delete_query);
-
-			if ($deleteComputedStat_result === false) {
-				return $this->reportError("Error: failed to DELETE rule from database");
-			}
+			$this->InsertQueries('computedStatsArchives', $cols, $values);
+			$this->DeleteQueries('computedStats', 'statId', $statId);
 
 			$output->addHTML("<p>computed Stat deleted</p><br>");
 			$output->addHTML("<a href='$baselink'>Home</a>");
