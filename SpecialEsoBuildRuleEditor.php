@@ -549,6 +549,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		else {
 			$this->LoadRule($id);
 
+			if ($this->LoadRule($id) == False){
+				return $this->reportError("Error: cannot load Rule");
+			}
+
 			$ruleType = $this->escapeHtml($this->rule['ruleType']);
 			$nameId = $this->escapeHtml($this->rule['nameId']);
 			$displayName = $this->escapeHtml($this->rule['displayName']);
@@ -1234,6 +1238,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 		$this->loadEffect($effectId);
 
+		if ($this->loadEffect($effectId) == False){
+			return $this->reportError("Error: cannot load effect");
+		}
+
 		$version = $this->escapeHtml($this->effect['version']);
 		$statId = $this->escapeHtml($this->effect['statId']);
 		$value = $this->escapeHtml($this->effect['value']);
@@ -1286,6 +1294,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		else
 		{
 			$this->loadEffect($effectId);
+
+			if ($this->loadEffect($effectId) == False){
+				return $this->reportError("Error: cannot load effect");
+			}
 
 			$version = $this->escapeHtml($this->effect['version']);
 			$statId = $this->escapeHtml($this->effect['statId']);
@@ -1871,6 +1883,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 		$this->LoadComputedStat($statId);
 
+		if ($this->LoadComputedStat($statId)) == False){
+			return $this->reportError("Error: cannot load stat");
+		}
+
 		$version = $this->escapeHtml($this->computedStat['version']);
 		$roundNum = $this->escapeHtml($this->computedStat['roundNum']);
 		$addClass = $this->escapeHtml($this->computedStat['addClass']);
@@ -1918,6 +1934,22 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		}
 		else
 		{
+			$this->LoadComputedStat($statId);
+
+			if ($this->LoadComputedStat($statId); == False){
+				return $this->reportError("Error: cannot load stat");
+			}
+
+			$version = $this->escapeHtml($this->computedStat['version']);
+			$round = $this->escapeHtml($this->computedStat['roundNum']);
+			$addClass = $this->escapeHtml($this->computedStat['addClass']);
+			$comment = $this->escapeHtml($this->computedStat['comment']);
+			$minimumValue = $this->escapeHtml($this->computedStat['minimumValue']);
+			$maximumValue = $this->escapeHtml($this->computedStat['maximumValue']);
+			$deferLevel = $this->escapeHtml($this->computedStat['deferLevel']);
+			$display = $this->escapeHtml($this->computedStat['display']);
+			$compute = $this->escapeHtml($this->computedStat['compute']);
+
 			$cols = [];
 			$values = [];
 			$cols[] = 'statId';
@@ -1933,7 +1965,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 			$values[] = "'" . $this->db->real_escape_string($statId) . "'";
 			$values[] = "'" . $this->db->real_escape_string($version) . "'";
-			$values[] = "'" . $this->db->real_escape_string($roundNum) . "'";
+			$values[] = "'" . $this->db->real_escape_string($round) . "'";
 			$values[] = "'" . $this->db->real_escape_string($addClass) . "'";
 			$values[] = "'" . $this->db->real_escape_string($comment) . "'";
 			$values[] = "'" . $this->db->real_escape_string($minimumValue) . "'";
