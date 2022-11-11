@@ -1883,7 +1883,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 		$this->LoadComputedStat($statId);
 
-		if ($this->LoadComputedStat($statId)) == False){
+		if ($this->LoadComputedStat($statId) == False)
+		{
 			return $this->reportError("Error: cannot load stat");
 		}
 
@@ -1936,7 +1937,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		{
 			$this->LoadComputedStat($statId);
 
-			if ($this->LoadComputedStat($statId); == False){
+			if ($this->LoadComputedStat($statId) == False){
 				return $this->reportError("Error: cannot load stat");
 			}
 
