@@ -77,7 +77,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 	                        groupName TINYTEXT,
 	                        maxTimes INTEGER,
 	                        comment TINYTEXT NOT NULL,
-	                        description TINYTEXT NOT NULL,
+	                        description MEDIUMTEXT NOT NULL,
 	                        disableIds TINYTEXT,
 	                        PRIMARY KEY (id),
 	                        INDEX index_version(version(10)),
@@ -103,6 +103,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 	                        factorValue FLOAT,
 	                        statDesc TINYTEXT,
 	                        buffId TINYTEXT,
+													regexVar TINYTEXT NOT NULL,
 													PRIMARY KEY (effectId),
 	                        INDEX index_ruleId(ruleId),
 	                        INDEX index_stat(statId(32)),
@@ -116,7 +117,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			}
 
 			$computedStats_result = $this->db->query("CREATE TABLE IF NOT EXISTS computedStats (
-                        statId INTEGER AUTO_INCREMENT NOT NULL,
+                        statId TINYTEXT NOT NULL,
                         version TINYTEXT NOT NULL,
                         title TINYTEXT NOT NULL,
                         roundNum TINYTEXT,
@@ -127,7 +128,11 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
                         deferLevel TINYINT,
                         display TINYTEXT,
                         compute TEXT NOT NULL,
-                        PRIMARY KEY (statId),
+												idx TINYINT NOT NULL,
+						            category TINYTEXT NOT NULL,
+						            suffix TINYTEXT NOT NULL,
+						            dependsOn MEDIUMTEXT NOT NULL,
+                        PRIMARY KEY (statId(32)),
                         INDEX index_version(version(10))
                     );
 
@@ -162,7 +167,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 	                        groupName TINYTEXT,
 	                        maxTimes INTEGER,
 	                        comment TINYTEXT NOT NULL,
-	                        description TINYTEXT NOT NULL,
+	                        description MEDIUMTEXT NOT NULL,
 	                        disableIds TINYTEXT,
 	                        PRIMARY KEY (archiveId),
 	                        INDEX index_version(version(10)),
@@ -189,6 +194,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 													factorValue FLOAT,
 													statDesc TINYTEXT,
 													buffId TINYTEXT,
+													regexVar TINYTEXT NOT NULL,
 													PRIMARY KEY (archiveId),
 													INDEX index_ruleId(ruleId),
 													INDEX index_stat(statId(32)),
@@ -202,7 +208,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			}
 
 			$DeletedcomputedStats_result = $this->db->query("CREATE TABLE IF NOT EXISTS computedStatsArchives (
-                        id INTEGER AUTO_INCREMENT NOT NULL,
+                        id TINYTEXT NOT NULL,
 												statId INTEGER NOT NULL,
                         version TINYTEXT NOT NULL,
                         title TINYTEXT NOT NULL,
@@ -214,14 +220,30 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
                         deferLevel TINYINT,
                         display TINYTEXT,
                         compute TEXT NOT NULL,
-                        PRIMARY KEY (id),
+												idx TINYINT NOT NULL,
+						            category TINYTEXT NOT NULL,
+						            suffix TINYTEXT NOT NULL,
+						            dependsOn MEDIUMTEXT NOT NULL,
+                        PRIMARY KEY (id(32)),
                         INDEX index_version(version(10))
                     );
 
 								");
 
 			if ($computedStats_result === false) {
-				return $this->reportError("Error: failed to create computed Stats table");
+				return $this->reportError("Error: failed to create computed Stats archive table");
+			}
+
+
+			$versions_result = $this->db->query("CREATE TABLE IF NOT EXISTS versions (
+												version TINYTEXT NOT NULL,
+												PRIMARY KEY idx_version(version(16))
+									  );
+
+								");
+
+    	if ($computedStats_result === false) {
+				return $this->reportError("Error: failed to create versions table");
 			}
 
 			return true;
@@ -241,53 +263,99 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 	}
 
 
-	public function versionsList($param, $version)
+	//------------------ Versions functions ---------------
+	public function OutputAddVersionForm()
 	{
+		$permission = $this->canUserEdit();
+
+		if($permission === False) {
+			return $this->reportError("Error: you have no permission to add versions");
+		}
+
 		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
 
-		$versionOptions=[
-			'1' => '1',
-			'2' => '2',
-			'3' => '3',
-			'4' => '4',
-			'5' => '5',
-			'6' => '6',
-			'7' => '7',
-			'8' => '8',
-			'9' => '9',
-			'10' => '10',
-			'11' => '11',
-			'12' => '12',
-			'13' => '13',
-			'14' => '14',
-			'15' => '15',
-			'16' => '16',
-			'17' => '17',
-			'18' => '18',
-			'19' => '19',
-			'20' => '20',
-			'21' => '21',
-			'22' => '22',
-			'23' => '23',
-			'24' => '24',
-			'25' => '25',
-			'26' => '26',
-			'27' => '27',
-			'28' => '28',
-			'29' => '29',
-			'30' => '30',
-			'31' => '31',
-			'32' => '32',
-			'33' => '33',
-			'34' => '34',
-			'35' => '35',
-			'36' => '36'
-		];
+		$output->addHTML("<h3>Add New Version</h3>");
+		$output->addHTML("<form action='$baselink/saveversion' method='POST'>");
 
-		$output->addHTML("<label for='$param'>version: </label>");
-		$this->OutputLists($version, $versionOptions, $param);
+		$output->addHTML("<label for='version'>Version: </label>");
+		$output->addHTML("<input type='text' id='version' name='version'><br>");
+
+		$output->addHTML("<br><input type='submit' value='Save Version'>");
+		$output->addHTML("</form>");
 	}
 
+	public function SaveNewVersion()
+	{
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
+		$req = $this->getRequest();
+
+		$input_version = $req->getVal('version');
+
+		$cols = [];
+		$values = [];
+
+		$cols[] = 'version';
+		$values[] = "'" . $this->db->real_escape_string($input_version) . "'";
+
+		$this->InsertQueries('versions', $cols, $values);
+
+		$output->addHTML("<p>New version added</p><br>");
+		$output->addHTML("<a href='$baselink'>Home</a>");
+
+	}
+
+	public function loadVersions()
+	{
+		$query = "SELECT version FROM versions;";
+		$result = $this->db->query($query);
+
+		if ($result === false) {
+			return $this->reportError("Error: failed to load versions from database");
+		}
+
+		$this->versions =[];
+
+		while($row = mysqli_fetch_assoc($result)) {
+				$this->versions[] = $row;
+		}
+
+		return true;
+	}
+
+	public function versionsList($param, $selectedVersion)
+	{
+		$output = $this->getOutput();
+		$this->loadVersions();
+
+		$selected = "";
+
+		$output->addHTML("<label for='$param'>version: </label>");
+		$output->addHTML("<select id='$param' name='$param'>");
+
+		foreach ($this->versions as $version) {
+
+			$versionOption = $this->escapeHtml($version['version']);
+
+			if($versionOption == $selectedVersion)
+			{
+				$selected = "selected";
+			}
+			if($versionOption != "")
+			{
+				$output->addHTML("<option value='$versionOption' $selected >$versionOption</option>");
+			}
+
+		}
+
+		$output->addHTML("</select><br>");
+
+		//$this->OutputLists($version, $versionOptions, $param);
+
+	}
+
+	//-------------------Queries fucntions---------------
 	public function InsertQueries($tableName, $cols, $values)
 	{
 		$cols = implode(',', $cols);
@@ -324,6 +392,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		}
 	}
 
+	//-------------------Rules table functions---------------
 	public function rounds($param, $round)
 	{
 		$output = $this->getOutput();
@@ -1183,6 +1252,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<th>factorValue</th>");
 		$output->addHTML("<th>statDesc</th>");
 		$output->addHTML("<th>buffId</th>");
+		$output->addHTML("<th>regexVar</th>");
 		$output->addHTML("<th>Delete</th>");
 		$output->addHTML("</tr></thead><tbody>");
 
@@ -1199,6 +1269,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$factorValue = $this->escapeHtml($effectsData['factorValue']);
 			$statDesc = $this->escapeHtml($effectsData['statDesc']);
 			$buffId = $this->escapeHtml($effectsData['buffId']);
+			$regexVar = $this->escapeHtml($effectsData['regexVar']);
 
 			$output->addHTML("<tr>");
 			$output->addHTML("<td><a href='$baselink/editeffect?effectid=$effectId&ruleid=$id'>Edit</a></td>");
@@ -1213,6 +1284,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<td>$factorValue</td>");
 			$output->addHTML("<td>$statDesc</td>");
 			$output->addHTML("<td>$buffId</td>");
+			$output->addHTML("<td>$regexVar</td>");
 			$output->addHTML("<td><a href='$baselink/deleteeffect?effectid=$effectId&ruleid=$id' >Delete</a></td>");
 		}
 
@@ -1252,6 +1324,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$factorValue = $this->escapeHtml($this->effect['factorValue']);
 		$statDesc = $this->escapeHtml($this->effect['statDesc']);
 		$buffId = $this->escapeHtml($this->effect['buffId']);
+		$regexVar = $this->escapeHtml($this->effect['regexVar']);
 
 		$output->addHTML("<h3>Are you sure you want to delete this effect: </h3>");
 		$output->addHTML("<label><b>id:</b> $effectId </label><br>");
@@ -1265,6 +1338,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<label><b>factorValue:</b> $factorValue </label><br>");
 		$output->addHTML("<label><b>statDesc:</b> $statDesc </label><br>");
 		$output->addHTML("<label><b>buffId:</b> $buffId </label><br>");
+		$output->addHTML("<label><b>buffId:</b> $regexVar </label><br>");
 
 		$output->addHTML("<br><a href='$baselink/effectdeleteconfirm?ruleid=$id&effectid=$effectId&confirm=True'>Delete </a>");
 		$output->addHTML("<a href='$baselink/effectdeleteconfirm?effectid=$effectId&confirm=False'> Cancel</a>");
@@ -1309,6 +1383,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$factorValue = $this->escapeHtml($this->effect['factorValue']);
 			$statDesc = $this->escapeHtml($this->effect['statDesc']);
 			$buffId = $this->escapeHtml($this->effect['buffId']);
+			$regexVar = $this->escapeHtml($this->effect['regexVar']);
 
 			$cols = [];
 			$values = [];
@@ -1323,6 +1398,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$cols[] = 'factorValue';
 			$cols[] = 'statDesc';
 			$cols[] = 'buffId';
+			$cols[] = 'regexVar';
 
 			$values[] = "'" . $this->db->real_escape_string($id). "'";
 			$values[] = "'" . $this->db->real_escape_string($version). "'";
@@ -1335,6 +1411,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$values[] = "'" . $this->db->real_escape_string($factorValue). "'";
 			$values[] = "'" . $this->db->real_escape_string($statDesc). "'";
 			$values[] = "'" . $this->db->real_escape_string($buffId). "'";
+			$values[] = "'" . $this->db->real_escape_string($regexVar). "'";
 
 
 			$this->InsertQueries('effectsArchive', $cols, $values);
@@ -1366,6 +1443,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$input_factorValue = $req->getVal('factorValue');
 		$input_statDesc = $req->getVal('statDesc');
 		$input_buffId = $req->getVal('buffId');
+		$input_regexVar = $req->getVal('regexVar');
 
 		$cols = [];
 		$values = [];
@@ -1380,6 +1458,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$cols[] = 'factorValue';
 		$cols[] = 'statDesc';
 		$cols[] = 'buffId';
+		$cols[] = 'regexVar';
 
 		$values[] = "'" . $this->db->real_escape_string($id). "'";
 		$values[] = "'" . $this->db->real_escape_string($input_version). "'";
@@ -1392,6 +1471,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$values[] = "'" . $this->db->real_escape_string($input_factorValue). "'";
 		$values[] = "'" . $this->db->real_escape_string($input_statDesc). "'";
 		$values[] = "'" . $this->db->real_escape_string($input_buffId). "'";
+		$values[] = "'" . $this->db->real_escape_string($input_regexVar). "'";
 
 		$this->InsertQueries('effects', $cols, $values);
 
@@ -1440,6 +1520,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<input type='text' id='statDesc' name='statDesc'><br>");
 		$output->addHTML("<label for='buffId'>buffId: </label>");
 		$output->addHTML("<input type='text' id='buffId' name='buffId'><br>");
+		$output->addHTML("<label for='regexVar'>regexVar: </label>");
+		$output->addHTML("<input type='text' id='regexVar' name='regexVar'><br>");
 
 		$output->addHTML("<br><input type='submit' value='Save Effect'>");
 
@@ -1491,6 +1573,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$factorValue = $this->escapeHtml($this->effect['factorValue']);
 		$statDesc = $this->escapeHtml($this->effect['statDesc']);
 		$buffId = $this->escapeHtml($this->effect['buffId']);
+		$regexVar = $this->escapeHtml($this->effect['regexVar']);
 
 		$output->addHTML("<a href='$baselink/showrules'>Show Rules : </a>");
 		$output->addHTML("<a href='$baselink/editrule?ruleid=$ruleId'>Rule #$ruleId</a><br>");
@@ -1518,6 +1601,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<input type='text' id='edit_statDesc' name='edit_statDesc' value='$statDesc'><br>");
 		$output->addHTML("<label for='edit_buffId'>buffId </label>");
 		$output->addHTML("<input type='text' id='edit_buffId' name='edit_buffId' value='$buffId'><br>");
+		$output->addHTML("<label for='edit_regexVar'>regexVar: </label>");
+		$output->addHTML("<input type='text' id='edit_regexVar' name='edit_regexVar' value='$regexVar'><br>");
 
 		$output->addHTML("<br><input type='submit' value='Save Edits'>");
 		$output->addHTML("</form><br>");
@@ -1549,6 +1634,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$new_factorValue = $req->getVal('edit_factorValue');
 		$new_statDesc = $req->getVal('edit_statDesc');
 		$new_buffId = $req->getVal('edit_buffId');
+		$new_regexVar = $req->getVal('edit_regexVar');
 
 
 		$values = [];
@@ -1563,6 +1649,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$values[] = "factorValue='" . $this->db->real_escape_string($new_factorValue) . "'";
 		$values[] = "statDesc='" . $this->db->real_escape_string($new_statDesc) . "'";
 		$values[] = "buffId='" . $this->db->real_escape_string($new_buffId) . "'";
+		$values[] = "regexVar='" . $this->db->real_escape_string($new_regexVar) . "'";
 
 		$this->UpdateQueries('effects', $values, 'effectId', $effectId);
 
@@ -1620,7 +1707,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 		$output->addHTML("<tr>");
 		$output->addHTML("<th>Edit</th>");
-		$output->addHTML("<th>id</th>");
+		$output->addHTML("<th>statId</th>");
 		$output->addHTML("<th>version</th>");
 		$output->addHTML("<th>round</th>");
 		$output->addHTML("<th>addClass</th>");
@@ -1630,6 +1717,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<th>deferLevel</th>");
 		$output->addHTML("<th>display</th>");
 		$output->addHTML("<th>compute</th>");
+		$output->addHTML("<th>idx</th>");
+		$output->addHTML("<th>category</th>");
+		$output->addHTML("<th>suffix</th>");
+		$output->addHTML("<th>dependsOn</th>");
 		$output->addHTML("<th>Delete</th>");
 		$output->addHTML("</tr></thead><tbody>");
 
@@ -1645,6 +1736,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$deferLevel = $this->escapeHtml($computedStatsData['deferLevel']);
 			$display = $this->escapeHtml($computedStatsData['display']);
 			$compute = $this->escapeHtml($computedStatsData['compute']);
+			$idx = $this->escapeHtml($computedStatsData['idx']);
+			$category = $this->escapeHtml($computedStatsData['category']);
+			$suffix = $this->escapeHtml($computedStatsData['suffix']);
+			$dependsOn = $this->escapeHtml($computedStatsData['dependsOn']);
 
 			$output->addHTML("<tr>");
 			$output->addHTML("<td><a href='$baselink/editcomputedstat?statid=$statId'>Edit</a></td>");
@@ -1658,6 +1753,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<td>$deferLevel</td>");
 			$output->addHTML("<td>$display</td>");
 			$output->addHTML("<td>$compute</td>");
+			$output->addHTML("<td>$idx</td>");
+			$output->addHTML("<td>$category</td>");
+			$output->addHTML("<td>$suffix</td>");
+			$output->addHTML("<td>$dependsOn</td>");
 			$output->addHTML("<td><a href='$baselink/deletcomputedstat?statid=$statId'>Delete</a></td>");
 
 		}
@@ -1680,6 +1779,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<h3>Add New computed Stat</h3>");
 		$output->addHTML("<form action='$baselink/savenewcomputedstat' method='POST'>");
 
+		$output->addHTML("<label for='statId'>statId: </label>");
+		$output->addHTML("<input type='text' id='statId' name='statId'><br>");
+
 		$this->versionsList('version', '1');
 		$this->rounds('round', '');
 
@@ -1697,9 +1799,33 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<input type='text' id='display' name='display'><br>");
 		$output->addHTML("<label for='compute'>compute: </label>");
 		$output->addHTML("<input type='text' id='compute' name='compute'><br>");
+		$output->addHTML("<label for='idx'>idx: </label>");
+		$output->addHTML("<input type='text' id='idx' name='idx'><br>");
+		$output->addHTML("<label for='category'>category: </label>");
+		$output->addHTML("<input type='text' id='category' name='category'><br>");
+		$output->addHTML("<label for='suffix'>suffix: </label>");
+		$output->addHTML("<input type='text' id='suffix' name='suffix'><br>");
+		$output->addHTML("<label for='dependsOn'>dependsOn: </label>");
+		$output->addHTML("<input type='text' id='dependsOn' name='dependsOn'><br>");
 
 		$output->addHTML("<br><input type='submit' value='Save computed Stat'>");
 		$output->addHTML("</form>");
+	}
+
+	public function laodStatIds()
+	{
+		$query = "SELECT statId FROM computedStats;";
+		$result = $this->db->query($query);
+
+		if ($result === false) {
+			return $this->reportError("Error: failed to load stat ids from database");
+		}
+
+		$col=[];
+		$col[] = $result->fetch_assoc();
+		$this->stat = $col['statId'];
+
+		return true;
 	}
 
 	public function SaveNewComputedStat()
@@ -1708,6 +1834,13 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$baselink = $this->GetBaseLink();
 		$req = $this->getRequest();
 
+		$input_statId = $req->getVal('statId');
+
+		$this->laodStatIds();
+
+		if(in_array($input_statId, $this->stat) === True) {
+			return $this->reportError("Error: statId = $input_statId is already used");
+		}
 
 		$input_version = $req->getVal('version');
 		$input_roundNum = $req->getVal('round');
@@ -1718,9 +1851,14 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$input_deferLevel = $req->getVal('deferLevel');
 		$input_display = $req->getVal('display');
 		$input_compute = $req->getVal('compute');
+		$input_idx = $req->getVal('idx');
+		$input_category = $req->getVal('category');
+		$input_suffix = $req->getVal('suffix');
+		$input_dependsOn = $req->getVal('dependsOn');
 
 		$cols = [];
 		$values = [];
+		$cols[] = 'statId';
 		$cols[] = 'version';
 		$cols[] = 'roundNum';
 		$cols[] = 'addClass';
@@ -1730,7 +1868,12 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$cols[] = 'deferLevel';
 		$cols[] = 'display';
 		$cols[] = 'compute';
+		$cols[] = 'idx';
+		$cols[] = 'category';
+		$cols[] = 'suffix';
+		$cols[] = 'dependsOn';
 
+		$values[] = "'" . $this->db->real_escape_string($input_statId) . "'";
 		$values[] = "'" . $this->db->real_escape_string($input_version) . "'";
 		$values[] = "'" . $this->db->real_escape_string($input_roundNum) . "'";
 		$values[] = "'" . $this->db->real_escape_string($input_addClass) . "'";
@@ -1740,6 +1883,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$values[] = "'" . $this->db->real_escape_string($input_deferLevel) . "'";
 		$values[] = "'" . $this->db->real_escape_string($input_display) . "'";
 		$values[] = "'" . $this->db->real_escape_string($input_compute) . "'";
+		$values[] = "'" . $this->db->real_escape_string($input_idx) . "'";
+		$values[] = "'" . $this->db->real_escape_string($input_category) . "'";
+		$values[] = "'" . $this->db->real_escape_string($input_suffix) . "'";
+		$values[] = "'" . $this->db->real_escape_string($input_dependsOn) . "'";
 
 
 		$this->InsertQueries('computedStats', $cols, $values);
@@ -1790,9 +1937,13 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$deferLevel = $this->escapeHtml($this->computedStat['deferLevel']);
 		$display = $this->escapeHtml($this->computedStat['display']);
 		$compute = $this->escapeHtml($this->computedStat['compute']);
+		$idx = $this->escapeHtml($this->computedStat['idx']);
+		$category = $this->escapeHtml($this->computedStat['category']);
+		$suffix = $this->escapeHtml($this->computedStat['suffix']);
+		$dependsOn = $this->escapeHtml($this->computedStat['dependsOn']);
 
 
-		$output->addHTML("<a href='$baselink/showcomputedstats'>Go Back To Computed Stats Table</a><br>");
+		$output->addHTML("<a href='$baselink/showcomputedstats'>Show Computed Stats</a><br>");
 		$output->addHTML("<h3>Edit Computed Stat: $statId</h3>");
 		$output->addHTML("<form action='$baselink/saveeditcomputedstatsform?statid=$statId' method='POST'>");
 
@@ -1811,9 +1962,16 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<input type='text' id='edit_deferLevel' name='edit_deferLevel' value='$deferLevel'><br>");
 		$output->addHTML("<label for='edit_display'>display </label>");
 		$output->addHTML("<input type='text' id='edit_display' name='edit_display' value='$display'><br>");
-
 		$output->addHTML("<label for='edit_compute'>compute </label>");
 		$output->addHTML("<textarea id='edit_compute' name='edit_compute' class='txtArea' rows='4' cols='50'>$compute</textarea><br>");
+		$output->addHTML("<label for='edit_idx'>idx </label>");
+		$output->addHTML("<input type='text' id='edit_idx' name='edit_idx' value='$idx'><br>");
+		$output->addHTML("<label for='edit_category'>category </label>");
+		$output->addHTML("<input type='text' id='edit_category' name='edit_category' value='$category'><br>");
+		$output->addHTML("<label for='edit_suffix'>suffix </label>");
+		$output->addHTML("<input type='text' id='edit_suffix' name='edit_suffix' value='$suffix'><br>");
+		$output->addHTML("<label for='edit_dependsOn'>dependsOn </label>");
+		$output->addHTML("<input type='text' id='edit_dependsOn' name='edit_dependsOn' value='$dependsOn'><br>");
 
 		$output->addHTML("<br><input class='btn' type='submit' value='Save Edits'>");
 		$output->addHTML("</form><br>");
@@ -1829,10 +1987,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$statId = $req->getVal('statid');
 		$statId = $this->db->real_escape_string($statId);
 
-		if ($statId <= 0) {
-			return $this->reportError("Error: invalid computed Stat ID");
-		}
-
 		$new_version = $req->getVal('edit_version');
 		$new_roundNum = $req->getVal('edit_round');
 		$new_addClass = $req->getVal('edit_addClass');
@@ -1842,6 +1996,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$new_deferLevel = $req->getVal('edit_deferLevel');
 		$new_display = $req->getVal('edit_display');
 		$new_compute = $req->getVal('edit_compute');
+		$new_idx = $req->getVal('edit_idx');
+		$new_category = $req->getVal('edit_category');
+		$new_suffix = $req->getVal('edit_suffix');
+		$new_dependsOn = $req->getVal('edit_dependsOn');
 
 		$values = [];
 
@@ -1854,6 +2012,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$values[] = "deferLevel='" . $this->db->real_escape_string($new_deferLevel) . "'";
 		$values[] = "display='" . $this->db->real_escape_string($new_display) . "'";
 		$values[] = "compute='" . $this->db->real_escape_string($new_compute) . "'";
+		$values[] = "idx='" . $this->db->real_escape_string($new_idx) . "'";
+		$values[] = "category='" . $this->db->real_escape_string($new_category) . "'";
+		$values[] = "suffix='" . $this->db->real_escape_string($new_suffix) . "'";
+		$values[] = "dependsOn='" . $this->db->real_escape_string($new_dependsOn) . "'";
 
 		$this->UpdateQueries('computedStats', $values, 'statId', $statId);
 
@@ -1877,10 +2039,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$statId = $req->getVal('statid');
 		$statId = $this->escapeHtml($statId);
 
-		if ($statId <= 0) {
-			return $this->reportError("Error: invalid ID");
-		}
-
 		$this->LoadComputedStat($statId);
 
 		if ($this->LoadComputedStat($statId) == False)
@@ -1897,6 +2055,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$deferLevel = $this->escapeHtml($this->computedStat['deferLevel']);
 		$display = $this->escapeHtml($this->computedStat['display']);
 		$compute = $this->escapeHtml($this->computedStat['compute']);
+		$idx = $this->escapeHtml($this->computedStat['idx']);
+		$category = $this->escapeHtml($this->computedStat['category']);
+		$suffix = $this->escapeHtml($this->computedStat['suffix']);
+		$dependsOn = $this->escapeHtml($this->computedStat['dependsOn']);
 
 		$output->addHTML("<h3>Are you sure you want to delete this computed Stat: </h3>");
 		$output->addHTML("<label><b>id:</b> $statId </label><br>");
@@ -1909,6 +2071,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<label><b>deferLevel:</b> $deferLevel </label><br>");
 		$output->addHTML("<label><b>display:</b> $display </label><br>");
 		$output->addHTML("<label><b>compute:</b> $compute </label><br>");
+		$output->addHTML("<label><b>idx:</b> $idx </label><br>");
+		$output->addHTML("<label><b>category:</b> $category </label><br>");
+		$output->addHTML("<label><b>suffix:</b> $suffix </label><br>");
+		$output->addHTML("<label><b>dependsOn:</b> $dependsOn </label><br>");
 
 		$output->addHTML("<br><a href='$baselink/statdeleteconfirm?statid=$statId&confirm=True'>Delete </a>");
 		$output->addHTML("<a href='$baselink/statdeleteconfirm?statid=$statId&confirm=False'> Cancel</a>");
@@ -1923,10 +2089,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$confirm = $req->getVal('confirm');
 		$statId = $req->getVal('statid');
 		$statId = $this->db->real_escape_string($statId);
-
-		if ($statId <= 0) {
-			return $this->reportError("Error: invalid stat ID");
-		}
 
 		if ($confirm !== 'True')
 		{
@@ -1950,6 +2112,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$deferLevel = $this->escapeHtml($this->computedStat['deferLevel']);
 			$display = $this->escapeHtml($this->computedStat['display']);
 			$compute = $this->escapeHtml($this->computedStat['compute']);
+			$idx = $this->escapeHtml($this->computedStat['idx']);
+			$category = $this->escapeHtml($this->computedStat['category']);
+			$suffix = $this->escapeHtml($this->computedStat['suffix']);
+			$dependsOn = $this->escapeHtml($this->computedStat['dependsOn']);
 
 			$cols = [];
 			$values = [];
@@ -1963,6 +2129,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$cols[] = 'deferLevel';
 			$cols[] = 'display';
 			$cols[] = 'compute';
+			$cols[] = 'idx';
+			$cols[] = 'category';
+			$cols[] = 'suffix';
+			$cols[] = 'dependsOn';
 
 			$values[] = "'" . $this->db->real_escape_string($statId) . "'";
 			$values[] = "'" . $this->db->real_escape_string($version) . "'";
@@ -1974,6 +2144,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$values[] = "'" . $this->db->real_escape_string($deferLevel) . "'";
 			$values[] = "'" . $this->db->real_escape_string($display) . "'";
 			$values[] = "'" . $this->db->real_escape_string($compute) . "'";
+			$values[] = "'" . $this->db->real_escape_string($idx) . "'";
+			$values[] = "'" . $this->db->real_escape_string($category) . "'";
+			$values[] = "'" . $this->db->real_escape_string($suffix) . "'";
+			$values[] = "'" . $this->db->real_escape_string($dependsOn) . "'";
 
 			$this->InsertQueries('computedStatsArchives', $cols, $values);
 			$this->DeleteQueries('computedStats', 'statId', $statId);
@@ -2000,6 +2174,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<br>");
 		$output->addHTML("<li><a href='$baselink/showcomputedstats'>Show Computed Stats</a></li>");
 		$output->addHTML("<li><a href='$baselink/addcomputedstat'>Add Computed Stat</a></li>");
+		$output->addHTML("<br>");
+		$output->addHTML("<li><a href='$baselink/addversion'>Add Version</a></li>");
 		$output->addHTML("</ul>");
 	}
 
@@ -2059,6 +2235,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$this->OutputDeleteEffect();
 		elseif($parameter == "effectdeleteconfirm")
 			$this->ConfirmDeleteEffect();
+		elseif($parameter == "addversion")
+			$this->OutputAddVersionForm();
+		elseif($parameter == "saveversion")
+			$this->SaveNewVersion();
 		else
 			$this->OutputTableOfContents();
 	}
