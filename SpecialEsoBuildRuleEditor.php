@@ -470,6 +470,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<th>Enable Off Bar</th>");
 			$output->addHTML("<th>Match Skill Name</th>");
 			$output->addHTML("<th>Update Buff Value</th>");
+			$output->addHTML("<th>statRequireValue</th>");
 			$output->addHTML("<th>Delete</th>");
 			$output->addHTML("</tr></thead><tbody>");
 
@@ -493,6 +494,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 				$enableOffBar = $this->escapeHtml($rulesData['enableOffBar']);
 				$matchSkillName = $this->escapeHtml($rulesData['matchSkillName']);
 				$updateBuffValue = $this->escapeHtml($rulesData['updateBuffValue']);
+				$statRequireValue = $this->escapeHtml($rulesData['statRequireValue']);
 
 
 				$isEnabledDisplay = $this->GetBooleanDispaly($isEnabled);
@@ -522,6 +524,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 				$output->addHTML("<td>$enableOffBarDisplay</td>");
 				$output->addHTML("<td>$matchSkillNameDisplay</td>");
 				$output->addHTML("<td>$updateBuffValueDisplay</td>");
+				$output->addHTML("<td>$statRequireValue</td>");
 				$output->addHTML("<td><a href='$baselink/deleterule?ruleid=$id'>Delete</a></td>");
 				$output->addHTML("</tr>");
 				}
@@ -576,6 +579,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$updateBuffValue = $this->escapeHtml($this->rule['updateBuffValue']);
 		$toggleVisible = $this->escapeHtml($this->rule['toggleVisible']);
 		$toggle = $this->escapeHtml($this->rule['isToggle']);
+		$statRequireValue = $this->escapeHtml($this->rule['statRequireValue']);
 
 		$output->addHTML("<h3>Are you sure you want to delete this rule: </h3>");
 		$output->addHTML("<label><b>id:</b> $id </label><br>");
@@ -599,6 +603,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<label><b>enableOffBar:</b> $enableOffBar </label><br>");
 		$output->addHTML("<label><b>matchSkillName:</b> $matchSkillName </label><br>");
 		$output->addHTML("<label><b>updateBuffValue:</b> $updateBuffValue </label><br>");
+		$output->addHTML("<label><b>statRequireValue:</b> $statRequireValue </label><br>");
 		$output->addHTML("<label><b>toggleVisible:</b> $toggleVisible </label><br>");
 		$output->addHTML("<label><b>isToggle:</b> $isToggle </label><br>");
 
@@ -657,6 +662,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$updateBuffValue = $this->escapeHtml($this->rule['updateBuffValue']);
 			$toggleVisible = $this->escapeHtml($this->rule['toggleVisible']);
 			$toggle = $this->escapeHtml($this->rule['isToggle']);
+			$statRequireValue = $this->escapeHtml($this->rule['statRequireValue']);
 
 
 			$cols = [];
@@ -684,6 +690,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$cols[] = 'updateBuffValue';
 			$cols[] = 'toggleVisible';
 			$cols[] = 'isToggle';
+			$cols[] = 'statRequireValue';
 
 			$values[] = "'" . $this->db->real_escape_string($id) . "'";
 			$values[] = "'" . $this->db->real_escape_string($ruleType) . "'";
@@ -708,6 +715,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$values[] = "'" . $this->db->real_escape_string($updateBuffValue) . "'";
 			$values[] = "'" . $this->db->real_escape_string($toggleVisible) . "'";
 			$values[] = "'" . $this->db->real_escape_string($isToggle) . "'";
+			$values[] = "'" . $this->db->real_escape_string($statRequireValue) . "'";
 
 
 			$this->InsertQueries('rulesArchive', $cols, $values);
@@ -824,6 +832,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$updateBuffValue = $this->escapeHtml($this->rule['updateBuffValue']);
 			$toggleVisible = $this->escapeHtml($this->rule['toggleVisible']);
 			$toggle = $this->escapeHtml($this->rule['isToggle']);
+			$statRequireValue = $this->escapeHtml($this->rule['statRequireValue']);
 
 			$output->addHTML("<a href='$baselink/showrules'>Show Rules</a><br>");
 			$output->addHTML("<h3>Edit Rule: $id</h3>");
@@ -863,6 +872,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<input type='text' id='edit_factorStatId' name='edit_factorStatId' value='$factorStatId'><br>");
 			$output->addHTML("<label for='edit_originalId'>Original ID: </label>");
 			$output->addHTML("<input type='text' id='edit_originalId' name='edit_originalId' value='$originalId'><br>");
+			$output->addHTML("<label for='edit_statRequireValue'>statRequireValue: </label>");
+			$output->addHTML("<input type='text' id='edit_statRequireValue' name='edit_statRequireValue' value='$edit_statRequireValue'><br>");
+
 
 			$this->versionsList('edit_version', $version);
 
@@ -958,6 +970,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<input type='text' id='factorStatId' name='factorStatId'><br>");
 			$output->addHTML("<label for='originalId'>Original ID: </label>");
 			$output->addHTML("<input type='text' id='originalId' name='originalId'><br>");
+			$output->addHTML("<label for='statRequireValue'>statRequireValue: </label>");
+			$output->addHTML("<input type='text' id='statRequireValue' name='statRequireValue'><br>");
 
 			$this->versionsList('version', '1');
 
@@ -1069,6 +1083,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$input_updateBuffValue = $req->getVal('updateBuffValue');
 		$input_toggleVisible = $req->getVal('toggleVisible');
 		$input_toggle = $req->getVal('toggle');
+		$input_statRequireValue = $req->getVal('statRequireValue');
 
 		$cols = [];
 		$values = [];
@@ -1094,6 +1109,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$cols[] = 'updateBuffValue';
 		$cols[] = 'toggleVisible';
 		$cols[] = 'isToggle';
+		$cols[] = 'statRequireValue';
 
 		$values[] = "'" . $this->db->real_escape_string($input_ruleType) . "'";
 		$values[] = "'" . $this->db->real_escape_string($input_nameId). "'";
@@ -1117,6 +1133,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$values[] = "'" . $this->db->real_escape_string($input_updateBuffValue). "'";
 		$values[] = "'" . $this->db->real_escape_string($input_toggleVisible). "'";
 		$values[] = "'" . $this->db->real_escape_string($input_toggle). "'";
+		$values[] = "'" . $this->db->real_escape_string($input_statRequireValue). "'";
 
 
 		$this->InsertQueries('rules', $cols, $values);
@@ -1160,6 +1177,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$new_updateBuffValue = $req->getVal('edit_updateBuffValue');
 			$new_toggleVisible = $req->getVal('edit_toggleVisible');
 			$new_toggle = $req->getVal('edit_toggle');
+			$new_statRequireValue = $req->getVal('edit_statRequireValue');
 
 			$values = [];
 
@@ -1185,6 +1203,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$values[] = "updateBuffValue='" . $this->db->real_escape_string($new_updateBuffValue). "'";
 			$values[] = "toggleVisible='" . $this->db->real_escape_string($new_toggleVisible). "'";
 			$values[] = "isToggle='" . $this->db->real_escape_string($new_toggle). "'";
+			$values[] = "statRequireValue='" . $this->db->real_escape_string($new_statRequireValue). "'";
 
 			$this->UpdateQueries('rules', $values, 'id', $id);
 
