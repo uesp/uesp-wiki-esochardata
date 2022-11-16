@@ -293,6 +293,16 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 		$input_version = $req->getVal('version');
 
+		$this->loadVersions();
+
+		foreach($this->versions as $version) {
+			$versionOption = $this->escapeHtml($version['version']);
+
+			if($input_version == $versionOption) {
+				return $this->reportError("Error: version $input_version already exists");
+			}
+		}
+
 		$cols = [];
 		$values = [];
 
@@ -338,14 +348,16 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 			$versionOption = $this->escapeHtml($version['version']);
 
-			if($versionOption == $selectedVersion)
+			if($versionOption == $selectedVersion )
 			{
 				$selected = "selected";
 			}
+
 			if($versionOption != "")
 			{
 				$output->addHTML("<option value='$versionOption' $selected >$versionOption</option>");
 			}
+
 
 		}
 
@@ -365,7 +377,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$result = $this->db->query($query);
 
 		if ($result === false) {
-			return $this->reportError("Error: failed to INSERT deleted data into database");
+			return $this->reportError("Error: failed to INSERT data into database");
 		}
 	}
 
@@ -375,7 +387,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$result = $this->db->query($query);
 
 		if ($result === false) {
-			return $this->reportError("Error: failed to DELETE rule from database");
+			return $this->reportError("Error: failed to DELETE data from database");
 		}
 	}
 
@@ -1818,12 +1830,14 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$result = $this->db->query($query);
 
 		if ($result === false) {
-			return $this->reportError("Error: failed to load stat ids from database");
+			return $this->reportError("Error: failed to load stat IDs from database");
 		}
 
-		$col=[];
-		$col[] = $result->fetch_assoc();
-		$this->stat = $col['statId'];
+		$this->ids =[];
+
+		while($row = mysqli_fetch_assoc($result)) {
+				$this->ids[] = $row;
+		}
 
 		return true;
 	}
@@ -1838,8 +1852,13 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 		$this->laodStatIds();
 
-		if(in_array($input_statId, $this->stat) === True) {
-			return $this->reportError("Error: statId = $input_statId is already used");
+		foreach($this->ids as $id)
+		{
+			$usedId = $this->escapeHtml($id['statId']);
+
+			if($input_statId === $usedId) {
+				return $this->reportError("Error: statId '$input_statId' is already used");
+			}
 		}
 
 		$input_version = $req->getVal('version');
