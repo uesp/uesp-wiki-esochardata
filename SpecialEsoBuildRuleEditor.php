@@ -1772,6 +1772,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$suffix = $this->escapeHtml($computedStatsData['suffix']);
 			$dependsOn = $this->escapeHtml($computedStatsData['dependsOn']);
 
+			$compute = json_decode($compute);
+			$dependsOn = json_decode($dependsOn);
+
 			$output->addHTML("<tr>");
 			$output->addHTML("<td><a href='$baselink/editcomputedstat?statid=$statId'>Edit</a></td>");
 			$output->addHTML("<td>$statId</td>");
