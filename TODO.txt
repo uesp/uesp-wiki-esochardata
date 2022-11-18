@@ -1,0 +1,22 @@
+TODO:
+
+- rules:
+    - convert custom fields to JSON data in save new rule and edit rule forms
+- computedStats:
+    - convert custom fields to JSON data when saving $compute and $new_dependsOn
+
+- Interface Changes:
+    - Longer text inputs on rules forms:
+        - NameID
+        - Display Name
+        - Icon
+        - Comment
+        - All regex fields
+    - Longer text inputs on effect forms:
+        - buffId
+    - Align "Description" label with top of input field.
+    - Remove ":" in label names on rule/effect forms. Add a little space between label and input.
+    - Add a bit more vertical space between inputs.
+    - Make version select list a bit wider (fixed width).
+    - Make the rule type select list a bit wider and fixed width.
+    - Use full words with spaces for labels. ex: "requireSkillLine" should be "Required Skill Line".

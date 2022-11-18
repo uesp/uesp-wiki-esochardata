@@ -61,24 +61,20 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 	                        displayName TINYTEXT,
 	                        matchRegex TINYTEXT NOT NULL,
 	                        displayRegex TINYTEXT,
-	                        requireSkillLine TINYTEXT,
 	                        statRequireId TINYTEXT,
 	                        statRequireValue TINYTEXT,
 	                        factorStatId TINYTEXT,
 	                        isEnabled TINYINT(1) NOT NULL,
 	                        isVisible TINYINT(1) NOT NULL,
-	                        toggleVisible TINYINT(1) NOT NULL,
 	                        isToggle TINYINT(1) NOT NULL,
 	                        enableOffBar TINYINT(1) NOT NULL,
-	                        matchSkillName TINYINT(1) NOT NULL,
-	                        updateBuffValue TINYINT(1) NOT NULL,
 	                        originalId TINYTEXT,
 	                        icon TINYTEXT,
 	                        groupName TINYTEXT,
 	                        maxTimes INTEGER,
 	                        comment TINYTEXT NOT NULL,
 	                        description MEDIUMTEXT NOT NULL,
-	                        disableIds TINYTEXT,
+													customData MEDIUMTEXT NOT NULL,
 	                        PRIMARY KEY (id),
 	                        INDEX index_version(version(10)),
 	                        INDEX index_ruleId(originalId(30))
@@ -151,24 +147,20 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 	                        displayName TINYTEXT,
 	                        matchRegex TINYTEXT NOT NULL,
 	                        displayRegex TINYTEXT,
-	                        requireSkillLine TINYTEXT,
 	                        statRequireId TINYTEXT,
 	                        statRequireValue TINYTEXT,
 	                        factorStatId TINYTEXT,
 	                        isEnabled TINYINT(1) NOT NULL,
 	                        isVisible TINYINT(1) NOT NULL,
-	                        toggleVisible TINYINT(1) NOT NULL,
 	                        isToggle TINYINT(1) NOT NULL,
 	                        enableOffBar TINYINT(1) NOT NULL,
-	                        matchSkillName TINYINT(1) NOT NULL,
-	                        updateBuffValue TINYINT(1) NOT NULL,
 	                        originalId TINYTEXT,
 	                        icon TINYTEXT,
 	                        groupName TINYTEXT,
 	                        maxTimes INTEGER,
 	                        comment TINYTEXT NOT NULL,
 	                        description MEDIUMTEXT NOT NULL,
-	                        disableIds TINYTEXT,
+													customData MEDIUMTEXT NOT NULL,
 	                        PRIMARY KEY (archiveId),
 	                        INDEX index_version(version(10)),
 	                        INDEX index_ruleId(originalId(30))
@@ -460,17 +452,15 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<th>Match Regex</th>");
 			$output->addHTML("<th>statRequireId</th>");
 			$output->addHTML("<th>Original Id</th>");
-			$output->addHTML("<th>groupName</th>");
+			$output->addHTML("<th>Group Name</th>");
 			$output->addHTML("<th>Description</th>");
 			$output->addHTML("<th>Version</th>");
 			$output->addHTML("<th>Enabled</th>");
 			$output->addHTML("<th>Toggle</th>");
-			$output->addHTML("<th>Toggle Visible</th>");
 			$output->addHTML("<th>Visible</th>");
 			$output->addHTML("<th>Enable Off Bar</th>");
-			$output->addHTML("<th>Match Skill Name</th>");
-			$output->addHTML("<th>Update Buff Value</th>");
-			$output->addHTML("<th>statRequireValue</th>");
+			$output->addHTML("<th>Stat Require Value</th>");
+			$output->addHTML("<th>Custom Data</th>");
 			$output->addHTML("<th>Delete</th>");
 			$output->addHTML("</tr></thead><tbody>");
 
@@ -488,22 +478,28 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 				$description = $this->escapeHtml($rulesData['description']);
 				$version = $this->escapeHtml($rulesData['version']);
 				$isEnabled = $this->escapeHtml($rulesData['isEnabled']);
-				$toggleVisible = $this->escapeHtml($rulesData['toggleVisible']);
 				$toggle = $this->escapeHtml($rulesData['isToggle']);
 				$isVisible = $this->escapeHtml($rulesData['isVisible']);
 				$enableOffBar = $this->escapeHtml($rulesData['enableOffBar']);
-				$matchSkillName = $this->escapeHtml($rulesData['matchSkillName']);
-				$updateBuffValue = $this->escapeHtml($rulesData['updateBuffValue']);
 				$statRequireValue = $this->escapeHtml($rulesData['statRequireValue']);
 
 
 				$isEnabledDisplay = $this->GetBooleanDispaly($isEnabled);
-				$toggleVisibleDisplay = $this->GetBooleanDispaly($toggleVisible);
 				$toggleDisplay = $this->GetBooleanDispaly($toggle);
 				$isVisibleDisplay = $this->GetBooleanDispaly($isVisible);
 				$enableOffBarDisplay = $this->GetBooleanDispaly($enableOffBar);
-				$matchSkillNameDisplay = $this->GetBooleanDispaly($matchSkillName);
-				$updateBuffValueDisplay = $this->GetBooleanDispaly($updateBuffValue);
+
+
+
+				if ($rulesData['customData'] == '') {
+					$data = [];
+				}
+        else {
+            $data = json_decode($rulesData['customData'], true);
+				}
+
+				$rulesData['customData'] = $data;
+
 
 				$output->addHTML("<tr>");
 				$output->addHTML("<td><a href='$baselink/editrule?ruleid=$id'>Edit</a></td>");
@@ -519,12 +515,17 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 				$output->addHTML("<td>$version</td>");
 				$output->addHTML("<td>$isEnabledDisplay</td>");
 				$output->addHTML("<td>$toggleDisplay</td>");
-				$output->addHTML("<td>$toggleVisibleDisplay</td>");
 				$output->addHTML("<td>$isVisibleDisplay</td>");
 				$output->addHTML("<td>$enableOffBarDisplay</td>");
-				$output->addHTML("<td>$matchSkillNameDisplay</td>");
-				$output->addHTML("<td>$updateBuffValueDisplay</td>");
 				$output->addHTML("<td>$statRequireValue</td>");
+
+				$output->addHTML("<td>");
+				foreach($rulesData['customData'] as $costumData)
+				{
+					$output->addHTML("$costumData");
+				}
+				$output->addHTML("</td>");
+
 				$output->addHTML("<td><a href='$baselink/deleterule?ruleid=$id'>Delete</a></td>");
 				$output->addHTML("</tr>");
 				}
@@ -561,7 +562,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$displayName = $this->escapeHtml($this->rule['displayName']);
 		$matchRegex = $this->escapeHtml($this->rule['matchRegex']);
 		$displayRegex = $this->escapeHtml($this->rule['displayRegex']);
-		$requireSkillLine = $this->escapeHtml($this->rule['requireSkillLine']);
 		$statRequireId = $this->escapeHtml($this->rule['statRequireId']);
 		$factorStatId = $this->escapeHtml($this->rule['factorStatId']);
 		$originalId = $this->escapeHtml($this->rule['originalId']);
@@ -571,13 +571,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$maxTimes = $this->escapeHtml($this->rule['maxTimes']);
 		$comment = $this->escapeHtml($this->rule['comment']);
 		$description = $this->escapeHtml($this->rule['description']);
-		$disableIds = $this->escapeHtml($this->rule['disableIds']);
 		$isEnabled = $this->escapeHtml($this->rule['isEnabled']);
 		$isVisible = $this->escapeHtml($this->rule['isVisible']);
 		$enableOffBar = $this->escapeHtml($this->rule['enableOffBar']);
-		$matchSkillName = $this->escapeHtml($this->rule['matchSkillName']);
-		$updateBuffValue = $this->escapeHtml($this->rule['updateBuffValue']);
-		$toggleVisible = $this->escapeHtml($this->rule['toggleVisible']);
 		$toggle = $this->escapeHtml($this->rule['isToggle']);
 		$statRequireValue = $this->escapeHtml($this->rule['statRequireValue']);
 
@@ -587,7 +583,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<label><b>nameId:</b> $nameId </label><br>");
 		$output->addHTML("<label><b>displayName:</b> $displayName </label><br>");
 		$output->addHTML("<label><b>matchRegex:</b> $matchRegex </label><br>");
-		$output->addHTML("<label><b>requireSkillLine:</b> $requireSkillLine </label><br>");
 		$output->addHTML("<label><b>statRequireId:</b> $statRequireId </label><br>");
 		$output->addHTML("<label><b>factorStatId:</b> $factorStatId </label><br>");
 		$output->addHTML("<label><b>originalId:</b> $originalId </label><br>");
@@ -597,14 +592,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<label><b>maxTimes:</b> $maxTimes </label><br>");
 		$output->addHTML("<label><b>comment:</b> $comment </label><br>");
 		$output->addHTML("<label><b>description:</b> $description </label><br>");
-		$output->addHTML("<label><b>disableIds:</b> $disableIds </label><br>");
 		$output->addHTML("<label><b>isEnabled:</b> $isEnabled </label><br>");
 		$output->addHTML("<label><b>isVisible:</b> $isVisible </label><br>");
 		$output->addHTML("<label><b>enableOffBar:</b> $enableOffBar </label><br>");
-		$output->addHTML("<label><b>matchSkillName:</b> $matchSkillName </label><br>");
-		$output->addHTML("<label><b>updateBuffValue:</b> $updateBuffValue </label><br>");
 		$output->addHTML("<label><b>statRequireValue:</b> $statRequireValue </label><br>");
-		$output->addHTML("<label><b>toggleVisible:</b> $toggleVisible </label><br>");
 		$output->addHTML("<label><b>isToggle:</b> $isToggle </label><br>");
 
 		$output->addHTML("<br><a href='$baselink/ruledeleteconfirm?ruleid=$id&confirm=True'>Delete </a>");
@@ -644,7 +635,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$displayName = $this->escapeHtml($this->rule['displayName']);
 			$matchRegex = $this->escapeHtml($this->rule['matchRegex']);
 			$displayRegex = $this->escapeHtml($this->rule['displayRegex']);
-			$requireSkillLine = $this->escapeHtml($this->rule['requireSkillLine']);
 			$statRequireId = $this->escapeHtml($this->rule['statRequireId']);
 			$factorStatId = $this->escapeHtml($this->rule['factorStatId']);
 			$originalId = $this->escapeHtml($this->rule['originalId']);
@@ -654,13 +644,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$maxTimes = $this->escapeHtml($this->rule['maxTimes']);
 			$comment = $this->escapeHtml($this->rule['comment']);
 			$description = $this->escapeHtml($this->rule['description']);
-			$disableIds = $this->escapeHtml($this->rule['disableIds']);
 			$isEnabled = $this->escapeHtml($this->rule['isEnabled']);
 			$isVisible = $this->escapeHtml($this->rule['isVisible']);
 			$enableOffBar = $this->escapeHtml($this->rule['enableOffBar']);
-			$matchSkillName = $this->escapeHtml($this->rule['matchSkillName']);
-			$updateBuffValue = $this->escapeHtml($this->rule['updateBuffValue']);
-			$toggleVisible = $this->escapeHtml($this->rule['toggleVisible']);
 			$toggle = $this->escapeHtml($this->rule['isToggle']);
 			$statRequireValue = $this->escapeHtml($this->rule['statRequireValue']);
 
@@ -672,7 +658,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$cols[] = 'nameId';
 			$cols[] = 'displayName';
 			$cols[] = 'matchRegex';
-			$cols[] = 'requireSkillLine';
 			$cols[] = 'statRequireId';
 			$cols[] = 'factorStatId';
 			$cols[] = 'originalId';
@@ -682,13 +667,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$cols[] = 'maxTimes';
 			$cols[] = 'comment';
 			$cols[] = 'description';
-			$cols[] = 'disableIds';
 			$cols[] = 'isEnabled';
 			$cols[] = 'isVisible';
 			$cols[] = 'enableOffBar';
-			$cols[] = 'matchSkillName';
-			$cols[] = 'updateBuffValue';
-			$cols[] = 'toggleVisible';
 			$cols[] = 'isToggle';
 			$cols[] = 'statRequireValue';
 
@@ -697,7 +678,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$values[] = "'" . $this->db->real_escape_string($displayName) . "'";
 			$values[] = "'" . $this->db->real_escape_string($displayName) . "'";
 			$values[] = "'" . $this->db->real_escape_string($matchRegex) . "'";
-			$values[] = "'" . $this->db->real_escape_string($requireSkillLine) . "'";
 			$values[] = "'" . $this->db->real_escape_string($statRequireId) . "'";
 			$values[] = "'" . $this->db->real_escape_string($factorStatId) . "'";
 			$values[] = "'" . $this->db->real_escape_string($originalId) . "'";
@@ -707,13 +687,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$values[] = "'" . $this->db->real_escape_string($maxTimes) . "'";
 			$values[] = "'" . $this->db->real_escape_string($comment) . "'";
 			$values[] = "'" . $this->db->real_escape_string($description) . "'";
-			$values[] = "'" . $this->db->real_escape_string($disableIds) . "'";
 			$values[] = "'" . $this->db->real_escape_string($isEnabled) . "'";
 			$values[] = "'" . $this->db->real_escape_string($isVisible) . "'";
 			$values[] = "'" . $this->db->real_escape_string($enableOffBar) . "'";
-			$values[] = "'" . $this->db->real_escape_string($matchSkillName) . "'";
-			$values[] = "'" . $this->db->real_escape_string($updateBuffValue) . "'";
-			$values[] = "'" . $this->db->real_escape_string($toggleVisible) . "'";
 			$values[] = "'" . $this->db->real_escape_string($isToggle) . "'";
 			$values[] = "'" . $this->db->real_escape_string($statRequireValue) . "'";
 
@@ -814,7 +790,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$displayName = $this->escapeHtml($this->rule['displayName']);
 			$matchRegex = $this->escapeHtml($this->rule['matchRegex']);
 			$displayRegex = $this->escapeHtml($this->rule['displayRegex']);
-			$requireSkillLine = $this->escapeHtml($this->rule['requireSkillLine']);
 			$statRequireId = $this->escapeHtml($this->rule['statRequireId']);
 			$factorStatId = $this->escapeHtml($this->rule['factorStatId']);
 			$originalId = $this->escapeHtml($this->rule['originalId']);
@@ -824,13 +799,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$maxTimes = $this->escapeHtml($this->rule['maxTimes']);
 			$comment = $this->escapeHtml($this->rule['comment']);
 			$description = $this->escapeHtml($this->rule['description']);
-			$disableIds = $this->escapeHtml($this->rule['disableIds']);
 			$isEnabled = $this->escapeHtml($this->rule['isEnabled']);
 			$isVisible = $this->escapeHtml($this->rule['isVisible']);
 			$enableOffBar = $this->escapeHtml($this->rule['enableOffBar']);
-			$matchSkillName = $this->escapeHtml($this->rule['matchSkillName']);
-			$updateBuffValue = $this->escapeHtml($this->rule['updateBuffValue']);
-			$toggleVisible = $this->escapeHtml($this->rule['toggleVisible']);
 			$toggle = $this->escapeHtml($this->rule['isToggle']);
 			$statRequireValue = $this->escapeHtml($this->rule['statRequireValue']);
 
@@ -840,16 +811,16 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 			$ruleTypeOptions=[
                 '' => 'None',
-                'buff' => 'Buff',
-                'mundus' => 'Mundus',
-								'set' => 'Set',
-								'active' => 'Active',
-								'passive' => 'Passive',
+                'buff' => 'BUFF',
+                'mundus' => 'MUNDUS',
+								'set' => 'SET',
+								'active' => 'ACTIVE',
+								'passive' => 'PASSIVE',
 								'cp' => 'CP',
-								'armorEnchant' => 'Armor Enchantment',
-								'weaponEnchant' => 'Weapon Enchantment',
-								'offHandEnchant' => 'Off-Hand Enchantment',
-								'abilityDesc' => 'Ability Description'
+								'armorEnchant' => 'ARMOR ENCHANTMENT',
+								'weaponEnchant' => 'WEAPON ENCHANTMENT',
+								'offHandEnchant' => 'OFF-HAND ENCHANTMENT',
+								'abilityDesc' => 'ABILITY DESCRIPTION'
       ];
 
 			$output->addHTML("<label for='edit_ruleType'>Rule Type: </label>");
@@ -864,8 +835,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<input type='text' id='edit_matchRegex' name='edit_matchRegex' value='$matchRegex'><br>");
 			$output->addHTML("<label for='edit_displayRegex'>Display Regex: </label>");
 			$output->addHTML("<input type='text' id='edit_displayRegex' name='edit_displayRegex' value='$displayRegex'><br>");
-			$output->addHTML("<label for='edit_requireSkillLine'>requireSkillLine: </label>");
-			$output->addHTML("<input type='text' id='edit_requireSkillLine' name='edit_requireSkillLine' value='$requireSkillLine'><br>");
 			$output->addHTML("<label for='edit_statRequireId'>statRequireId: </label>");
 			$output->addHTML("<input type='text' id='edit_statRequireId' name='edit_statRequireId' value='$statRequireId'><br>");
 			$output->addHTML("<label for='edit_factorStatId'>factorStatId: </label>");
@@ -890,16 +859,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<label for='edit_description'>Description </label>");
 			$output->addHTML("<textarea id='edit_description' name='edit_description' class='txtArea' rows='4' cols='50'>$description</textarea><br>");
 
-			$output->addHTML("<label for='edit_disableIds'>Disable IDs </label>");
-			$output->addHTML("<input type='text' id='edit_disableIds' name='edit_disableIds' value='$disableIds'><br>");
-
-
 			$isEnabledBoxCheck = $this->GetCheckboxState($isEnabled);
 			$isVisibleBoxCheck = $this->GetCheckboxState($isVisible);
 			$enableOffBarBoxCheck = $this->GetCheckboxState($enableOffBar);
-			$matchSkillNameBoxCheck = $this->GetCheckboxState($matchSkillName);
-			$updateBuffValueBoxCheck = $this->GetCheckboxState($updateBuffValue);
-			$toggleVisibleBoxCheck = $this->GetCheckboxState($toggleVisible);
 			$isEnabledBoxCheck = $this->GetCheckboxState($isEnabled);
 			$toggleBoxCheck = $this->GetCheckboxState($toggle);
 
@@ -909,12 +871,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<input $isVisibleBoxCheck type='checkbox' id='edit_isVisible' name='edit_isVisible' value='1'><br>");
 			$output->addHTML("<label for='edit_enableOffBar'>Enable Off Bar:</label>");
 			$output->addHTML("<input $enableOffBarBoxCheck type='checkbox' id='edit_enableOffBar' name='edit_enableOffBar' value='1'><br>");
-			$output->addHTML("<label for='edit_matchSkillName'>Match Skill Name:</label>");
-			$output->addHTML("<input $matchSkillNameBoxCheck type='checkbox' id='edit_matchSkillName' name='edit_matchSkillName' value='1'><br>");
-			$output->addHTML("<label for='edit_updateBuffValue'>Update Buff Value:</label>");
-			$output->addHTML("<input $updateBuffValueBoxCheck type='checkbox' id='edit_updateBuffValue' name='edit_updateBuffValue' value='1'><br>");
-			$output->addHTML("<label for='edit_toggleVisible'>Toggle Visible:</label>");
-			$output->addHTML("<input $toggleVisibleBoxCheck type='checkbox' id='edit_toggleVisible' name='edit_toggleVisible' value='1'><br>");
 			$output->addHTML("<label for='edit_toggle'>Toggle:</label>");
 			$output->addHTML("<input $toggleBoxCheck type='checkbox' id='edit_toggle' name='edit_toggle' value='1'><br>");
 
@@ -940,19 +896,22 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<h3>Add New Rule</h3>");
 			$output->addHTML("<form action='$baselink/saverule' method='POST'>");
 
+			$ruleTypeOptions=[
+                '' => 'None',
+                'buff' => 'BUFF',
+                'mundus' => 'MUNDUS',
+								'set' => 'SET',
+								'active' => 'ACTIVE',
+								'passive' => 'PASSIVE',
+								'cp' => 'CP',
+								'armorEnchant' => 'ARMOR ENCHANTMENT',
+								'weaponEnchant' => 'WEAPON ENCHANTMENT',
+								'offHandEnchant' => 'OFF-HAND ENCHANTMENT',
+								'abilityDesc' => 'ABILITY DESCRIPTION'
+      ];
+
 			$output->addHTML("<label for='ruleType'>Rule Type: </label>");
-			$output->addHTML("<select id='ruleType' name='ruleType'>");
-			$output->addHTML("<option value='buff'>buff</option>");
-			$output->addHTML("<option value='mundus'>mundus</option>");
-			$output->addHTML("<option value='set'>set</option>");
-			$output->addHTML("<option value='active'>active</option>");
-			$output->addHTML("<option value='passive'>passive</option>");
-			$output->addHTML("<option value='cp'>cp</option>");
-			$output->addHTML("<option value='armorEnchant'>armorEnchant</option>");
-			$output->addHTML("<option value='weaponEnchant'>weaponEnchant</option>");
-			$output->addHTML("<option value='offHandEnchant'>offHandEnchant</option>");
-			$output->addHTML("<option value='abilityDesc'>abilityDesc</option>");
-			$output->addHTML("</select><br>");
+			$this->OutputLists($ruleType, $ruleTypeOptions, 'ruleType');
 
 			$output->addHTML("<label for='nameId'>Name ID: </label>");
 			$output->addHTML("<input type='text' id='nameId' name='nameId'><br>");
@@ -962,8 +921,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<input type='text' id='matchRegex' name='MatchRegex'><br>");
 			$output->addHTML("<label for='displayRegex'>Display Regex: </label>");
 			$output->addHTML("<input type='text' id='displayRegex' name='displayRegex'><br>");
-			$output->addHTML("<label for='requireSkillLine'>requireSkillLine: </label>");
-			$output->addHTML("<input type='text' id='requireSkillLine' name='requireSkillLine'><br>");
 			$output->addHTML("<label for='statRequireId'>statRequireId: </label>");
 			$output->addHTML("<input type='text' id='statRequireId' name='statRequireId'><br>");
 			$output->addHTML("<label for='factorStatId'>factorStatId: </label>");
@@ -985,22 +942,14 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<input type='text' id='comment' name='comment'><br>");
 			$output->addHTML("<label for='description'>Description: </label>");
 			$output->addHTML("<input type='text' id='description' name='description'><br>");
-			$output->addHTML("<label for='disableIds'>Disable IDs: </label>");
-			$output->addHTML("<input type='text' id='disableIds' name='disableIds'><br>");
 
 			//could only be true or false (1 or 0)
 			$output->addHTML("<br><label for='isEnabled'>Enabled:</label>");
 			$output->addHTML("<input type='checkbox' id='isEnabled' name='isEnabled' value='1'><br>");
 			$output->addHTML("<label for='isVisible'>Visible:</label>");
-			$output->addHTML("<input type='checkbox' id='isVisible' name='isVisible' value='1'><br>");
+			$output->addHTML("<input type='checkbox' id='isVisible' name='isVisible' value='1' checked><br>");
 			$output->addHTML("<label for='enableOffBar'>Enable Off Bar:</label>");
 			$output->addHTML("<input type='checkbox' id='enableOffBar' name='enableOffBar' value='1'><br>");
-			$output->addHTML("<label for='matchSkillName'>Match Skill Name:</label>");
-			$output->addHTML("<input type='checkbox' id='matchSkillName' name='matchSkillName' value='1'><br>");
-			$output->addHTML("<label for='updateBuffValue'>Update Buff Value:</label>");
-			$output->addHTML("<input type='checkbox' id='updateBuffValue' name='updateBuffValue' value='1'><br>");
-			$output->addHTML("<label for='toggleVisible'>Toggle Visible:</label>");
-			$output->addHTML("<input type='checkbox' id='toggleVisible' name='toggleVisible' value='1'><br>");
 			$output->addHTML("<label for='toggle'>Toggle:</label>");
 			$output->addHTML("<input type='checkbox' id='toggle' name='toggle' value='1'><br>");
 
@@ -1065,7 +1014,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$input_nameId = $req->getVal('nameId');
 		$input_displayName = $req->getVal('displayName');
 		$input_matchRegex =$req->getVal('matchRegex');
-		$input_requireSkillLine = $req->getVal('requireSkillLine');
 		$input_statRequireId = $req->getVal('statRequireId');
 		$input_factorStatId = $req->getVal('factorStatId');
 		$input_originalId = $req->getVal('originalId');
@@ -1075,13 +1023,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$input_maxTimes = $req->getVal('maxTimes');
 		$input_comment = $req->getVal('comment');
 		$input_description = $req->getVal('description');
-		$input_disableIds = $req->getVal('disableIds');
 		$input_isEnabled = $req->getVal('isEnabled');
 		$input_isVisible = $req->getVal('isVisible');
 		$input_enableOffBar = $req->getVal('enableOffBar');
-		$input_matchSkillName = $req->getVal('matchSkillName');
-		$input_updateBuffValue = $req->getVal('updateBuffValue');
-		$input_toggleVisible = $req->getVal('toggleVisible');
 		$input_toggle = $req->getVal('toggle');
 		$input_statRequireValue = $req->getVal('statRequireValue');
 
@@ -1091,7 +1035,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$cols[] = 'nameId';
 		$cols[] = 'displayName';
 		$cols[] = 'matchRegex';
-		$cols[] = 'requireSkillLine';
 		$cols[] = 'statRequireId';
 		$cols[] = 'factorStatId';
 		$cols[] = 'originalId';
@@ -1101,13 +1044,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$cols[] = 'maxTimes';
 		$cols[] = 'comment';
 		$cols[] = 'description';
-		$cols[] = 'disableIds';
 		$cols[] = 'isEnabled';
 		$cols[] = 'isVisible';
 		$cols[] = 'enableOffBar';
-		$cols[] = 'matchSkillName';
-		$cols[] = 'updateBuffValue';
-		$cols[] = 'toggleVisible';
 		$cols[] = 'isToggle';
 		$cols[] = 'statRequireValue';
 
@@ -1115,7 +1054,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$values[] = "'" . $this->db->real_escape_string($input_nameId). "'";
 		$values[] = "'" . $this->db->real_escape_string($input_displayName). "'";
 		$values[] = "'" . $this->db->real_escape_string($input_matchRegex). "'";
-		$values[] = "'" . $this->db->real_escape_string($input_requireSkillLine). "'";
 		$values[] = "'" . $this->db->real_escape_string($input_statRequireId). "'";
 		$values[] = "'" . $this->db->real_escape_string($input_factorStatId). "'";
 		$values[] = "'" . $this->db->real_escape_string($input_originalId). "'";
@@ -1125,13 +1063,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$values[] = "'" . $this->db->real_escape_string($input_maxTimes). "'";
 		$values[] = "'" . $this->db->real_escape_string($input_comment). "'";
 		$values[] = "'" . $this->db->real_escape_string($input_description). "'";
-		$values[] = "'" . $this->db->real_escape_string($input_disableIds). "'";
 		$values[] = "'" . $this->db->real_escape_string($input_isEnabled). "'";
 		$values[] = "'" . $this->db->real_escape_string($input_isVisible). "'";
 		$values[] = "'" . $this->db->real_escape_string($input_enableOffBar). "'";
-		$values[] = "'" . $this->db->real_escape_string($input_matchSkillName). "'";
-		$values[] = "'" . $this->db->real_escape_string($input_updateBuffValue). "'";
-		$values[] = "'" . $this->db->real_escape_string($input_toggleVisible). "'";
 		$values[] = "'" . $this->db->real_escape_string($input_toggle). "'";
 		$values[] = "'" . $this->db->real_escape_string($input_statRequireValue). "'";
 
@@ -1159,7 +1093,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$new_nameId = $req->getVal('edit_nameId');
 			$new_displayName = $req->getVal('edit_displayName');
 			$new_matchRegex =$req->getVal('edit_matchRegex');
-			$new_requireSkillLine = $req->getVal('edit_requireSkillLine');
 			$new_statRequireId = $req->getVal('edit_statRequireId');
 			$new_factorStatId = $req->getVal('edit_factorStatId');
 			$new_originalId = $req->getVal('edit_originalId');
@@ -1169,13 +1102,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$new_maxTimes = $req->getVal('edit_maxTimes');
 			$new_comment = $req->getVal('edit_comment');
 			$new_description = $req->getVal('edit_description');
-			$new_disableIds = $req->getVal('edit_disableIds');
 			$new_isEnabled = $req->getVal('edit_isEnabled');
 			$new_isVisible = $req->getVal('edit_isVisible');
 			$new_enableOffBar = $req->getVal('edit_enableOffBar');
-			$new_matchSkillName = $req->getVal('edit_matchSkillName');
-			$new_updateBuffValue = $req->getVal('edit_updateBuffValue');
-			$new_toggleVisible = $req->getVal('edit_toggleVisible');
 			$new_toggle = $req->getVal('edit_toggle');
 			$new_statRequireValue = $req->getVal('edit_statRequireValue');
 
@@ -1185,7 +1114,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$values[] = "nameId='" . $this->db->real_escape_string($new_nameId). "'";
 			$values[] = "displayName='" . $this->db->real_escape_string($new_displayName). "'";
 			$values[] = "matchRegex='" . $this->db->real_escape_string($new_matchRegex). "'";
-			$values[] = "requireSkillLine='" . $this->db->real_escape_string($new_requireSkillLine). "'";
 			$values[] = "statRequireId='" . $this->db->real_escape_string($new_statRequireId). "'";
 			$values[] = "factorStatId='" . $this->db->real_escape_string($new_factorStatId). "'";
 			$values[] = "originalId='" . $this->db->real_escape_string($new_originalId). "'";
@@ -1195,13 +1123,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$values[] = "maxTimes='" . $this->db->real_escape_string($new_maxTimes). "'";
 			$values[] = "comment='" . $this->db->real_escape_string($new_comment). "'";
 			$values[] = "description='" . $this->db->real_escape_string($new_description). "'";
-			$values[] = "disableIds='" . $this->db->real_escape_string($new_disableIds). "'";
 			$values[] = "isEnabled='" . $this->db->real_escape_string($new_isEnabled). "'";
 			$values[] = "isVisible='" . $this->db->real_escape_string($new_isVisible). "'";
 			$values[] = "enableOffBar='" . $this->db->real_escape_string($new_enableOffBar). "'";
-			$values[] = "matchSkillName='" . $this->db->real_escape_string($new_matchSkillName). "'";
-			$values[] = "updateBuffValue='" . $this->db->real_escape_string($new_updateBuffValue). "'";
-			$values[] = "toggleVisible='" . $this->db->real_escape_string($new_toggleVisible). "'";
 			$values[] = "isToggle='" . $this->db->real_escape_string($new_toggle). "'";
 			$values[] = "statRequireValue='" . $this->db->real_escape_string($new_statRequireValue). "'";
 
@@ -1772,8 +1696,16 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$suffix = $this->escapeHtml($computedStatsData['suffix']);
 			$dependsOn = $this->escapeHtml($computedStatsData['dependsOn']);
 
-			$compute = json_decode($compute);
-			$dependsOn = json_decode($dependsOn);
+			if ($computedStatsData['compute'] == '') { $data = [];}
+      else {  $data = json_decode($computedStatsData['compute'], true); }
+
+      $computedStatsData['compute'] = $data;
+
+
+			if ($computedStatsData['dependsOn'] == '') { $datas = [];}
+      else {  $datas = json_decode($computedStatsData['dependsOn'], true); }
+
+      $computedStatsData['dependsOn'] = $datas;
 
 			$output->addHTML("<tr>");
 			$output->addHTML("<td><a href='$baselink/editcomputedstat?statid=$statId'>Edit</a></td>");
@@ -1786,11 +1718,23 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<td>$maximumValue</td>");
 			$output->addHTML("<td>$deferLevel</td>");
 			$output->addHTML("<td>$display</td>");
-			$output->addHTML("<td>$compute</td>");
+
+			$output->addHTML("<td>");
+			foreach($computedStatsData['compute'] as $compute) {
+				$output->addHTML("$compute");
+			}
+			$output->addHTML("</td>");
+
 			$output->addHTML("<td>$idx</td>");
 			$output->addHTML("<td>$category</td>");
 			$output->addHTML("<td>$suffix</td>");
-			$output->addHTML("<td>$dependsOn</td>");
+
+			$output->addHTML("<td>");
+			foreach($computedStatsData['dependsOn'] as $dependsOn) {
+				$output->addHTML("$dependsOn");
+			}
+			$output->addHTML("</td>");
+
 			$output->addHTML("<td><a href='$baselink/deletcomputedstat?statid=$statId'>Delete</a></td>");
 
 		}
@@ -1891,7 +1835,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$input_maximumValue = $req->getVal('maximumValue');
 		$input_deferLevel = $req->getVal('deferLevel');
 		$input_display = $req->getVal('display');
+
 		$input_compute = $req->getVal('compute');
+
 		$input_idx = $req->getVal('idx');
 		$input_category = $req->getVal('category');
 		$input_suffix = $req->getVal('suffix');
