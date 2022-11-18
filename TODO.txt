@@ -1,8 +1,8 @@
 TODO:
 
-- rules:
+- Save Rules/Changes:
     - convert custom fields to JSON data in save new rule and edit rule forms
-- computedStats:
+- Save ComputedStats/Changes:
     - convert custom fields to JSON data when saving $compute and $new_dependsOn
     - make category a list
 - Interface Changes:
