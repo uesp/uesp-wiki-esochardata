@@ -4,7 +4,7 @@ TODO:
     - convert custom fields to JSON data in save new rule and edit rule forms
 - computedStats:
     - convert custom fields to JSON data when saving $compute and $new_dependsOn
-
+    - make category a list
 - Interface Changes:
     - Longer text inputs on rules forms:
         - NameID

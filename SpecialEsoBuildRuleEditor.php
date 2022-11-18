@@ -490,6 +490,28 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 				$enableOffBarDisplay = $this->GetBooleanDispaly($enableOffBar);
 
 
+				$customNames = [
+					'matchSkillName',
+	        'disableIds' ,
+	        'updateBuffValue',
+	        'toggleVisible',
+	        'requireSkillLine',
+	        'ignoreIfNotVisible',
+	        'statValue',
+	        'factorSkillType',
+	        'factorSkillLine',
+	        'onlyManual',
+	        'requireSkillType',
+	        'factorOffset',
+	        'minTimes',
+	        'deferLevel',
+	        'enableBuffAtMax',
+	        'duration',
+	        'cooldown',
+	        'isHealing',
+	        'isDamageShield',
+	        'damageType'
+				];
 
 				if ($rulesData['customData'] == '') {
 					$data = [];
@@ -520,9 +542,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 				$output->addHTML("<td>$statRequireValue</td>");
 
 				$output->addHTML("<td>");
-				foreach($rulesData['customData'] as $costumData)
+				foreach($rulesData['customData'] as $index => $costumData)
 				{
-					$output->addHTML("$costumData");
+
+					$output->addHTML("$customNames : $costumData");
 				}
 				$output->addHTML("</td>");
 
