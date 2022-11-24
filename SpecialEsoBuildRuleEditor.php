@@ -279,6 +279,12 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 	public function SaveNewVersion()
 	{
+		$permission = $this->canUserEdit();
+
+		if($permission === False) {
+			return $this->reportError("Error: you have no permission to add versions");
+		}
+
 		$output = $this->getOutput();
 		$baselink = $this->GetBaseLink();
 		$req = $this->getRequest();
@@ -334,7 +340,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$selected = "";
 
 		$output->addHTML("<label for='$param'>version: </label>");
-		$output->addHTML("<select id='$param' name='$param'>");
+		$output->addHTML("<select id='$param' name='$param'> ");
 
 		foreach ($this->versions as $version) {
 
@@ -483,35 +489,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 				$enableOffBar = $this->escapeHtml($rulesData['enableOffBar']);
 				$statRequireValue = $this->escapeHtml($rulesData['statRequireValue']);
 
-
 				$isEnabledDisplay = $this->GetBooleanDispaly($isEnabled);
 				$toggleDisplay = $this->GetBooleanDispaly($toggle);
 				$isVisibleDisplay = $this->GetBooleanDispaly($isVisible);
 				$enableOffBarDisplay = $this->GetBooleanDispaly($enableOffBar);
-
-
-				$customNames = [
-					'matchSkillName',
-	        'disableIds' ,
-	        'updateBuffValue',
-	        'toggleVisible',
-	        'requireSkillLine',
-	        'ignoreIfNotVisible',
-	        'statValue',
-	        'factorSkillType',
-	        'factorSkillLine',
-	        'onlyManual',
-	        'requireSkillType',
-	        'factorOffset',
-	        'minTimes',
-	        'deferLevel',
-	        'enableBuffAtMax',
-	        'duration',
-	        'cooldown',
-	        'isHealing',
-	        'isDamageShield',
-	        'damageType'
-				];
 
 				if ($rulesData['customData'] == '') {
 					$data = [];
@@ -521,7 +502,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 				}
 
 				$rulesData['customData'] = $data;
-
 
 				$output->addHTML("<tr>");
 				$output->addHTML("<td><a href='$baselink/editrule?ruleid=$id'>Edit</a></td>");
@@ -542,18 +522,19 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 				$output->addHTML("<td>$statRequireValue</td>");
 
 				$output->addHTML("<td>");
-				foreach($rulesData['customData'] as $index => $costumData)
-				{
-
-					$output->addHTML("$customNames : $costumData");
+				foreach($rulesData['customData'] as $key => $val) {
+					$output->addHTML("$key = $val<br>");
 				}
+
 				$output->addHTML("</td>");
+
 
 				$output->addHTML("<td><a href='$baselink/deleterule?ruleid=$id'>Delete</a></td>");
 				$output->addHTML("</tr>");
-				}
+			}
 
 			$output->addHTML("</table>");
+
 	}
 
 	public function OutputDeleteRule()
@@ -600,26 +581,42 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$toggle = $this->escapeHtml($this->rule['isToggle']);
 		$statRequireValue = $this->escapeHtml($this->rule['statRequireValue']);
 
+		if ($this->rule['customData'] == '') {
+			$data = [];
+		}
+		else {
+				$data = json_decode($this->rule['customData'], true);
+		}
+
+		$this->rule['customData'] = $data;
+
+
 		$output->addHTML("<h3>Are you sure you want to delete this rule: </h3>");
 		$output->addHTML("<label><b>id:</b> $id </label><br>");
 		$output->addHTML("<label><b>Rule Type:</b> $ruleType </label><br>");
-		$output->addHTML("<label><b>nameId:</b> $nameId </label><br>");
-		$output->addHTML("<label><b>displayName:</b> $displayName </label><br>");
-		$output->addHTML("<label><b>matchRegex:</b> $matchRegex </label><br>");
-		$output->addHTML("<label><b>statRequireId:</b> $statRequireId </label><br>");
-		$output->addHTML("<label><b>factorStatId:</b> $factorStatId </label><br>");
-		$output->addHTML("<label><b>originalId:</b> $originalId </label><br>");
-		$output->addHTML("<label><b>originalId:</b> $version </label><br>");
-		$output->addHTML("<label><b>icon:</b> $icon </label><br>");
-		$output->addHTML("<label><b>groupName:</b> $groupName </label><br>");
-		$output->addHTML("<label><b>maxTimes:</b> $maxTimes </label><br>");
-		$output->addHTML("<label><b>comment:</b> $comment </label><br>");
-		$output->addHTML("<label><b>description:</b> $description </label><br>");
-		$output->addHTML("<label><b>isEnabled:</b> $isEnabled </label><br>");
-		$output->addHTML("<label><b>isVisible:</b> $isVisible </label><br>");
-		$output->addHTML("<label><b>enableOffBar:</b> $enableOffBar </label><br>");
-		$output->addHTML("<label><b>statRequireValue:</b> $statRequireValue </label><br>");
-		$output->addHTML("<label><b>isToggle:</b> $isToggle </label><br>");
+		$output->addHTML("<label><b>Name Id:</b> $nameId </label><br>");
+		$output->addHTML("<label><b>Display Name:</b> $displayName </label><br>");
+		$output->addHTML("<label><b>Match Regex:</b> $matchRegex </label><br>");
+		$output->addHTML("<label><b>Stat Require Id:</b> $statRequireId </label><br>");
+		$output->addHTML("<label><b>Factor Stat Id:</b> $factorStatId </label><br>");
+		$output->addHTML("<label><b>Original Id:</b> $originalId </label><br>");
+		$output->addHTML("<label><b>Version:</b> $version </label><br>");
+		$output->addHTML("<label><b>Icon:</b> $icon </label><br>");
+		$output->addHTML("<label><b>Group Name:</b> $groupName </label><br>");
+		$output->addHTML("<label><b>Max Times:</b> $maxTimes </label><br>");
+		$output->addHTML("<label><b>Comment:</b> $comment </label><br>");
+		$output->addHTML("<label><b>Description:</b> $description </label><br>");
+		$output->addHTML("<label><b>Enabled:</b> $isEnabled </label><br>");
+		$output->addHTML("<label><b>Visible:</b> $isVisible </label><br>");
+		$output->addHTML("<label><b>Enable Off Bar:</b> $enableOffBar </label><br>");
+		$output->addHTML("<label><b>Stat Require Value:</b> $statRequireValue </label><br>");
+		$output->addHTML("<label><b>Toggle:</b> $isToggle </label><br>");
+
+		$output->addHTML("<b>custom Data:</b><br>");
+
+		foreach($this->rule['customData'] as $key => $val) {
+			$output->addHTML("<li class='costumeDataLi'>$key = $val</li>");
+		}
 
 		$output->addHTML("<br><a href='$baselink/ruledeleteconfirm?ruleid=$id&confirm=True'>Delete </a>");
 		$output->addHTML("<a href='$baselink/ruledeleteconfirm?ruleid=$id&confirm=False'> Cancel</a>");
@@ -628,6 +625,12 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 	public function ConfirmDeleteRule()
 	{
+		$permission = $this->canUserEdit();
+
+		if($permission === False) {
+			return $this->reportError("Error: you have no permission to delete rules");
+		}
+
 		$output = $this->getOutput();
 		$baselink = $this->GetBaseLink();
 		$req = $this->getRequest();
@@ -672,6 +675,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$enableOffBar = $this->escapeHtml($this->rule['enableOffBar']);
 			$toggle = $this->escapeHtml($this->rule['isToggle']);
 			$statRequireValue = $this->escapeHtml($this->rule['statRequireValue']);
+			$customData = $this->escapeHtml($this->rule['customData']);
 
 
 			$cols = [];
@@ -695,6 +699,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$cols[] = 'enableOffBar';
 			$cols[] = 'isToggle';
 			$cols[] = 'statRequireValue';
+			$cols[] = 'customData';
 
 			$values[] = "'" . $this->db->real_escape_string($id) . "'";
 			$values[] = "'" . $this->db->real_escape_string($ruleType) . "'";
@@ -715,6 +720,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$values[] = "'" . $this->db->real_escape_string($enableOffBar) . "'";
 			$values[] = "'" . $this->db->real_escape_string($isToggle) . "'";
 			$values[] = "'" . $this->db->real_escape_string($statRequireValue) . "'";
+			$values[] = "'" . $this->db->real_escape_string($customData) . "'";
 
 
 			$this->InsertQueries('rulesArchive', $cols, $values);
@@ -828,6 +834,15 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$toggle = $this->escapeHtml($this->rule['isToggle']);
 			$statRequireValue = $this->escapeHtml($this->rule['statRequireValue']);
 
+			if ($this->rule['customData'] == '') {
+				$data = [];
+			}
+			else {
+					$data = json_decode($this->rule['customData'], true);
+			}
+
+			$this->rule['customData'] = $data;
+
 			$output->addHTML("<a href='$baselink/showrules'>Show Rules</a><br>");
 			$output->addHTML("<h3>Edit Rule: $id</h3>");
 			$output->addHTML("<form action='$baselink/saveeditruleform?ruleid=$id' method='POST'>");
@@ -850,37 +865,45 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$this->OutputLists($ruleType, $ruleTypeOptions, 'edit_ruleType');
 
 
-			$output->addHTML("<label for='edit_nameId'>Name ID: </label>");
-			$output->addHTML("<input type='text' id='edit_nameId' name='edit_nameId' value='$nameId'><br>");
-			$output->addHTML("<label for='edit_displayName'>Display Name: </label>");
-			$output->addHTML("<input type='text' id='edit_displayName' name='edit_displayName' value='$displayName'><br>");
-			$output->addHTML("<label for='edit_matchRegex'>Match Regex: </label>");
-			$output->addHTML("<input type='text' id='edit_matchRegex' name='edit_matchRegex' value='$matchRegex'><br>");
-			$output->addHTML("<label for='edit_displayRegex'>Display Regex: </label>");
-			$output->addHTML("<input type='text' id='edit_displayRegex' name='edit_displayRegex' value='$displayRegex'><br>");
-			$output->addHTML("<label for='edit_statRequireId'>statRequireId: </label>");
+			$output->addHTML("<label for='edit_nameId'>Name ID </label>");
+			$output->addHTML("<input type='text' id='edit_nameId' name='edit_nameId' value='$nameId' size='60'><br>");
+			$output->addHTML("<label for='edit_displayName'>Display Name </label>");
+			$output->addHTML("<input type='text' id='edit_displayName' name='edit_displayName' value='$displayName' size='60'><br>");
+			$output->addHTML("<label for='edit_matchRegex'>Match Regex </label>");
+			$output->addHTML("<input type='text' id='edit_matchRegex' name='edit_matchRegex' value='$matchRegex' size='60'><br>");
+			$output->addHTML("<label for='edit_displayRegex'>Display Regex </label>");
+			$output->addHTML("<input type='text' id='edit_displayRegex' name='edit_displayRegex' value='$displayRegex' size='60'><br>");
+			$output->addHTML("<label for='edit_statRequireId'>Stat Require Id </label>");
 			$output->addHTML("<input type='text' id='edit_statRequireId' name='edit_statRequireId' value='$statRequireId'><br>");
-			$output->addHTML("<label for='edit_factorStatId'>factorStatId: </label>");
+			$output->addHTML("<label for='edit_factorStatId'>Factor Stat Id </label>");
 			$output->addHTML("<input type='text' id='edit_factorStatId' name='edit_factorStatId' value='$factorStatId'><br>");
-			$output->addHTML("<label for='edit_originalId'>Original ID: </label>");
+			$output->addHTML("<label for='edit_originalId'>Original Id </label>");
 			$output->addHTML("<input type='text' id='edit_originalId' name='edit_originalId' value='$originalId'><br>");
-			$output->addHTML("<label for='edit_statRequireValue'>statRequireValue: </label>");
+			$output->addHTML("<label for='edit_statRequireValue'>Stat Require Value </label>");
 			$output->addHTML("<input type='text' id='edit_statRequireValue' name='edit_statRequireValue' value='$edit_statRequireValue'><br>");
 
 
 			$this->versionsList('edit_version', $version);
 
 			$output->addHTML("<label for='edit_icon'>Icon </label>");
-			$output->addHTML("<input type='text' id='edit_icon' class='iconFld' name='edit_icon' value='$icon'><br>");
-			$output->addHTML("<label for='edit_groupName'>groupName </label>");
+			$output->addHTML("<input type='text' id='edit_icon' size='60' name='edit_icon' value='$icon'><br>");
+			$output->addHTML("<label for='edit_groupName'>Group Name </label>");
 			$output->addHTML("<input type='text' id='edit_groupName' name='edit_groupName' value='$groupName'><br>");
 			$output->addHTML("<label for='edit_maxTimes'>Maximum Times </label>");
 			$output->addHTML("<input type='text' id='edit_maxTimes' name='edit_maxTimes' value='$maxTimes'><br>");
 			$output->addHTML("<label for='edit_comment'>Comment </label>");
-			$output->addHTML("<input type='text' id='edit_comment' name='edit_comment' value='$comment'><br>");
+			$output->addHTML("<input type='text' id='edit_comment' name='edit_comment' value='$comment' size='60'><br>");
 
 			$output->addHTML("<label for='edit_description'>Description </label>");
 			$output->addHTML("<textarea id='edit_description' name='edit_description' class='txtArea' rows='4' cols='50'>$description</textarea><br>");
+
+
+			$output->addHTML("<label for='edit_customData'>Custom Data </label>");
+			$output->addHTML("<textarea id='edit_customData' name='edit_customData' class='txtArea' rows='4' cols='50'>");
+			foreach($this->rule['customData'] as $key => $val) {
+				$output->addHTML("$key = $val \n");
+			}
+			$output->addHTML("</textarea><br>");
 
 			$isEnabledBoxCheck = $this->GetCheckboxState($isEnabled);
 			$isVisibleBoxCheck = $this->GetCheckboxState($isVisible);
@@ -888,13 +911,13 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$isEnabledBoxCheck = $this->GetCheckboxState($isEnabled);
 			$toggleBoxCheck = $this->GetCheckboxState($toggle);
 
-			$output->addHTML("<br><label for='edit_isEnabled'>Enabled:</label>");
+			$output->addHTML("<br><label for='edit_isEnabled'>Enabled</label>");
 			$output->addHTML("<input $isEnabledBoxCheck type='checkbox' id='edit_isEnabled' name='edit_isEnabled' value='1'><br> ");
-			$output->addHTML("<label for='edit_isVisible'>Visible:</label>");
+			$output->addHTML("<label for='edit_isVisible'>Visible</label>");
 			$output->addHTML("<input $isVisibleBoxCheck type='checkbox' id='edit_isVisible' name='edit_isVisible' value='1'><br>");
-			$output->addHTML("<label for='edit_enableOffBar'>Enable Off Bar:</label>");
+			$output->addHTML("<label for='edit_enableOffBar'>Enable Off Bar</label>");
 			$output->addHTML("<input $enableOffBarBoxCheck type='checkbox' id='edit_enableOffBar' name='edit_enableOffBar' value='1'><br>");
-			$output->addHTML("<label for='edit_toggle'>Toggle:</label>");
+			$output->addHTML("<label for='edit_toggle'>Toggle</label>");
 			$output->addHTML("<input $toggleBoxCheck type='checkbox' id='edit_toggle' name='edit_toggle' value='1'><br>");
 
 			$output->addHTML("<br><input type='submit' value='Save Edits'>");
@@ -936,44 +959,47 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<label for='ruleType'>Rule Type: </label>");
 			$this->OutputLists($ruleType, $ruleTypeOptions, 'ruleType');
 
-			$output->addHTML("<label for='nameId'>Name ID: </label>");
-			$output->addHTML("<input type='text' id='nameId' name='nameId'><br>");
-			$output->addHTML("<label for='displayName'>Display Name: </label>");
-			$output->addHTML("<input type='text' id='displayName' name='displayname'><br>");
-			$output->addHTML("<label for='matchRegex'>Match Regex: </label>");
-			$output->addHTML("<input type='text' id='matchRegex' name='MatchRegex'><br>");
-			$output->addHTML("<label for='displayRegex'>Display Regex: </label>");
-			$output->addHTML("<input type='text' id='displayRegex' name='displayRegex'><br>");
-			$output->addHTML("<label for='statRequireId'>statRequireId: </label>");
+			$output->addHTML("<label for='nameId'>Name Id </label>");
+			$output->addHTML("<input type='text' id='nameId' name='nameId' size='60'><br>");
+			$output->addHTML("<label for='displayName'>Display Name </label>");
+			$output->addHTML("<input type='text' id='displayName' name='displayname' size='60'><br>");
+			$output->addHTML("<label for='matchRegex'>Match Regex </label>");
+			$output->addHTML("<input type='text' id='matchRegex' name='MatchRegex' size='60'><br>");
+			$output->addHTML("<label for='displayRegex'>Display Regex </label>");
+			$output->addHTML("<input type='text' id='displayRegex' name='displayRegex' size='60'><br>");
+			$output->addHTML("<label for='statRequireId'>Stat Require Id </label>");
 			$output->addHTML("<input type='text' id='statRequireId' name='statRequireId'><br>");
-			$output->addHTML("<label for='factorStatId'>factorStatId: </label>");
+			$output->addHTML("<label for='factorStatId'>Factor Stat Id </label>");
 			$output->addHTML("<input type='text' id='factorStatId' name='factorStatId'><br>");
-			$output->addHTML("<label for='originalId'>Original ID: </label>");
+			$output->addHTML("<label for='originalId'>Original Id </label>");
 			$output->addHTML("<input type='text' id='originalId' name='originalId'><br>");
-			$output->addHTML("<label for='statRequireValue'>statRequireValue: </label>");
+			$output->addHTML("<label for='statRequireValue'>Stat Require Value </label>");
 			$output->addHTML("<input type='text' id='statRequireValue' name='statRequireValue'><br>");
 
 			$this->versionsList('version', '1');
 
-			$output->addHTML("<label for='icon'>Icon: </label>");
-			$output->addHTML("<input type='text' id='icon' name='icon'><br>");
-			$output->addHTML("<label for='groupName'>groupName: </label>");
+			$output->addHTML("<label for='icon'>Icon </label>");
+			$output->addHTML("<input type='text' id='icon' name='icon' size='60'><br>");
+			$output->addHTML("<label for='groupName'>Group Name </label>");
 			$output->addHTML("<input type='text' id='groupName' name='groupName'><br>");
-			$output->addHTML("<label for='maxTimes'>Maximum Times: </label>");
+			$output->addHTML("<label for='maxTimes'>Maximum Times </label>");
 			$output->addHTML("<input type='text' id='maxTimes' name='maxTimes'><br>");
-			$output->addHTML("<label for='comment'>Comment: </label>");
-			$output->addHTML("<input type='text' id='comment' name='comment'><br>");
-			$output->addHTML("<label for='description'>Description: </label>");
-			$output->addHTML("<input type='text' id='description' name='description'><br>");
+			$output->addHTML("<label for='comment'>Comment </label>");
+			$output->addHTML("<input type='text' id='comment' name='comment' size='60'><br>");
+			$output->addHTML("<label for='description'>Description </label>");
+			$output->addHTML("<textarea id='description' name='description' class='txtArea' rows='4' cols='50'></textarea><br>");
+
+			$output->addHTML("<label for='customData'>Custom Data </label>");
+			$output->addHTML("<textarea id='customData' name='customData'class='txtArea' rows='4' cols='50'></textarea><br>");
 
 			//could only be true or false (1 or 0)
-			$output->addHTML("<br><label for='isEnabled'>Enabled:</label>");
+			$output->addHTML("<br><label for='isEnabled'>Enabled</label>");
 			$output->addHTML("<input type='checkbox' id='isEnabled' name='isEnabled' value='1'><br>");
-			$output->addHTML("<label for='isVisible'>Visible:</label>");
+			$output->addHTML("<label for='isVisible'>Visible</label>");
 			$output->addHTML("<input type='checkbox' id='isVisible' name='isVisible' value='1' checked><br>");
-			$output->addHTML("<label for='enableOffBar'>Enable Off Bar:</label>");
+			$output->addHTML("<label for='enableOffBar'>Enable Off Bar</label>");
 			$output->addHTML("<input type='checkbox' id='enableOffBar' name='enableOffBar' value='1'><br>");
-			$output->addHTML("<label for='toggle'>Toggle:</label>");
+			$output->addHTML("<label for='toggle'>Toggle</label>");
 			$output->addHTML("<input type='checkbox' id='toggle' name='toggle' value='1'><br>");
 
 			$output->addHTML("<br><input type='submit' value='Save Rule'>");
@@ -1000,7 +1026,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		foreach ($array as $key => $value)
 		{
 				$selected = "";
-				if ($key == $option) $selected = "selected";
+				if ($key === $option) {
+					$selected = "selected";
+				}
 				$output->addHTML("<option value='$key' $selected >$value</option>");
 		}
 		$output->addHTML("</select><br>");
@@ -1028,6 +1056,12 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 	public function SaveNewRule()
 	{
+		$permission = $this->canUserEdit();
+
+		if($permission === False) {
+			return $this->reportError("Error: you have no permission to add rules");
+		}
+
 		$output = $this->getOutput();
 		$baselink = $this->GetBaseLink();
 		$req = $this->getRequest();
@@ -1101,6 +1135,12 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 	public function SaveEditRuleForm()
 	{
+			$permission = $this->canUserEdit();
+
+			if($permission === False) {
+				return $this->reportError("Error: you have no permission to edit rules");
+			}
+
 			$output = $this->getOutput();
 			$baselink = $this->GetBaseLink();
 			$req = $this->getRequest();
@@ -1167,10 +1207,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 		return $ruleId;
 
-		//$url = "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
-		//$rowId = substr($url, strpos($url, "=") + 1);
-
-		//return $rowId;
 	}
 
 	public static function GetBaseLink()
@@ -1305,18 +1341,18 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$regexVar = $this->escapeHtml($this->effect['regexVar']);
 
 		$output->addHTML("<h3>Are you sure you want to delete this effect: </h3>");
-		$output->addHTML("<label><b>id:</b> $effectId </label><br>");
-		$output->addHTML("<label><b>version:</b> $version </label><br>");
-		$output->addHTML("<label><b>statId:</b> $statId </label><br>");
-		$output->addHTML("<label><b>value:</b> $value </label><br>");
-		$output->addHTML("<label><b>display:</b> $display </label><br>");
-		$output->addHTML("<label><b>category:</b> $category </label><br>");
-		$output->addHTML("<label><b>combineAs:</b> $combineAs </label><br>");
-		$output->addHTML("<label><b>round:</b> $round </label><br>");
-		$output->addHTML("<label><b>factorValue:</b> $factorValue </label><br>");
-		$output->addHTML("<label><b>statDesc:</b> $statDesc </label><br>");
-		$output->addHTML("<label><b>buffId:</b> $buffId </label><br>");
-		$output->addHTML("<label><b>buffId:</b> $regexVar </label><br>");
+		$output->addHTML("<label><b>Id</b> $effectId </label><br>");
+		$output->addHTML("<label><b>Version</b> $version </label><br>");
+		$output->addHTML("<label><b>Stat Id</b> $statId </label><br>");
+		$output->addHTML("<label><b>Value</b> $value </label><br>");
+		$output->addHTML("<label><b>Display</b> $display </label><br>");
+		$output->addHTML("<label><b>Category</b> $category </label><br>");
+		$output->addHTML("<label><b>Combine As</b> $combineAs </label><br>");
+		$output->addHTML("<label><b>Round</b> $round </label><br>");
+		$output->addHTML("<label><b>Factor Value</b> $factorValue </label><br>");
+		$output->addHTML("<label><b>Stat Desc</b> $statDesc </label><br>");
+		$output->addHTML("<label><b>Buff Id</b> $buffId </label><br>");
+		$output->addHTML("<label><b>Regex Var</b> $regexVar </label><br>");
 
 		$output->addHTML("<br><a href='$baselink/effectdeleteconfirm?ruleid=$id&effectid=$effectId&confirm=True'>Delete </a>");
 		$output->addHTML("<a href='$baselink/effectdeleteconfirm?effectid=$effectId&confirm=False'> Cancel</a>");
@@ -1324,6 +1360,12 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 	public function ConfirmDeleteEffect()
 	{
+		$permission = $this->canUserEdit();
+
+		if($permission === False) {
+			return $this->reportError("Error: you have no permission to delete effects");
+		}
+
 		$output = $this->getOutput();
 		$baselink = $this->GetBaseLink();
 		$req = $this->getRequest();
@@ -1405,6 +1447,11 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
   public function SaveNewEffect()
 	{
+		$permission = $this->canUserEdit();
+
+		if($permission === False) {
+			return $this->reportError("Error: you have no permission to add effects");
+		}
 
 		$output = $this->getOutput();
 		$baselink = $this->GetBaseLink();
@@ -1479,26 +1526,26 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 		$this->versionsList('version', '1');
 
-		$output->addHTML("<label for='statId'>statId: </label>");
+		$output->addHTML("<label for='statId'>Stat Id </label>");
 		$output->addHTML("<input type='text' id='statId' name='statId'><br>");
-		$output->addHTML("<label for='value'>value: </label>");
+		$output->addHTML("<label for='value'>Value </label>");
 		$output->addHTML("<input type='text' id='value' name='value'><br>");
-		$output->addHTML("<label for='display'>display: </label>");
+		$output->addHTML("<label for='display'>Display </label>");
 		$output->addHTML("<input type='text' id='display' name='display'><br>");
-		$output->addHTML("<label for='category'>category: </label>");
+		$output->addHTML("<label for='category'>Category </label>");
 		$output->addHTML("<input type='text' id='category' name='category'><br>");
-		$output->addHTML("<label for='combineAs'>combineAs: </label>");
+		$output->addHTML("<label for='combineAs'>Combine As </label>");
 		$output->addHTML("<input type='text' id='combineAs' name='combineAs'><br>");
 
 		$this->rounds('round', '');
 
-		$output->addHTML("<label for='factorValue'>factorValue: </label>");
+		$output->addHTML("<label for='factorValue'>Factor Value </label>");
 		$output->addHTML("<input type='text' id='factorValue' name='factorValue'><br>");
-		$output->addHTML("<label for='statDesc'>statDesc: </label>");
+		$output->addHTML("<label for='statDesc'>Stat Desc </label>");
 		$output->addHTML("<input type='text' id='statDesc' name='statDesc'><br>");
-		$output->addHTML("<label for='buffId'>buffId: </label>");
-		$output->addHTML("<input type='text' id='buffId' name='buffId'><br>");
-		$output->addHTML("<label for='regexVar'>regexVar: </label>");
+		$output->addHTML("<label for='buffId'>Buff Id </label>");
+		$output->addHTML("<input type='text' id='buffId' name='buffId' size='60'><br>");
+		$output->addHTML("<label for='regexVar'>Regex Var </label>");
 		$output->addHTML("<input type='text' id='regexVar' name='regexVar'><br>");
 
 		$output->addHTML("<br><input type='submit' value='Save Effect'>");
@@ -1560,26 +1607,26 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 		$this->versionsList('edit_version', $version);
 
-		$output->addHTML("<label for='edit_statId'>statId </label>");
+		$output->addHTML("<label for='edit_statId'>Stat Id </label>");
 		$output->addHTML("<input type='text' id='edit_statId' name='edit_statId' value='$statId'><br>");
-		$output->addHTML("<label for='edit_value'>value </label>");
+		$output->addHTML("<label for='edit_value'>Value </label>");
 		$output->addHTML("<input type='text' id='edit_value' name='edit_value' value='$value'><br>");
-		$output->addHTML("<label for='edit_display'>display </label>");
+		$output->addHTML("<label for='edit_display'>Display </label>");
 		$output->addHTML("<input type='text' id='edit_display' name='edit_display' value='$display'><br>");
-		$output->addHTML("<label for='edit_category'>category </label>");
+		$output->addHTML("<label for='edit_category'>Category </label>");
 		$output->addHTML("<input type='text' id='edit_category' name='edit_category' value='$category'><br>");
-		$output->addHTML("<label for='edit_combineAs'>combineAs </label>");
+		$output->addHTML("<label for='edit_combineAs'>CombineAs </label>");
 		$output->addHTML("<input type='text' id='edit_combineAs' name='edit_combineAs' value='$combineAs'><br>");
 
 		$this->rounds('edit_round', $round);
 
-		$output->addHTML("<label for='edit_factorValue'>factorValue </label>");
+		$output->addHTML("<label for='edit_factorValue'>Factor Value </label>");
 		$output->addHTML("<input type='text' id='edit_factorValue' name='edit_factorValue' value='$factorValue'><br>");
-		$output->addHTML("<label for='edit_statDesc'>statDesc </label>");
+		$output->addHTML("<label for='edit_statDesc'>Stat Desc </label>");
 		$output->addHTML("<input type='text' id='edit_statDesc' name='edit_statDesc' value='$statDesc'><br>");
-		$output->addHTML("<label for='edit_buffId'>buffId </label>");
-		$output->addHTML("<input type='text' id='edit_buffId' name='edit_buffId' value='$buffId'><br>");
-		$output->addHTML("<label for='edit_regexVar'>regexVar: </label>");
+		$output->addHTML("<label for='edit_buffId'>Buff Id </label>");
+		$output->addHTML("<input type='text' id='edit_buffId' name='edit_buffId' value='$buffId' size='60'><br>");
+		$output->addHTML("<label for='edit_regexVar'>Regex Var </label>");
 		$output->addHTML("<input type='text' id='edit_regexVar' name='edit_regexVar' value='$regexVar'><br>");
 
 		$output->addHTML("<br><input type='submit' value='Save Edits'>");
@@ -1588,6 +1635,11 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 	public function SaveEditEffectForm()
 	{
+		$permission = $this->canUserEdit();
+
+		if($permission === False) {
+			return $this->reportError("Error: you have no permission to edit effects");
+		}
 
 		$output = $this->getOutput();
 		$baselink = $this->GetBaseLink();
@@ -1643,11 +1695,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$req = $this->getRequest();
 		$effectId = $req->getVal('effectid');
 		return $effectId;
-
-		//$url = "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
-		//$rowId = substr($url, strpos($url, "=") + 1);
-
-		//return $rowId;
 	}
 
 
@@ -1685,20 +1732,20 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 		$output->addHTML("<tr>");
 		$output->addHTML("<th>Edit</th>");
-		$output->addHTML("<th>statId</th>");
-		$output->addHTML("<th>version</th>");
-		$output->addHTML("<th>round</th>");
-		$output->addHTML("<th>addClass</th>");
-		$output->addHTML("<th>comment</th>");
-		$output->addHTML("<th>minimumValue</th>");
-		$output->addHTML("<th>maximumValue</th>");
-		$output->addHTML("<th>deferLevel</th>");
-		$output->addHTML("<th>display</th>");
-		$output->addHTML("<th>compute</th>");
-		$output->addHTML("<th>idx</th>");
-		$output->addHTML("<th>category</th>");
-		$output->addHTML("<th>suffix</th>");
-		$output->addHTML("<th>dependsOn</th>");
+		$output->addHTML("<th>Stat Id</th>");
+		$output->addHTML("<th>Version</th>");
+		$output->addHTML("<th>Round</th>");
+		$output->addHTML("<th>Class</th>");
+		$output->addHTML("<th>Comment</th>");
+		$output->addHTML("<th>Min Value</th>");
+		$output->addHTML("<th>Max Value</th>");
+		$output->addHTML("<th>Defer Level</th>");
+		$output->addHTML("<th>Display</th>");
+		$output->addHTML("<th>Compute</th>");
+		$output->addHTML("<th>Idx</th>");
+		$output->addHTML("<th>Category</th>");
+		$output->addHTML("<th>Suffix</th>");
+		$output->addHTML("<th>Depends On</th>");
 		$output->addHTML("<th>Delete</th>");
 		$output->addHTML("</tr></thead><tbody>");
 
@@ -1743,8 +1790,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<td>$display</td>");
 
 			$output->addHTML("<td>");
-			foreach($computedStatsData['compute'] as $compute) {
-				$output->addHTML("$compute");
+			foreach($computedStatsData['compute'] as $key=>$val) {
+				$output->addHTML("$val <br />");
 			}
 			$output->addHTML("</td>");
 
@@ -1753,8 +1800,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<td>$suffix</td>");
 
 			$output->addHTML("<td>");
-			foreach($computedStatsData['dependsOn'] as $dependsOn) {
-				$output->addHTML("$dependsOn");
+			foreach($computedStatsData['dependsOn'] as $key =>$val) {
+				$output->addHTML("$val <br />");
 			}
 			$output->addHTML("</td>");
 
@@ -1780,33 +1827,55 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<h3>Add New computed Stat</h3>");
 		$output->addHTML("<form action='$baselink/savenewcomputedstat' method='POST'>");
 
-		$output->addHTML("<label for='statId'>statId: </label>");
+		$output->addHTML("<label for='statId'>Stat Id </label>");
 		$output->addHTML("<input type='text' id='statId' name='statId'><br>");
 
 		$this->versionsList('version', '1');
 		$this->rounds('round', '');
 
-		$output->addHTML("<label for='addClass'>addClass: </label>");
+		$output->addHTML("<label for='addClass'>Class </label>");
 		$output->addHTML("<input type='text' id='addClass' name='addClass'><br>");
-		$output->addHTML("<label for='comment'>comment: </label>");
+		$output->addHTML("<label for='comment'>Comment </label>");
 		$output->addHTML("<input type='text' id='comment' name='comment'><br>");
-		$output->addHTML("<label for='minimumValue'>minimumValue: </label>");
+		$output->addHTML("<label for='minimumValue'>Min Value </label>");
 		$output->addHTML("<input type='number' id='minimumValue' name='minimumValue'><br>");
-		$output->addHTML("<label for='maximumValue'>maximumValue: </label>");
+		$output->addHTML("<label for='maximumValue'>Max Value </label>");
 		$output->addHTML("<input type='number' id='maximumValue' name='maximumValue'><br>");
-		$output->addHTML("<label for='deferLevel'>deferLevel: </label>");
+		$output->addHTML("<label for='deferLevel'>Defer Level </label>");
 		$output->addHTML("<input type='text' id='deferLevel' name='deferLevel'><br>");
-		$output->addHTML("<label for='display'>display: </label>");
+		$output->addHTML("<label for='display'>Display </label>");
 		$output->addHTML("<input type='text' id='display' name='display'><br>");
-		$output->addHTML("<label for='compute'>compute: </label>");
+		$output->addHTML("<label for='compute'>Compute </label>");
 		$output->addHTML("<input type='text' id='compute' name='compute'><br>");
-		$output->addHTML("<label for='idx'>idx: </label>");
+		$output->addHTML("<label for='idx'>Idx </label>");
 		$output->addHTML("<input type='text' id='idx' name='idx'><br>");
-		$output->addHTML("<label for='category'>category: </label>");
-		$output->addHTML("<input type='text' id='category' name='category'><br>");
-		$output->addHTML("<label for='suffix'>suffix: </label>");
+
+		$COMPUTED_STAT_CATEGORIES = array(
+            "basic" => "Basic Stats",
+            "elementresist" => "Elemental Resistances",
+            "healing" => "Healing",
+            "statrestore" => "Stat Restoration",
+            "movement" => "Movement",
+            "combat" => "Bash / Block / Dodge / Break Free / Fear",
+            "damageshield" => "Damage Shield",
+            "damagetaken" => "Damage Taken",
+            "damagedone" => "Damage Done",
+            "harestore" => "Heavy Attack Restoration",
+            "statuseffect" => "Status Effects",
+            "lightattack" => "Light Attacks",
+            "heavyattack" => "Heavy Attacks",
+            "mitigation" => "Mitigation",
+            "abilitycost" => "Ability Costs",
+            "trait" => "Traits",
+            "other" => "Other",
+    );
+
+		$output->addHTML("<label for='category'>Category </label>");
+		$this->OutputLists('', $COMPUTED_STAT_CATEGORIES, 'category');
+
+		$output->addHTML("<label for='suffix'>Suffix </label>");
 		$output->addHTML("<input type='text' id='suffix' name='suffix'><br>");
-		$output->addHTML("<label for='dependsOn'>dependsOn: </label>");
+		$output->addHTML("<label for='dependsOn'>Depends On </label>");
 		$output->addHTML("<input type='text' id='dependsOn' name='dependsOn'><br>");
 
 		$output->addHTML("<br><input type='submit' value='Save computed Stat'>");
@@ -1833,6 +1902,12 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 	public function SaveNewComputedStat()
 	{
+		$permission = $this->canUserEdit();
+
+		if($permission === False) {
+			return $this->reportError("Error: you have no permission to add computed stats");
+		}
+
 		$output = $this->getOutput();
 		$baselink = $this->GetBaseLink();
 		$req = $this->getRequest();
@@ -1960,27 +2035,52 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$this->versionsList('edit_version', $version);
 		$roundOptions=$this->rounds('edit_round', $round);
 
-		$output->addHTML("<label for='edit_addClass'>addClass </label>");
+
+		$output->addHTML("<label for='edit_addClass'>Class </label>");
 		$output->addHTML("<input type='text' id='edit_addClass' name='edit_addClass' value='$addClass'><br>");
-		$output->addHTML("<label for='edit_comment'>comment </label>");
+		$output->addHTML("<label for='edit_comment'>Comment </label>");
 		$output->addHTML("<input type='text' id='edit_comment' name='edit_comment' value='$comment'><br>");
-		$output->addHTML("<label for='edit_minimumValue'>minimumValue </label>");
+		$output->addHTML("<label for='edit_minimumValue'>Min Value </label>");
 		$output->addHTML("<input type='text' id='edit_minimumValue' name='edit_minimumValue' value='$minimumValue'><br>");
-		$output->addHTML("<label for='edit_maximumValue'>maximumValue </label>");
+		$output->addHTML("<label for='edit_maximumValue'>Max Value </label>");
 		$output->addHTML("<input type='text' id='edit_maximumValue' name='edit_maximumValue' value='$maximumValue'><br>");
-		$output->addHTML("<label for='edit_deferLevel'>deferLevel </label>");
+		$output->addHTML("<label for='edit_deferLevel'>Defer Level </label>");
 		$output->addHTML("<input type='text' id='edit_deferLevel' name='edit_deferLevel' value='$deferLevel'><br>");
-		$output->addHTML("<label for='edit_display'>display </label>");
+		$output->addHTML("<label for='edit_display'>Display </label>");
 		$output->addHTML("<input type='text' id='edit_display' name='edit_display' value='$display'><br>");
-		$output->addHTML("<label for='edit_compute'>compute </label>");
+		$output->addHTML("<label for='edit_compute'>Compute </label>");
 		$output->addHTML("<textarea id='edit_compute' name='edit_compute' class='txtArea' rows='4' cols='50'>$compute</textarea><br>");
-		$output->addHTML("<label for='edit_idx'>idx </label>");
+		$output->addHTML("<label for='edit_idx'>Idx </label>");
 		$output->addHTML("<input type='text' id='edit_idx' name='edit_idx' value='$idx'><br>");
-		$output->addHTML("<label for='edit_category'>category </label>");
-		$output->addHTML("<input type='text' id='edit_category' name='edit_category' value='$category'><br>");
-		$output->addHTML("<label for='edit_suffix'>suffix </label>");
+
+		 $COMPUTED_STAT_CATEGORIES = array(
+            "basic" => "Basic Stats",
+            "elementresist" => "Elemental Resistances",
+            "healing" => "Healing",
+            "statrestore" => "Stat Restoration",
+            "movement" => "Movement",
+            "combat" => "Bash / Block / Dodge / Break Free / Fear",
+            "damageshield" => "Damage Shield",
+            "damagetaken" => "Damage Taken",
+            "damagedone" => "Damage Done",
+            "harestore" => "Heavy Attack Restoration",
+            "statuseffect" => "Status Effects",
+            "lightattack" => "Light Attacks",
+            "heavyattack" => "Heavy Attacks",
+            "mitigation" => "Mitigation",
+            "abilitycost" => "Ability Costs",
+            "trait" => "Traits",
+            "other" => "Other",
+    );
+
+
+		$output->addHTML("<label for='edit_category'>Category </label>");
+		$this->OutputLists($category, $COMPUTED_STAT_CATEGORIES, 'edit_category');
+
+
+		$output->addHTML("<label for='edit_suffix'>Suffix </label>");
 		$output->addHTML("<input type='text' id='edit_suffix' name='edit_suffix' value='$suffix'><br>");
-		$output->addHTML("<label for='edit_dependsOn'>dependsOn </label>");
+		$output->addHTML("<label for='edit_dependsOn'>Depends On </label>");
 		$output->addHTML("<input type='text' id='edit_dependsOn' name='edit_dependsOn' value='$dependsOn'><br>");
 
 		$output->addHTML("<br><input class='btn' type='submit' value='Save Edits'>");
@@ -1990,6 +2090,12 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 	public function SaveEditComputedStatsForm()
 	{
+		$permission = $this->canUserEdit();
+
+		if($permission === False) {
+			return $this->reportError("Error: you have no permission to edit computed stats");
+		}
+
 		$output = $this->getOutput();
 		$baselink = $this->GetBaseLink();
 		$req = $this->getRequest();
@@ -2071,20 +2177,20 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$dependsOn = $this->escapeHtml($this->computedStat['dependsOn']);
 
 		$output->addHTML("<h3>Are you sure you want to delete this computed Stat: </h3>");
-		$output->addHTML("<label><b>id:</b> $statId </label><br>");
-		$output->addHTML("<label><b>version:</b> $version </label><br>");
-		$output->addHTML("<label><b>roundNum:</b> $roundNum </label><br>");
-		$output->addHTML("<label><b>addClass:</b> $addClass </label><br>");
-		$output->addHTML("<label><b>comment:</b> $comment </label><br>");
-		$output->addHTML("<label><b>minimumValue:</b> $minimumValue </label><br>");
-		$output->addHTML("<label><b>maximumValue:</b> $maximumValue </label><br>");
-		$output->addHTML("<label><b>deferLevel:</b> $deferLevel </label><br>");
-		$output->addHTML("<label><b>display:</b> $display </label><br>");
-		$output->addHTML("<label><b>compute:</b> $compute </label><br>");
-		$output->addHTML("<label><b>idx:</b> $idx </label><br>");
-		$output->addHTML("<label><b>category:</b> $category </label><br>");
-		$output->addHTML("<label><b>suffix:</b> $suffix </label><br>");
-		$output->addHTML("<label><b>dependsOn:</b> $dependsOn </label><br>");
+		$output->addHTML("<label><b>Id:</b> $statId </label><br>");
+		$output->addHTML("<label><b>Version:</b> $version </label><br>");
+		$output->addHTML("<label><b>Round:</b> $roundNum </label><br>");
+		$output->addHTML("<label><b>Class:</b> $addClass </label><br>");
+		$output->addHTML("<label><b>Comment:</b> $comment </label><br>");
+		$output->addHTML("<label><b>Min Value:</b> $minimumValue </label><br>");
+		$output->addHTML("<label><b>Max Value:</b> $maximumValue </label><br>");
+		$output->addHTML("<label><b>Defer Level:</b> $deferLevel </label><br>");
+		$output->addHTML("<label><b>Display:</b> $display </label><br>");
+		$output->addHTML("<label><b>Compute:</b> $compute </label><br>");
+		$output->addHTML("<label><b>Idx:</b> $idx </label><br>");
+		$output->addHTML("<label><b>Category:</b> $category </label><br>");
+		$output->addHTML("<label><b>Suffix:</b> $suffix </label><br>");
+		$output->addHTML("<label><b>Depends On:</b> $dependsOn </label><br>");
 
 		$output->addHTML("<br><a href='$baselink/statdeleteconfirm?statid=$statId&confirm=True'>Delete </a>");
 		$output->addHTML("<a href='$baselink/statdeleteconfirm?statid=$statId&confirm=False'> Cancel</a>");
@@ -2092,6 +2198,12 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 	public function ConfirmDeleteStat()
 	{
+		$permission = $this->canUserEdit();
+
+		if($permission === False) {
+			return $this->reportError("Error: you have no permission to delete computed stats");
+		}
+
 		$output = $this->getOutput();
 		$baselink = $this->GetBaseLink();
 		$req = $this->getRequest();
