@@ -898,12 +898,11 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<textarea id='edit_description' name='edit_description' class='txtArea' rows='4' cols='50'>$description</textarea><br>");
 
 
-			$output->addHTML("<label for='edit_customData'>Custom Data </label>");
-			$output->addHTML("<textarea id='edit_customData' name='edit_customData' class='txtArea' rows='4' cols='50'>");
+			$output->addHTML("<label for='edit_customData'>Custom Data </label><br />");
 			foreach($this->rule['customData'] as $key => $val) {
-				$output->addHTML("$key = $val \n");
+				$output->addHTML("<input type='text' id='edit_customName' name='edit_customName[]' class='custCol' value='$key'>   </input>");
+				$output->addHTML("<input type='text' id='edit_customValue' name='edit_customValue[]' value='$val'></input><br>");
 			}
-			$output->addHTML("</textarea><br>");
 
 			$isEnabledBoxCheck = $this->GetCheckboxState($isEnabled);
 			$isVisibleBoxCheck = $this->GetCheckboxState($isVisible);
@@ -989,8 +988,34 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<label for='description'>Description </label>");
 			$output->addHTML("<textarea id='description' name='description' class='txtArea' rows='4' cols='50'></textarea><br>");
 
-			$output->addHTML("<label for='customData'>Custom Data </label>");
-			$output->addHTML("<textarea id='customData' name='customData'class='txtArea' rows='4' cols='50'></textarea><br>");
+			$customColumns = [
+				'matchSkillName',
+        'disableIds',
+        'updateBuffValue',
+        'toggleVisible',
+        'requireSkillLine',
+        'ignoreIfNotVisible',
+        'statValue',
+        'factorSkillType',
+        'factorSkillLine',
+        'onlyManual',
+        'requireSkillType',
+        'factorOffset',
+        'minTimes',
+        'deferLevel',
+        'enableBuffAtMax',
+        'duration',
+        'cooldown',
+        'isHealing',
+        'isDamageShield',
+        'damageType'
+			];
+
+			$output->addHTML("<label for='customData'>Custom Data </label><br />");
+			foreach($customColumns as $customName) {
+				$output->addHTML("<input type='text' id='customNames' name='customNames[]' class='custCol' value='$customName'></input>  ");
+				$output->addHTML("<input type='text' id='customValues' name='customValues[]'></input><br>");
+			}
 
 			//could only be true or false (1 or 0)
 			$output->addHTML("<br><label for='isEnabled'>Enabled</label>");
@@ -1086,6 +1111,23 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$input_toggle = $req->getVal('toggle');
 		$input_statRequireValue = $req->getVal('statRequireValue');
 
+		$customNames  = $req->getArray('customNames');
+    $customValues = $req->getArray('customValues');
+    $input_customData = [];
+
+    foreach ($customNames as $i => $name)
+    {
+        $name = trim($name);
+        $value = $customValues[$i];
+
+        if ($name == '') continue;
+        if ($value === undefined) continue;
+
+        $input_customData[$name] = $value;
+    }
+
+    $input_customData = json_encode($input_customData);
+
 		$cols = [];
 		$values = [];
 		$cols[] = 'ruleType';
@@ -1106,6 +1148,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$cols[] = 'enableOffBar';
 		$cols[] = 'isToggle';
 		$cols[] = 'statRequireValue';
+		$cols[] = 'customData';
 
 		$values[] = "'" . $this->db->real_escape_string($input_ruleType) . "'";
 		$values[] = "'" . $this->db->real_escape_string($input_nameId). "'";
@@ -1125,6 +1168,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$values[] = "'" . $this->db->real_escape_string($input_enableOffBar). "'";
 		$values[] = "'" . $this->db->real_escape_string($input_toggle). "'";
 		$values[] = "'" . $this->db->real_escape_string($input_statRequireValue). "'";
+		$values[] = "'" . $this->db->real_escape_string($input_customData). "'";
 
 
 		$this->InsertQueries('rules', $cols, $values);
@@ -1171,6 +1215,23 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$new_toggle = $req->getVal('edit_toggle');
 			$new_statRequireValue = $req->getVal('edit_statRequireValue');
 
+			$customNames  = $req->getArray('edit_customName');
+      $customValues = $req->getArray('edit_customValue');
+      $new_customData = [];
+
+      foreach ($customNames as $i => $name)
+      {
+          $name = trim($name);
+          $value = $customValues[$i];
+
+          if ($name == '') continue;
+          if ($value === undefined) continue;
+
+          $new_customData[$name] = $value;
+      }
+      $new_customData = json_encode($new_customData);
+
+
 			$values = [];
 
 			$values[] = "ruleType='" . $this->db->real_escape_string($new_ruleType) . "'";
@@ -1191,6 +1252,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$values[] = "enableOffBar='" . $this->db->real_escape_string($new_enableOffBar). "'";
 			$values[] = "isToggle='" . $this->db->real_escape_string($new_toggle). "'";
 			$values[] = "statRequireValue='" . $this->db->real_escape_string($new_statRequireValue). "'";
+			$values[] = "customData='" . $this->db->real_escape_string($new_customData). "'";
 
 			$this->UpdateQueries('rules', $values, 'id', $id);
 
@@ -1845,8 +1907,11 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<input type='text' id='deferLevel' name='deferLevel'><br>");
 		$output->addHTML("<label for='display'>Display </label>");
 		$output->addHTML("<input type='text' id='display' name='display'><br>");
+
 		$output->addHTML("<label for='compute'>Compute </label>");
 		$output->addHTML("<input type='text' id='compute' name='compute'><br>");
+
+
 		$output->addHTML("<label for='idx'>Idx </label>");
 		$output->addHTML("<input type='text' id='idx' name='idx'><br>");
 
@@ -1935,11 +2000,15 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$input_display = $req->getVal('display');
 
 		$input_compute = $req->getVal('compute');
+		$input_compute = json_encode($input_compute);
 
 		$input_idx = $req->getVal('idx');
 		$input_category = $req->getVal('category');
 		$input_suffix = $req->getVal('suffix');
+
 		$input_dependsOn = $req->getVal('dependsOn');
+		$input_dependsOn = json_encode($input_dependsOn);
+
 
 		$cols = [];
 		$values = [];
@@ -2111,11 +2180,17 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$new_maximumValue = $req->getVal('edit_maximumValue');
 		$new_deferLevel = $req->getVal('edit_deferLevel');
 		$new_display = $req->getVal('edit_display');
+
 		$new_compute = $req->getVal('edit_compute');
+		$new_compute = json_encode($new_compute);
+
 		$new_idx = $req->getVal('edit_idx');
 		$new_category = $req->getVal('edit_category');
 		$new_suffix = $req->getVal('edit_suffix');
+
 		$new_dependsOn = $req->getVal('edit_dependsOn');
+		$new_dependsOn = json_encode($new_dependsOn);
+
 
 		$values = [];
 
