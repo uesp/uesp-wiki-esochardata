@@ -903,6 +903,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 				$output->addHTML("<input type='text' id='edit_customName' name='edit_customName[]' class='custCol' value='$key'>   </input>");
 				$output->addHTML("<input type='text' id='edit_customValue' name='edit_customValue[]' value='$val'></input><br>");
 			}
+			$output->addHTML("<input type='text' id='edit_customName' name='edit_customName[]' class='custCol'>   </input>");
+			$output->addHTML("<input type='text' id='edit_customValue' name='edit_customValue[]'></input><br>");
+			$output->addHTML("<input type='text' id='edit_customName' name='edit_customName[]' class='custCol'>   </input>");
+			$output->addHTML("<input type='text' id='edit_customValue' name='edit_customValue[]'></input><br>");
 
 			$isEnabledBoxCheck = $this->GetCheckboxState($isEnabled);
 			$isVisibleBoxCheck = $this->GetCheckboxState($isVisible);
@@ -988,34 +992,15 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<label for='description'>Description </label>");
 			$output->addHTML("<textarea id='description' name='description' class='txtArea' rows='4' cols='50'></textarea><br>");
 
-			$customColumns = [
-				'matchSkillName',
-        'disableIds',
-        'updateBuffValue',
-        'toggleVisible',
-        'requireSkillLine',
-        'ignoreIfNotVisible',
-        'statValue',
-        'factorSkillType',
-        'factorSkillLine',
-        'onlyManual',
-        'requireSkillType',
-        'factorOffset',
-        'minTimes',
-        'deferLevel',
-        'enableBuffAtMax',
-        'duration',
-        'cooldown',
-        'isHealing',
-        'isDamageShield',
-        'damageType'
-			];
 
 			$output->addHTML("<label for='customData'>Custom Data </label><br />");
-			foreach($customColumns as $customName) {
-				$output->addHTML("<input type='text' id='customNames' name='customNames[]' class='custCol' value='$customName'></input>  ");
-				$output->addHTML("<input type='text' id='customValues' name='customValues[]'></input><br>");
-			}
+			$output->addHTML("<input type='text' id='customNames' name='customNames[]' class='custCol'></input>  ");
+			$output->addHTML("<input type='text' id='customValues' name='customValues[]'></input><br>");
+			$output->addHTML("<input type='text' id='customNames' name='customNames[]'class='custCol'></input>  ");
+			$output->addHTML("<input type='text' id='customValues' name='customValues[]'></input><br>");
+			$output->addHTML("<input type='text' id='customNames' name='customNames[]'class='custCol'></input>  ");
+			$output->addHTML("<input type='text' id='customValues' name='customValues[]'></input><br>");
+
 
 			//could only be true or false (1 or 0)
 			$output->addHTML("<br><label for='isEnabled'>Enabled</label>");
@@ -1569,7 +1554,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 	}
 
-  public function OutpuAddtEffectForm()
+  public function OutputAddtEffectForm()
 	{
 		$permission = $this->canUserEdit();
 
@@ -1822,11 +1807,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$maximumValue = $this->escapeHtml($computedStatsData['maximumValue']);
 			$deferLevel = $this->escapeHtml($computedStatsData['deferLevel']);
 			$display = $this->escapeHtml($computedStatsData['display']);
-			$compute = $this->escapeHtml($computedStatsData['compute']);
 			$idx = $this->escapeHtml($computedStatsData['idx']);
 			$category = $this->escapeHtml($computedStatsData['category']);
 			$suffix = $this->escapeHtml($computedStatsData['suffix']);
-			$dependsOn = $this->escapeHtml($computedStatsData['dependsOn']);
 
 			if ($computedStatsData['compute'] == '') { $data = [];}
       else {  $data = json_decode($computedStatsData['compute'], true); }
@@ -1909,7 +1892,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<input type='text' id='display' name='display'><br>");
 
 		$output->addHTML("<label for='compute'>Compute </label>");
-		$output->addHTML("<input type='text' id='compute' name='compute'><br>");
+		$output->addHTML("<textarea id='compute' name='compute' class='txtArea' rows='15' cols='50'></textarea><br>");
 
 
 		$output->addHTML("<label for='idx'>Idx </label>");
@@ -1941,7 +1924,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<label for='suffix'>Suffix </label>");
 		$output->addHTML("<input type='text' id='suffix' name='suffix'><br>");
 		$output->addHTML("<label for='dependsOn'>Depends On </label>");
-		$output->addHTML("<input type='text' id='dependsOn' name='dependsOn'><br>");
+		$output->addHTML("<textarea id='dependsOn' name='dependsOn' class='txtArea' rows='4' cols='50'></textarea><br>");
 
 		$output->addHTML("<br><input type='submit' value='Save computed Stat'>");
 		$output->addHTML("</form>");
@@ -2090,11 +2073,21 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$maximumValue = $this->escapeHtml($this->computedStat['maximumValue']);
 		$deferLevel = $this->escapeHtml($this->computedStat['deferLevel']);
 		$display = $this->escapeHtml($this->computedStat['display']);
-		$compute = $this->escapeHtml($this->computedStat['compute']);
 		$idx = $this->escapeHtml($this->computedStat['idx']);
 		$category = $this->escapeHtml($this->computedStat['category']);
 		$suffix = $this->escapeHtml($this->computedStat['suffix']);
-		$dependsOn = $this->escapeHtml($this->computedStat['dependsOn']);
+
+
+		if ($this->computedStat['compute'] == '') { $data = [];}
+		else {  $data = json_decode($this->computedStat['compute'], true); }
+
+		$this->computedStat['compute'] = $data;
+
+
+		if ($this->computedStat['dependsOn'] == '') { $data = [];}
+		else {  $data = json_decode($this->computedStat['dependsOn'], true); }
+
+		$this->computedStat['dependsOn'] = $data;
 
 
 		$output->addHTML("<a href='$baselink/showcomputedstats'>Show Computed Stats</a><br>");
@@ -2117,12 +2110,20 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<input type='text' id='edit_deferLevel' name='edit_deferLevel' value='$deferLevel'><br>");
 		$output->addHTML("<label for='edit_display'>Display </label>");
 		$output->addHTML("<input type='text' id='edit_display' name='edit_display' value='$display'><br>");
+
 		$output->addHTML("<label for='edit_compute'>Compute </label>");
-		$output->addHTML("<textarea id='edit_compute' name='edit_compute' class='txtArea' rows='4' cols='50'>$compute</textarea><br>");
+		$output->addHTML("<textarea id='edit_compute' name='edit_compute' class='txtArea' rows='15' cols='50'>");
+		foreach($this->computedStat['compute'] as $key=>$val) {
+			$output->addHTML("$val \n");
+		}
+		$output->addHTML("</textarea><br>");
+
+
+
 		$output->addHTML("<label for='edit_idx'>Idx </label>");
 		$output->addHTML("<input type='text' id='edit_idx' name='edit_idx' value='$idx'><br>");
 
-		 $COMPUTED_STAT_CATEGORIES = array(
+		$COMPUTED_STAT_CATEGORIES = array(
             "basic" => "Basic Stats",
             "elementresist" => "Elemental Resistances",
             "healing" => "Healing",
@@ -2149,8 +2150,14 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 		$output->addHTML("<label for='edit_suffix'>Suffix </label>");
 		$output->addHTML("<input type='text' id='edit_suffix' name='edit_suffix' value='$suffix'><br>");
+
+
 		$output->addHTML("<label for='edit_dependsOn'>Depends On </label>");
-		$output->addHTML("<input type='text' id='edit_dependsOn' name='edit_dependsOn' value='$dependsOn'><br>");
+		$output->addHTML("<textarea id='edit_dependsOn' name='edit_dependsOn' class='txtArea' rows='4' cols='50'>");
+		foreach($this->computedStat['dependsOn'] as $key=>$val) {
+			$output->addHTML("$val \n");
+		}
+		$output->addHTML("</textarea><br>");
 
 		$output->addHTML("<br><input class='btn' type='submit' value='Save Edits'>");
 		$output->addHTML("</form><br>");
@@ -2403,7 +2410,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		elseif ($parameter == "saveeditruleform")
 			$this->SaveEditRuleForm();
 		elseif ($parameter == "addneweffect")
-			$this->OutpuAddtEffectForm();
+			$this->OutputAddtEffectForm();
 		elseif ($parameter == "savenewffect")
 			$this->SaveNewEffect();
 		elseif ($parameter == "saveediteffectform")
