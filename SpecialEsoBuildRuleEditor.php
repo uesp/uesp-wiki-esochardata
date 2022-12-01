@@ -943,6 +943,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$baselink = $this->GetBaseLink();
 
 			$output->addHTML("<h3>Add New Rule</h3>");
+			$output->addHTML("<p id='errMsg'></p>");
 			$output->addHTML("<form action='$baselink/saverule' method='POST'>");
 
 			$ruleTypeOptions=[
@@ -966,10 +967,13 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<input type='text' id='nameId' name='nameId' size='60'><br>");
 			$output->addHTML("<label for='displayName'>Display Name </label>");
 			$output->addHTML("<input type='text' id='displayName' name='displayname' size='60'><br>");
+
 			$output->addHTML("<label for='matchRegex'>Match Regex </label>");
-			$output->addHTML("<input type='text' id='matchRegex' name='MatchRegex' size='60'><br>");
+			$output->addHTML("<input type='text' id='regex' name='matchRegex' size='60'><br>");
+
 			$output->addHTML("<label for='displayRegex'>Display Regex </label>");
 			$output->addHTML("<input type='text' id='displayRegex' name='displayRegex' size='60'><br>");
+
 			$output->addHTML("<label for='statRequireId'>Stat Require Id </label>");
 			$output->addHTML("<input type='text' id='statRequireId' name='statRequireId'><br>");
 			$output->addHTML("<label for='factorStatId'>Factor Stat Id </label>");

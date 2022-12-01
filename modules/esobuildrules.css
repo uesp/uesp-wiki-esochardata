@@ -27,3 +27,7 @@ form label {
 .custCol {
 	margin-left: 20%;
 }
+
+#errMsg {
+	color: red;
+}
