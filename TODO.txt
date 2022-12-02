@@ -2,7 +2,6 @@ TODO:-
 
 (JS Edits)
 - Validation Thoughts/Ideas:
-  - Check all regex fields are valid dynamically. Color regex field background red or something. Prevent saving?
   - Ensure buffId is valid (would need to load the build JS file first).
   - Ensure statId is valid (requires loading statIds from server first).
   - Buff names can't have ' in them (double-check this is the case)?

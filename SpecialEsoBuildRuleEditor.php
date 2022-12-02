@@ -869,10 +869,15 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<input type='text' id='edit_nameId' name='edit_nameId' value='$nameId' size='60'><br>");
 			$output->addHTML("<label for='edit_displayName'>Display Name </label>");
 			$output->addHTML("<input type='text' id='edit_displayName' name='edit_displayName' value='$displayName' size='60'><br>");
+
 			$output->addHTML("<label for='edit_matchRegex'>Match Regex </label>");
 			$output->addHTML("<input type='text' id='edit_matchRegex' name='edit_matchRegex' value='$matchRegex' size='60'><br>");
+			$output->addHTML("<div class='errorMsg'></div>");
+
 			$output->addHTML("<label for='edit_displayRegex'>Display Regex </label>");
 			$output->addHTML("<input type='text' id='edit_displayRegex' name='edit_displayRegex' value='$displayRegex' size='60'><br>");
+			$output->addHTML("<div class='errorMsg'></div>");
+
 			$output->addHTML("<label for='edit_statRequireId'>Stat Require Id </label>");
 			$output->addHTML("<input type='text' id='edit_statRequireId' name='edit_statRequireId' value='$statRequireId'><br>");
 			$output->addHTML("<label for='edit_factorStatId'>Factor Stat Id </label>");
@@ -943,7 +948,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$baselink = $this->GetBaseLink();
 
 			$output->addHTML("<h3>Add New Rule</h3>");
-			$output->addHTML("<p id='errMsg'></p>");
 			$output->addHTML("<form action='$baselink/saverule' method='POST'>");
 
 			$ruleTypeOptions=[
@@ -969,10 +973,12 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<input type='text' id='displayName' name='displayname' size='60'><br>");
 
 			$output->addHTML("<label for='matchRegex'>Match Regex </label>");
-			$output->addHTML("<input type='text' id='matchRegex' name='matchRegex' size='60'><br>");
+			$output->addHTML("<input type='text' id='matchRegex' name='matchRegex' size='60'>");
+			$output->addHTML("<p class='errorMsg'></p>");
 
 			$output->addHTML("<label for='displayRegex'>Display Regex </label>");
-			$output->addHTML("<input type='text' id='displayRegex' name='displayRegex' size='60'><br>");
+			$output->addHTML("<input type='text' id='displayRegex' name='displayRegex' size='60'>");
+			$output->addHTML("<p class='errorMsg'></p>");
 
 			$output->addHTML("<label for='statRequireId'>Stat Require Id </label>");
 			$output->addHTML("<input type='text' id='statRequireId' name='statRequireId'><br>");

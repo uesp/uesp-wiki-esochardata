@@ -28,6 +28,12 @@ form label {
 	margin-left: 20%;
 }
 
-#errMsg {
+.errorMsg {
 	color: red;
+	text-align: center;
+}
+
+.badRegex {
+	background-color: #ffcccc;
+
 }
