@@ -5,6 +5,12 @@ $(document).ready(function () {
      $("#displayRegex").on("input", RegexValidate);
      $("#edit_matchRegex").on("input", RegexValidate);
      $("#edit_displayRegex").on("input", RegexValidate);
+     $("#regexVar").on("input", RegexValidate);
+     $("#edit_regexVar").on("input", RegexValidate);
+
+
+     $("#buffId").on("input", BuffNameValidate);
+     $("#edit_buffId").on("input", BuffNameValidate);
 });
 
 
@@ -34,4 +40,23 @@ window.RegexValidate = function()
     $(this).addClass("badRegex");
 		$('.submit_btn').prop('disabled', true);
 	}
+}
+
+window.BuffNameValidate = function()
+{
+	const char = "'";
+	var buffName = $(this).val();
+	var errorMsg = $(this).next(".errorMsg");
+
+	if(buffName.includes(char)) {
+		errorMsg.text("Error: please enter a valid buff name");
+    $(this).addClass("badRegex");
+		$('.submit_btn').prop('disabled', true);
+	}
+	else {
+		errorMsg.text("");
+		$(this).removeClass("badRegex");
+		$('.submit_btn').prop('disabled', false);
+	}
+
 }

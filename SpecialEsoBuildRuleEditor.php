@@ -1600,12 +1600,18 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<input type='text' id='factorValue' name='factorValue'><br>");
 		$output->addHTML("<label for='statDesc'>Stat Desc </label>");
 		$output->addHTML("<input type='text' id='statDesc' name='statDesc'><br>");
-		$output->addHTML("<label for='buffId'>Buff Id </label>");
-		$output->addHTML("<input type='text' id='buffId' name='buffId' size='60'><br>");
-		$output->addHTML("<label for='regexVar'>Regex Var </label>");
-		$output->addHTML("<input type='text' id='regexVar' name='regexVar'><br>");
 
-		$output->addHTML("<br><input type='submit' value='Save Effect'>");
+
+		$output->addHTML("<label for='buffId'>Buff Id </label>");
+		$output->addHTML("<input type='text' id='buffId' name='buffId' size='60'>");
+		$output->addHTML("<p class='errorMsg'></p>");
+
+		$output->addHTML("<label for='regexVar'>Regex Var </label>");
+		$output->addHTML("<input type='text' id='regexVar' name='regexVar' size='60'>");
+		$output->addHTML("<p class='errorMsg'></p>");
+
+
+		$output->addHTML("<br><input type='submit' value='Save Effect' class='submit_btn'>");
 
 		$output->addHTML("</form>");
 	}
@@ -1681,12 +1687,17 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<input type='text' id='edit_factorValue' name='edit_factorValue' value='$factorValue'><br>");
 		$output->addHTML("<label for='edit_statDesc'>Stat Desc </label>");
 		$output->addHTML("<input type='text' id='edit_statDesc' name='edit_statDesc' value='$statDesc'><br>");
-		$output->addHTML("<label for='edit_buffId'>Buff Id </label>");
-		$output->addHTML("<input type='text' id='edit_buffId' name='edit_buffId' value='$buffId' size='60'><br>");
-		$output->addHTML("<label for='edit_regexVar'>Regex Var </label>");
-		$output->addHTML("<input type='text' id='edit_regexVar' name='edit_regexVar' value='$regexVar'><br>");
 
-		$output->addHTML("<br><input type='submit' value='Save Edits'>");
+
+		$output->addHTML("<label for='edit_buffId'>Buff Id </label>");
+		$output->addHTML("<input type='text' id='edit_buffId' name='edit_buffId' value='$buffId' size='60'>");
+		$output->addHTML("<p class='errorMsg'></p>");
+
+		$output->addHTML("<label for='edit_regexVar'>Regex Var </label>");
+		$output->addHTML("<input type='text' id='edit_regexVar' name='edit_regexVar' value='$regexVar' size='60'>");
+		$output->addHTML("<p class='errorMsg'></p>");
+
+		$output->addHTML("<br><input type='submit' value='Save Edits' class='submit_btn'>");
 		$output->addHTML("</form><br>");
 	}
 
