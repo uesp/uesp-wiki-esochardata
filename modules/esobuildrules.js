@@ -24,12 +24,14 @@ window.RegexValidate = function()
 	    isValid = false;
 	}
 
-	if(!isValid) {
-		errorMsg.text("Error: please enter a valid regex");
-    $(this).addClass("badRegex");
-	}
-	else {
+	if(isValid || ($(this).val() == '') ) {
 		errorMsg.text("");
 		$(this).removeClass("badRegex");
+		$('.submit_btn').prop('disabled', false);
+	}
+	else {
+		errorMsg.text("Error: please enter a valid regex");
+    $(this).addClass("badRegex");
+		$('.submit_btn').prop('disabled', true);
 	}
 }

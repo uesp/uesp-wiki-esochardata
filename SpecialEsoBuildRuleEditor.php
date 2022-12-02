@@ -871,12 +871,12 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<input type='text' id='edit_displayName' name='edit_displayName' value='$displayName' size='60'><br>");
 
 			$output->addHTML("<label for='edit_matchRegex'>Match Regex </label>");
-			$output->addHTML("<input type='text' id='edit_matchRegex' name='edit_matchRegex' value='$matchRegex' size='60'><br>");
-			$output->addHTML("<div class='errorMsg'></div>");
+			$output->addHTML("<input type='text' id='edit_matchRegex' name='edit_matchRegex' value='$matchRegex' size='60'>");
+			$output->addHTML("<p class='errorMsg'></p>");
 
 			$output->addHTML("<label for='edit_displayRegex'>Display Regex </label>");
-			$output->addHTML("<input type='text' id='edit_displayRegex' name='edit_displayRegex' value='$displayRegex' size='60'><br>");
-			$output->addHTML("<div class='errorMsg'></div>");
+			$output->addHTML("<input type='text' id='edit_displayRegex' name='edit_displayRegex' value='$displayRegex' size='60'>");
+			$output->addHTML("<p class='errorMsg'></p>");
 
 			$output->addHTML("<label for='edit_statRequireId'>Stat Require Id </label>");
 			$output->addHTML("<input type='text' id='edit_statRequireId' name='edit_statRequireId' value='$statRequireId'><br>");
@@ -928,7 +928,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<label for='edit_toggle'>Toggle</label>");
 			$output->addHTML("<input $toggleBoxCheck type='checkbox' id='edit_toggle' name='edit_toggle' value='1'><br>");
 
-			$output->addHTML("<br><input type='submit' value='Save Edits'>");
+			$output->addHTML("<br><input type='submit' value='Save Edits' class='submit_btn'>");
 			$output->addHTML("</form><br>");
 
 			$this->OutputShowEffectsTable();
@@ -1022,7 +1022,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<label for='toggle'>Toggle</label>");
 			$output->addHTML("<input type='checkbox' id='toggle' name='toggle' value='1'><br>");
 
-			$output->addHTML("<br><input type='submit' value='Save Rule'>");
+			$output->addHTML("<br><input type='submit' value='Save Rule' class='submit_btn'>");
 			$output->addHTML("</form>");
 
 	}
