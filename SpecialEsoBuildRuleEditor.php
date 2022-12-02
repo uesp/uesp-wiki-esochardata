@@ -271,9 +271,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<form action='$baselink/saveversion' method='POST'>");
 
 		$output->addHTML("<label for='version'>Version: </label>");
-		$output->addHTML("<input type='text' id='version' name='version'><br>");
+		$output->addHTML("<input type='text' id='version' name='version'>");
+		$output->addHTML("<p class='errorMsg'></p>");
 
-		$output->addHTML("<br><input type='submit' value='Save Version'>");
+		$output->addHTML("<br><input type='submit' value='Save Version' class='submit_btn'>");
 		$output->addHTML("</form>");
 	}
 

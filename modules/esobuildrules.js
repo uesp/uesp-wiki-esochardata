@@ -11,6 +11,9 @@ $(document).ready(function () {
 
      $("#buffId").on("input", BuffNameValidate);
      $("#edit_buffId").on("input", BuffNameValidate);
+
+
+     $("#version").on("input", NumberValidate);
 });
 
 
@@ -59,4 +62,22 @@ window.BuffNameValidate = function()
 		$('.submit_btn').prop('disabled', false);
 	}
 
+}
+
+window.NumberValidate = function()
+{
+	var input = $(this).val();
+	var errorMsg = $(this).next(".errorMsg");
+	var isNum = input.match(/^[0-9]+$/);
+
+	if((isNum != null) || input == '') {
+		errorMsg.text("");
+		$(this).removeClass("badRegex");
+		$('.submit_btn').prop('disabled', false);
+	}
+	else {
+		errorMsg.text("Error: please enter a valid number");
+    $(this).addClass("badRegex");
+		$('.submit_btn').prop('disabled', true);
+	}
 }
