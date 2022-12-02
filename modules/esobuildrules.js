@@ -1,7 +1,7 @@
 $(document).ready(function () {
     if (window.console && console.log) console.log("ESO Build Rules Editor JavaScript");
 
-     $("#regex").on("input", RegexValidate);
+     $("#matchRegex").on("input", RegexValidate);
 });
 
 
@@ -9,9 +9,11 @@ $(document).ready(function () {
 window.RegexValidate = function()
 {
 	var isValid = true;
+	var m = $(this).val().match(/^([/~@;%#'])(.*?)\1([gimsuy]*)$/);
+	isValid = m ? !!new RegExp(m[2], m[3]) :  false;
 
 	try {
-	    new RegExp(document.getElementById("regex").value);
+	    new RegExp($("#matchRegex").val());
 	}
 	catch(e) {
 	    isValid = false;
@@ -19,7 +21,7 @@ window.RegexValidate = function()
 
 	if(!isValid) {
 		//alert("Invalid regular expression");
-		document.getElementById("regex").style.backgroundColor = "#FFCCCC";
-		document.getElementById("errMsg").innerHTML = "Please enter a valid Regex";
+		$("#matchRegex").css("backgroundColor", "#ffcccc")
+		$("#errMsg").html("Please enter a valid regex")
 	}
 }

@@ -969,7 +969,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<input type='text' id='displayName' name='displayname' size='60'><br>");
 
 			$output->addHTML("<label for='matchRegex'>Match Regex </label>");
-			$output->addHTML("<input type='text' id='regex' name='matchRegex' size='60'><br>");
+			$output->addHTML("<input type='text' id='matchRegex' name='matchRegex' size='60'><br>");
 
 			$output->addHTML("<label for='displayRegex'>Display Regex </label>");
 			$output->addHTML("<input type='text' id='displayRegex' name='displayRegex' size='60'><br>");
