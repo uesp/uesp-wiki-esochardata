@@ -862,12 +862,14 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 								'abilityDesc' => 'ABILITY DESCRIPTION'
       ];
 
-			$output->addHTML("<label for='edit_ruleType'>Rule Type: </label>");
-			$this->OutputLists($ruleType, $ruleTypeOptions, 'edit_ruleType');
+			$output->addHTML("<label for='ruleType'>Rule Type: </label>");
+			$this->OutputLists($ruleType, $ruleTypeOptions, 'ruleType');
 
 
 			$output->addHTML("<label for='edit_nameId'>Name ID </label>");
-			$output->addHTML("<input type='text' id='edit_nameId' name='edit_nameId' value='$nameId' size='60'><br>");
+			$output->addHTML("<input type='text' id='edit_nameId' name='edit_nameId' value='$nameId' size='60'>");
+			$output->addHTML("<p class='errorMsg'></p>");
+
 			$output->addHTML("<label for='edit_displayName'>Display Name </label>");
 			$output->addHTML("<input type='text' id='edit_displayName' name='edit_displayName' value='$displayName' size='60'><br>");
 
@@ -969,7 +971,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$this->OutputLists($ruleType, $ruleTypeOptions, 'ruleType');
 
 			$output->addHTML("<label for='nameId'>Name Id </label>");
-			$output->addHTML("<input type='text' id='nameId' name='nameId' size='60'><br>");
+			$output->addHTML("<input type='text' id='nameId' name='nameId' size='60'>");
+			$output->addHTML("<p class='errorMsg'></p>");
+
 			$output->addHTML("<label for='displayName'>Display Name </label>");
 			$output->addHTML("<input type='text' id='displayName' name='displayname' size='60'><br>");
 
@@ -1192,7 +1196,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 				return $this->reportError("Error: invalid rule ID");
 			}
 
-			$new_ruleType = $req->getVal('edit_ruleType');
+			$new_ruleType = $req->getVal('ruleType');
 			$new_nameId = $req->getVal('edit_nameId');
 			$new_displayName = $req->getVal('edit_displayName');
 			$new_matchRegex =$req->getVal('edit_matchRegex');
@@ -1602,10 +1606,11 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<label for='statDesc'>Stat Desc </label>");
 		$output->addHTML("<input type='text' id='statDesc' name='statDesc'><br>");
 
-
+		$this->loadBuffIds();
 		$output->addHTML("<label for='buffId'>Buff Id </label>");
-		$output->addHTML("<input type='text' id='buffId' name='buffId' size='60'>");
-		$output->addHTML("<p class='errorMsg'></p>");
+		//$output->addHTML("<input type='text' id='buffId' name='buffId' size='60'>");
+		$this->OutputLists('', $this->buff, 'buffId');
+
 
 		$output->addHTML("<label for='regexVar'>Regex Var </label>");
 		$output->addHTML("<input type='text' id='regexVar' name='regexVar' size='60'>");
@@ -1634,6 +1639,23 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 		 return true;
 	 }
+
+
+	public function loadBuffIds()
+	{
+		$query = "SELECT nameId FROM rules where ruleType='buff';";
+		$result = $this->db->query($query);
+
+		if ($result === false) {
+			return $this->reportError("Error: failed to load buffs from database");
+		}
+
+		$row=[];
+		$row[] = $result->fetch_assoc();
+		$this->buff = $row[0];
+
+		return true;
+	}
 
 	public function OutputEditEffectForm()
 	{
