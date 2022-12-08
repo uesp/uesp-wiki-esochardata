@@ -5,15 +5,14 @@ $(document).ready(function () {
      $("#displayRegex").on("input", RegexValidate);
      $("#edit_matchRegex").on("input", RegexValidate);
      $("#edit_displayRegex").on("input", RegexValidate);
-     $("#regexVar").on("input", RegexValidate);
      $("#edit_regexVar").on("input", RegexValidate);
 
 
-     $("#buffId").on("input", BuffNameValidate);
-     $("#edit_buffId").on("input", BuffNameValidate);
-
 
      $("#version").on("input", NumberValidate);
+
+     $("#nameId").on("input", NameIdValidate);
+     $("#edit_nameId").on("input", NameIdValidate);
 });
 
 
@@ -22,11 +21,11 @@ window.RegexValidate = function()
 {
 	var isValid = true;
 	var m = $(this).val().match(/^([/~@;%#'])(.*?)\1([gimsuy]*)$/);
-	isValid = m ? !!new RegExp(m[2], m[3]) :  false;
 
 	var errorMsg = $(this).next(".errorMsg");
 
 	try {
+			isValid = m ? !!new RegExp(m[2], m[3]) :  false;
 	    new RegExp($(this).val());
 	}
 	catch(e) {
@@ -44,6 +43,7 @@ window.RegexValidate = function()
 		$('.submit_btn').prop('disabled', true);
 	}
 }
+
 
 window.BuffNameValidate = function()
 {
@@ -64,11 +64,32 @@ window.BuffNameValidate = function()
 
 }
 
+window.NameIdValidate = function() {
+	const char = "'";
+	var nameId = $(this).val();
+	var ruleType = $("#ruleType").val()
+	var errorMsg = $(this).next(".errorMsg");
+
+	if (ruleType == "buff") {
+		if(nameId.includes(char)) {
+			errorMsg.text("Error: please enter a valid name id");
+	    $(this).addClass("badRegex");
+			$('.submit_btn').prop('disabled', true);
+		}
+		else {
+			errorMsg.text("");
+			$(this).removeClass("badRegex");
+			$('.submit_btn').prop('disabled', false);
+		}
+	}
+
+}
+
 window.NumberValidate = function()
 {
 	var input = $(this).val();
 	var errorMsg = $(this).next(".errorMsg");
-	var isNum = input.match(/^[0-9]+$/);
+	var isNum = input.match(/^[0-9pts]+$/);
 
 	if((isNum != null) || input == '') {
 		errorMsg.text("");
