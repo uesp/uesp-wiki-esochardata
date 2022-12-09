@@ -5,9 +5,6 @@ $(document).ready(function () {
      $("#displayRegex").on("input", RegexValidate);
      $("#edit_matchRegex").on("input", RegexValidate);
      $("#edit_displayRegex").on("input", RegexValidate);
-     $("#edit_regexVar").on("input", RegexValidate);
-
-
 
      $("#version").on("input", NumberValidate);
 
@@ -101,4 +98,12 @@ window.NumberValidate = function()
     $(this).addClass("badRegex");
 		$('.submit_btn').prop('disabled', true);
 	}
+}
+
+
+window.EffectsRegexValidate = function()
+{
+	var namedVars = $(this).val().matchAll(/?<([a-zA-Z]+)>/g);
+
+
 }
