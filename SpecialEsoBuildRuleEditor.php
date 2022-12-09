@@ -1588,11 +1588,12 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 		$this->versionsList('version', '1');
 
-		$this->loadStatId();
+		$this->laodStatIds();
 		$output->addHTML("<label for='statId'>Stat Id </label>");
 		$output->addHTML("<input list='statIds' id='statId' name='statId'>");
 		$output->addHTML("<datalist id='statIds' name='statId'>");
-		foreach($this->statIds as $statIdVal) {
+		foreach($this->ids as $id) {
+			$statIdVal = $this->escapeHtml($id['statId']);
 			$output->addHTML("<option value='$statIdVal'>");
 		}
 		$output->addHTML("</datalist><br />");
@@ -1617,8 +1618,13 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 		$this->loadBuffIds();
 		$output->addHTML("<label for='buffId'>Buff Id </label>");
-		//$output->addHTML("<input type='text' id='buffId' name='buffId' size='60'>");
-		$this->OutputLists('', $this->buff, 'buffId');
+		$output->addHTML("<select name='buffId' id='buffId'>");
+		foreach($this->buffIds as $buffIdVal) {
+			$optionVal = $this->escapeHtml($buffIdVal['nameId']);
+			$output->addHTML("<option value='$optionVal'>");
+		}
+		$output->addHTML("</select><br />");
+
 
 
 		$output->addHTML("<label for='regexVar'>Regex Var </label>");
@@ -1659,28 +1665,14 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			return $this->reportError("Error: failed to load buffs from database");
 		}
 
-		$row=[];
-		$row[] = $result->fetch_assoc();
-		$this->buff = $row[0];
-
-		return true;
-	}
-
-	public function loadStatId()
-	{
-		$query = "SELECT statId FROM computedStats;";
-		$result = $this->db->query($query);
-
-		if ($result === false) {
-			return $this->reportError("Error: failed to load stat id from database");
+		$this->buffIds =[];
+		while($row = mysqli_fetch_assoc($result)) {
+				$this->buffIds[] = $row;
 		}
 
-		$row=[];
-		$row[] = $result->fetch_assoc();
-		$this->statIds = $row[0];
-
 		return true;
 	}
+
 
 	public function OutputEditEffectForm()
 	{
@@ -1718,11 +1710,12 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 		$this->versionsList('edit_version', $version);
 
-		$this->loadStatId();
+		$this->laodStatIds();
 		$output->addHTML("<label for='edit_statId'>Stat Id </label>");
-		$output->addHTML("<input list='edit_statIds' id='edit_statId' name='edit_statId'  value='$statId'>");
+		$output->addHTML("<input list='edit_statIds' id='edit_statId' name='edit_statId' value='$statId'>");
 		$output->addHTML("<datalist id='edit_statIds' name='edit_statId'>");
-		foreach($this->statIds as $statIdVal) {
+		foreach($this->ids as $id) {
+			$statIdVal = $this->escapeHtml($id['statId']);
 			$output->addHTML("<option value='$statIdVal'>");
 		}
 		$output->addHTML("</datalist><br />");
@@ -1747,8 +1740,12 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 		$this->loadBuffIds();
 		$output->addHTML("<label for='edit_buffId'>Buff Id </label>");
-		//$output->addHTML("<input type='text' id='edit_buffId' name='edit_buffId' value='$buffId' size='60'>");
-		$this->OutputLists('', $this->buff, 'edit_buffId');
+		$output->addHTML("<select name='edit_buffId' id='edit_buffId'>");
+		foreach($this->buffIds as $buffIdVal) {
+			$optionVal = $this->escapeHtml($buffIdVal['nameId']);
+			$output->addHTML("<option value='$optionVal'>");
+		}
+		$output->addHTML("</select><br />");
 
 		$output->addHTML("<label for='edit_regexVar'>Regex Var </label>");
 		$output->addHTML("<input type='text' id='edit_regexVar' name='edit_regexVar' value='$regexVar' size='60'>");
