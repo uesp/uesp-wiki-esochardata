@@ -1,12 +1,7 @@
 TODO:-
 
 (JS Edits)
-- Validation Thoughts/Ideas:
-  - Ensure buffId is valid (would need to load the build JS file first).
-  - Ensure statId is valid (requires loading statIds from server first).
-  - Check all numeric fields are valid numbers. Which ones are always numeric?
-  - Home option to check all rules/effects and display issues.
-  - Validate rule against all data.
-  - Validate all rules against all data.
-  - statRequireId and statRequireValue
-  - Verifying format of custom data?
+-Verify positional names in regex exist in the rule effects
+  - should be after saving the rule so onclick? (discuss thoughts on Monday)
+
+- go to edit page after saving new rule
