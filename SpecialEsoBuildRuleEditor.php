@@ -1588,8 +1588,17 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 		$this->versionsList('version', '1');
 
+		$this->loadStatId();
 		$output->addHTML("<label for='statId'>Stat Id </label>");
-		$output->addHTML("<input type='text' id='statId' name='statId'><br>");
+		$output->addHTML("<input list='statIds' id='statId' name='statId'>");
+		$output->addHTML("<datalist id='statIds' name='statId'>");
+		foreach($this->statIds as $statIdVal) {
+			$output->addHTML("<option value='$statIdVal'>");
+		}
+		$output->addHTML("</datalist><br />");
+
+
+
 		$output->addHTML("<label for='value'>Value </label>");
 		$output->addHTML("<input type='text' id='value' name='value'><br>");
 		$output->addHTML("<label for='display'>Display </label>");
@@ -1657,6 +1666,22 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		return true;
 	}
 
+	public function loadStatId()
+	{
+		$query = "SELECT statId FROM computedStats;";
+		$result = $this->db->query($query);
+
+		if ($result === false) {
+			return $this->reportError("Error: failed to load stat id from database");
+		}
+
+		$row=[];
+		$row[] = $result->fetch_assoc();
+		$this->statIds = $row[0];
+
+		return true;
+	}
+
 	public function OutputEditEffectForm()
 	{
 		$permission = $this->canUserEdit();
@@ -1693,8 +1718,17 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 		$this->versionsList('edit_version', $version);
 
+		$this->loadStatId();
 		$output->addHTML("<label for='edit_statId'>Stat Id </label>");
-		$output->addHTML("<input type='text' id='edit_statId' name='edit_statId' value='$statId'><br>");
+		$output->addHTML("<input list='edit_statIds' id='edit_statId' name='edit_statId'  value='$statId'>");
+		$output->addHTML("<datalist id='edit_statIds' name='edit_statId'>");
+		foreach($this->statIds as $statIdVal) {
+			$output->addHTML("<option value='$statIdVal'>");
+		}
+		$output->addHTML("</datalist><br />");
+
+
+
 		$output->addHTML("<label for='edit_value'>Value </label>");
 		$output->addHTML("<input type='text' id='edit_value' name='edit_value' value='$value'><br>");
 		$output->addHTML("<label for='edit_display'>Display </label>");
@@ -1711,10 +1745,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<label for='edit_statDesc'>Stat Desc </label>");
 		$output->addHTML("<input type='text' id='edit_statDesc' name='edit_statDesc' value='$statDesc'><br>");
 
-
+		$this->loadBuffIds();
 		$output->addHTML("<label for='edit_buffId'>Buff Id </label>");
-		$output->addHTML("<input type='text' id='edit_buffId' name='edit_buffId' value='$buffId' size='60'>");
-		$output->addHTML("<p class='errorMsg'></p>");
+		//$output->addHTML("<input type='text' id='edit_buffId' name='edit_buffId' value='$buffId' size='60'>");
+		$this->OutputLists('', $this->buff, 'edit_buffId');
 
 		$output->addHTML("<label for='edit_regexVar'>Regex Var </label>");
 		$output->addHTML("<input type='text' id='edit_regexVar' name='edit_regexVar' value='$regexVar' size='60'>");
