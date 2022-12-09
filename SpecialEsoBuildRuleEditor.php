@@ -1666,8 +1666,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		}
 
 		$this->buffIds =[];
-		while($row = mysqli_fetch_assoc($result)) {
-				$this->buffIds[] = $row;
+
+		while($data = mysqli_fetch_assoc($result)) {
+				$this->buffIds[] = $data;
 		}
 
 		return true;
@@ -2057,15 +2058,17 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$input_deferLevel = $req->getVal('deferLevel');
 		$input_display = $req->getVal('display');
 
-		$input_compute = $req->getVal('compute');
-		$input_compute = json_encode($input_compute);
+		$compute = $req->getVal('compute');
+		$compute_strings = explode("\n", $compute);
+		$input_compute = json_encode($compute_strings);
 
 		$input_idx = $req->getVal('idx');
 		$input_category = $req->getVal('category');
 		$input_suffix = $req->getVal('suffix');
 
-		$input_dependsOn = $req->getVal('dependsOn');
-		$input_dependsOn = json_encode($input_dependsOn);
+		$dependsOn = $req->getVal('dependsOn');
+		$dependsOn_strings = explode("\n", $dependsOn);
+		$input_dependsOn = json_encode($dependsOn_strings);
 
 
 		$cols = [];
@@ -2263,15 +2266,17 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$new_deferLevel = $req->getVal('edit_deferLevel');
 		$new_display = $req->getVal('edit_display');
 
-		$new_compute = $req->getVal('edit_compute');
-		$new_compute = json_encode($new_compute);
+		$compute = $req->getVal('edit_compute');
+		$compute_strings = explode("\n", $compute);
+		$new_compute = json_encode($compute_strings);
 
 		$new_idx = $req->getVal('edit_idx');
 		$new_category = $req->getVal('edit_category');
 		$new_suffix = $req->getVal('edit_suffix');
 
-		$new_dependsOn = $req->getVal('edit_dependsOn');
-		$new_dependsOn = json_encode($new_dependsOn);
+		$dependsOn = $req->getVal('edit_dependsOn');
+		$dependsOn_strings = explode("\n", $dependsOn);
+		$new_dependsOn = json_encode($dependsOn_strings);
 
 
 		$values = [];
