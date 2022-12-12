@@ -23,7 +23,6 @@ window.RegexValidate = function()
 
 	try {
 			isValid = m ? !!new RegExp(m[2], m[3]) :  false;
-	    new RegExp($(this).val());
 	}
 	catch(e) {
 	    isValid = false;
@@ -78,6 +77,11 @@ window.NameIdValidate = function() {
 			$(this).removeClass("badRegex");
 			$('.submit_btn').prop('disabled', false);
 		}
+	}
+	else {
+		errorMsg.text("");
+		$(this).removeClass("badRegex");
+		$('.submit_btn').prop('disabled', false);
 	}
 
 }

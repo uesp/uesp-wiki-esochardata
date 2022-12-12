@@ -1,7 +1,7 @@
 TODO:-
 
 (JS Edits)
--Verify positional names in regex exist in the rule effects
+- Verify positional names in regex exist in the rule effects
   - should be after saving the rule so onclick? (discuss thoughts on Monday)
 
 - go to edit page after saving new rule

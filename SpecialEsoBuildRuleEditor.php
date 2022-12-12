@@ -1594,7 +1594,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<datalist id='statIds' name='statId'>");
 		foreach($this->ids as $id) {
 			$statIdVal = $this->escapeHtml($id['statId']);
-			$output->addHTML("<option value='$statIdVal'>");
+			$output->addHTML("<option value='$statIdVal'>$statIdVal</option>");
 		}
 		$output->addHTML("</datalist><br />");
 
@@ -1621,7 +1621,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<select name='buffId' id='buffId'>");
 		foreach($this->buffIds as $buffIdVal) {
 			$optionVal = $this->escapeHtml($buffIdVal['nameId']);
-			$output->addHTML("<option value='$optionVal'>");
+			if($optionVal != '') {
+				$output->addHTML("<option value='$optionVal'>$optionVal</option>");
+			}
 		}
 		$output->addHTML("</select><br />");
 
@@ -1717,7 +1719,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<datalist id='edit_statIds' name='edit_statId'>");
 		foreach($this->ids as $id) {
 			$statIdVal = $this->escapeHtml($id['statId']);
-			$output->addHTML("<option value='$statIdVal'>");
+			$output->addHTML("<option value='$statIdVal'>$statIdVa</option>");
 		}
 		$output->addHTML("</datalist><br />");
 
@@ -1744,7 +1746,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$output->addHTML("<select name='edit_buffId' id='edit_buffId'>");
 		foreach($this->buffIds as $buffIdVal) {
 			$optionVal = $this->escapeHtml($buffIdVal['nameId']);
-			$output->addHTML("<option value='$optionVal'>");
+			if($optionVal != '') {
+				$output->addHTML("<option value='$optionVal'>$optionVal</option>");
+			}
 		}
 		$output->addHTML("</select><br />");
 
@@ -2060,7 +2064,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 		$compute = $req->getVal('compute');
 		$compute_strings = explode("\n", $compute);
-		$input_compute = json_encode($compute_strings);
+		$trimedStrings = array_map('trim', $compute_strings);
+		$input_compute = json_encode($trimedStrings);
 
 		$input_idx = $req->getVal('idx');
 		$input_category = $req->getVal('category');
@@ -2268,7 +2273,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 		$compute = $req->getVal('edit_compute');
 		$compute_strings = explode("\n", $compute);
-		$new_compute = json_encode($compute_strings);
+		$trimedStrings = array_map('trim', $compute_strings);
+		$new_compute = json_encode($trimedStrings);
 
 		$new_idx = $req->getVal('edit_idx');
 		$new_category = $req->getVal('edit_category');
