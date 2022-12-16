@@ -1,7 +1,9 @@
-TODO:-
+TODO:
 
-(JS Edits)
-- Verify positional names in regex exist in the rule effects
-  - should be after saving the rule so onclick? (discuss thoughts on Monday)
 
-- go to edit page after saving new rule
+- ConfirmDeleteRule(): Don't escapeHtml() data before saving to archive.
+- SaveNewRule(): Don't redirect on error.
+- Check results of InsertQueries()/Update/Delete
+- De-duplicate $COMPUTED_STAT_CATEGORIES
+- NumberValidate() regex.
+- EffectsRegexValidate regex.
