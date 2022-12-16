@@ -876,6 +876,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<label for='edit_matchRegex'>Match Regex </label>");
 			$output->addHTML("<input type='text' id='edit_matchRegex' name='edit_matchRegex' value='$matchRegex' size='60'>");
 			$output->addHTML("<p class='errorMsg'></p>");
+			$output->addHTML("<p class='warningErr'></p>");
 
 			$output->addHTML("<label for='edit_displayRegex'>Display Regex </label>");
 			$output->addHTML("<input type='text' id='edit_displayRegex' name='edit_displayRegex' value='$displayRegex' size='60'>");
@@ -980,6 +981,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<label for='matchRegex'>Match Regex </label>");
 			$output->addHTML("<input type='text' id='matchRegex' name='matchRegex' size='60'>");
 			$output->addHTML("<p class='errorMsg'></p>");
+			$output->addHTML("<p class='warningErr'></p>");
 
 			$output->addHTML("<label for='displayRegex'>Display Regex </label>");
 			$output->addHTML("<input type='text' id='displayRegex' name='displayRegex' size='60'>");
@@ -1173,9 +1175,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 		$this->InsertQueries('rules', $cols, $values);
 
-		$output->addHTML("<p>New rule added</p><br>");
+		$output->addHTML("<p>New rule added </p><br>");
 		$output->addHTML("<a href='$baselink'>Home</a>");
 	}
+
 
 	public function SaveEditRuleForm()
 	{
@@ -1365,6 +1368,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		}
 
 		$output->addHTML("</table>");
+		$jsonEffects = json_encode($this->effectsDatas);
+		$output->addHTML("<script>window.g_RuleEffectData = $jsonEffects;</script>");
+
 
 	}
 
@@ -1626,8 +1632,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			}
 		}
 		$output->addHTML("</select><br />");
-
-
 
 		$output->addHTML("<label for='regexVar'>Regex Var </label>");
 		$output->addHTML("<input type='text' id='regexVar' name='regexVar' size='60'>");

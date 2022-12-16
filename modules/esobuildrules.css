@@ -29,11 +29,22 @@ form label {
 }
 
 .errorMsg {
-	color: red;
-	text-align: center;
+		color: red;
+		text-align: center;
+		display: inline;
+		margin-left: 10px;
+}
+
+.errorMsg:after {
+		content: "\a";
+		white-space: pre;
 }
 
 .badRegex {
 	background-color: #ffcccc;
+
+}
+.warningErr {
+	background-color: #FFFF8F;
 
 }
