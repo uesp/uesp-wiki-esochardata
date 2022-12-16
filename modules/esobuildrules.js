@@ -10,6 +10,11 @@ $(document).ready(function () {
 
      $("#nameId").on("input", NameIdValidate);
      $("#edit_nameId").on("input", NameIdValidate);
+
+     $("#matchRegex").on("change", EffectsRegexValidate);
+     $("#edit_matchRegex").on("change", EffectsRegexValidate);
+
+
 });
 
 
@@ -108,6 +113,26 @@ window.NumberValidate = function()
 window.EffectsRegexValidate = function()
 {
 	var namedVars = $(this).val().matchAll(/?<([a-zA-Z]+)>/g);
+  var warningErr = $(this).next(".warningErr");
+
+  for( var i = 0; i< namedVars.length; i++)
+  {
+    for( var k = 0; k<g_RuleEffectData.length; k++)
+    {
+      if(namedVars[i][1] != g_RuleEffectData[k])
+      {
+        errorMsg.text("Warning: positional names entered do not exist in rule effects");
+        $(this).addClass("warningErr");
+      }
+      else
+      {
+        errorMsg.text("");
+    		$(this).removeClass("warningErr");
+      }
+
+    }
+
+  }
 
 
 }
