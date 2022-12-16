@@ -382,7 +382,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 	public function DeleteQueries($tableName, $conditionName, $value)
 	{
-		$query = "DELETE FROM $tableName WHERE $conditionName=$value;";
+		$value =  $this->db->real_escape_string($value);
+		$query = "DELETE FROM $tableName WHERE $conditionName='$value';";
 		$result = $this->db->query($query);
 
 		if ($result === false) {
