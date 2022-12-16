@@ -1174,9 +1174,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 
 
 		$this->InsertQueries('rules', $cols, $values);
+		$lastId = $this->db->insert_id;
 
-		$output->addHTML("<p>New rule added </p><br>");
-		$output->addHTML("<a href='$baselink'>Home</a>");
+		header("Location: $baselink/editrule?ruleid=$lastId");
 	}
 
 
