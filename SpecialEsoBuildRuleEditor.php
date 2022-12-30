@@ -283,7 +283,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$output = $this->getOutput ();
 		$baselink = $this->GetBaseLink ();
 		
-		$output->addHTML ( "<h3>Add New Version</h3>" );
+		$output->addHTML ( "<h3>Adding New Version</h3>" );
 		$output->addHTML ( "<form action='$baselink/saveversion' method='POST'>" );
 		
 		$output->addHTML ( "<label for='version'>Version: </label>" );
@@ -455,6 +455,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$baselink = $this->GetBaseLink ();
 		
 		$output->addHTML ( "<a href='$baselink'>Home</a>" );
+		$output->addHTML ( "<h3>Showing All Rules</h3>" );
 		
 		$output->addHTML ( "<table class='wikitable sortable jquery-tablesorter' id='rules'><thead>" );
 		
@@ -804,7 +805,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	}
 	
 	
-	public function OutputEditRuleForm() {
+	public function OutputEditRuleForm()
+	{
 		$permission = $this->canUserEdit ();
 		
 		if ($permission === False) {
@@ -849,7 +851,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$this->rule ['customData'] = $data;
 		
 		$output->addHTML ( "<a href='$baselink/showrules'>Show Rules</a><br>" );
-		$output->addHTML ( "<h3>Edit Rule: $id</h3>" );
+		$output->addHTML ( "<h3>Editing Rule #$id</h3>" );
 		$output->addHTML ( "<form action='$baselink/saveeditruleform?ruleid=$id' method='POST'>" );
 		
 		$output->addHTML ( "<label for='ruleType'>Rule Type: </label>" );
@@ -936,7 +938,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		
 		$baselink = $this->GetBaseLink ();
 		
-		$output->addHTML ( "<h3>Add New Rule</h3>" );
+		$output->addHTML ( "<h3>Adding New Rule</h3>" );
 		$output->addHTML ( "<form action='$baselink/saverule' method='POST'>" );
 		
 		$output->addHTML ( "<label for='ruleType'>Rule Type: </label>" );
@@ -1279,7 +1281,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$id = $this->GetRuleId();
 		$effectId = $req->getVal ( 'effectid' );
 		
-		$output->addHTML ( "<hr><h3>Rule Effects:</h3>" );
+		$output->addHTML ( "<hr><h3>All Rule Effects</h3>" );
 		$output->addHTML ( "<a href='$baselink/addneweffect?ruleid=$id'>Add new effect</a>" );
 		
 		$output->addHTML ( "<table class='wikitable sortable jquery-tablesorter' id='effects'><thead>" );
@@ -1547,7 +1549,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$id = $this->GetRuleId();
 		
 		$output->addHTML ( "<a href='$baselink/editrule?ruleid=$id'>Rule #$id</a>" );
-		$output->addHTML ( "<h3>Add New Effect For Rule: $id</h3>" );
+		$output->addHTML ( "<h3>Adding New Effect For Rule #$id</h3>" );
 		$output->addHTML ( "<form action='$baselink/savenewffect?ruleid=$id' method='POST'>" );
 		
 		$this->OutputVersionListHtml( 'version', '1' );
@@ -1664,7 +1666,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		
 		$output->addHTML ( "<a href='$baselink/showrules'>Show Rules : </a>" );
 		$output->addHTML ( "<a href='$baselink/editrule?ruleid=$ruleId'>Rule #$ruleId</a><br>" );
-		$output->addHTML ( "<h3>Edit Effect: $effectId</h3>" );
+		$output->addHTML ( "<h3>Editing Effect #$effectId for Rule #$ruleId</h3>" );
 		$output->addHTML ( "<form action='$baselink/saveediteffectform?effectid=$effectId&ruleid=$ruleId' method='POST'>" );
 		
 		$this->OutputVersionListHtml( 'edit_version', $version );
@@ -1802,6 +1804,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$baselink = $this->GetBaseLink ();
 		
 		$output->addHTML ( "<a href='$baselink'>Home</a>" );
+		$output->addHTML ( "<h3>Showing All Computed Stats</h3>" );
 		
 		$output->addHTML ( "<table class='wikitable sortable jquery-tablesorter' id='computedStats'><thead>" );
 		
@@ -1908,7 +1911,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		
 		$baselink = $this->GetBaseLink ();
 		
-		$output->addHTML ( "<h3>Add New computed Stat</h3>" );
+		$output->addHTML ( "<h3>Adding New Computed Stat</h3>" );
 		$output->addHTML ( "<form action='$baselink/savenewcomputedstat' method='POST'>" );
 		
 		$output->addHTML ( "<label for='statId'>Stat Id </label>" );
@@ -2117,7 +2120,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$this->computedStat ['dependsOn'] = $data;
 		
 		$output->addHTML ( "<a href='$baselink/showcomputedstats'>Show Computed Stats</a><br>" );
-		$output->addHTML ( "<h3>Edit Computed Stat: $statId</h3>" );
+		$output->addHTML ( "<h3>Editing Computed Stat $statId</h3>" );
 		$output->addHTML ( "<form action='$baselink/saveeditcomputedstatsform?statid=$statId' method='POST'>" );
 		
 		$this->OutputVersionListHtml( 'edit_version', $version );
