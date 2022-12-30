@@ -279,7 +279,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$cols [] = 'version';
 		$values [] = "'" . $this->db->real_escape_string( $input_version ) . "'";
 		
-		$this->InsertQueries ( 'versions', $cols, $values );
+		$insertResult = $this->InsertQueries ( 'versions', $cols, $values );
+		if (!$insertResult) return $this->reportError("Error: Failed to insert record into versions!");
 		
 		$output->addHTML ( "<p>New version added</p><br>" );
 		$output->addHTML ( "<a href='$baselink'>Home</a>" );
@@ -343,6 +344,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		if ($result === false) {
 			return $this->reportError ( "Error: failed to INSERT data into database" );
 		}
+		
+		return true;
 	}
 	
 	
@@ -354,6 +357,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		if ($result === false) {
 			return $this->reportError ( "Error: failed to DELETE data from database" );
 		}
+		
+		return true;
 	}
 	
 	
@@ -367,6 +372,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		if ($result === false) {
 			return $this->reportError ( "Error: failed to UPDATE data in database" );
 		}
+		
+		return true;
 	}
 	
 	
@@ -682,8 +689,11 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 			$values [] = "'" . $this->db->real_escape_string( $statRequireValue ) . "'";
 			$values [] = "'" . $this->db->real_escape_string( $customData ) . "'";
 			
-			$this->InsertQueries ( 'rulesArchive', $cols, $values );
-			$this->DeleteQueries ( 'rules', 'id', $id );
+			$insertResult = $this->InsertQueries ( 'rulesArchive', $cols, $values );
+			if (!$insertResult) return $this->reportError("Error: Failed to insert record into rulesArchive!");
+			
+			$deleteResult = $this->DeleteQueries ( 'rules', 'id', $id );
+			if (!$deleteResult) return $this->reportError("Error: Failed to delete record from rules!");
 			
 			$this->loadEffects ();
 			
@@ -729,10 +739,12 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 				$values [] = "'" . $this->db->real_escape_string( $statDesc ) . "'";
 				$values [] = "'" . $this->db->real_escape_string( $buffId ) . "'";
 				
-				$this->InsertQueries ( 'effectsArchive', $cols, $values );
+				$insertResult = $this->InsertQueries ( 'effectsArchive', $cols, $values );
+				if (!$insertResult) return $this->reportError("Error: Failed to insert record into effectsArchive!");
 			}
 			
-			$this->DeleteQueries ( 'effects', 'ruleId', $id );
+			$deleteResult = $this->DeleteQueries ( 'effects', 'ruleId', $id );
+			if (!$deleteResult) return $this->reportError("Error: Failed to delete record from effects!");
 			
 			$output->addHTML ( "<p>Rule deleted</p><br>" );
 			$output->addHTML ( "<a href='$baselink'>Home</a>" );
@@ -1118,10 +1130,15 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$values [] = "'" . $this->db->real_escape_string( $input_statRequireValue ) . "'";
 		$values [] = "'" . $this->db->real_escape_string( $input_customData ) . "'";
 		
-		$this->InsertQueries ( 'rules', $cols, $values );
+		$insertResult = $this->InsertQueries ( 'rules', $cols, $values );
 		$lastId = $this->db->insert_id;
 		
-		header ( "Location: $baselink/editrule?ruleid=$lastId" );
+		if ($insertResult) 
+			header ( "Location: $baselink/editrule?ruleid=$lastId" );
+		else
+			$this->reportError("Error: Failed to insert record into rules!");
+		
+		return $insertResult;
 	}
 	
 	
@@ -1201,7 +1218,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$values [] = "statRequireValue='" . $this->db->real_escape_string( $new_statRequireValue ) . "'";
 		$values [] = "customData='" . $this->db->real_escape_string( $new_customData ) . "'";
 		
-		$this->UpdateQueries ( 'rules', $values, 'id', $id );
+		$updateResult = $this->UpdateQueries ( 'rules', $values, 'id', $id );
+		if (!$updateResult) return $this->reportError("Error: Failed to update record in rules!");
 		
 		$output->addHTML ( "<p>Edits saved for rule #$id</p><br>" );
 		$output->addHTML ( "<a href='$baselink'>Home</a>" );
@@ -1435,8 +1453,11 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 			$values [] = "'" . $this->db->real_escape_string( $buffId ) . "'";
 			$values [] = "'" . $this->db->real_escape_string( $regexVar ) . "'";
 			
-			$this->InsertQueries ( 'effectsArchive', $cols, $values );
-			$this->DeleteQueries ( 'effects', 'effectId', $effectId );
+			$insertResult = $this->InsertQueries ( 'effectsArchive', $cols, $values );
+			if (!$insertResult) return $this->reportError("Error: Failed to insert record into effectsArchive!");
+			
+			$deleteResult = $this->DeleteQueries ( 'effects', 'effectId', $effectId );
+			if (!$deleteResult) return $this->reportError("Error: Failed to delete record from effects!");
 			
 			$output->addHTML ( "<p>Effect deleted</p><br>" );
 			$output->addHTML ( "<a href='$baselink'>Home : </a>" );
@@ -1497,7 +1518,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$values [] = "'" . $this->db->real_escape_string( $input_buffId ) . "'";
 		$values [] = "'" . $this->db->real_escape_string( $input_regexVar ) . "'";
 		
-		$this->InsertQueries ( 'effects', $cols, $values );
+		$insertResult = $this->InsertQueries ( 'effects', $cols, $values );
+		if (!$insertResult) return $this->reportError("Error: Failed to insert record into effects!");
 		
 		$output->addHTML ( "<p>New effect added</p><br>" );
 		$output->addHTML ( "<a href='$baselink'>Home : </a>" );
@@ -1731,7 +1753,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$values [] = "buffId='" . $this->db->real_escape_string( $new_buffId ) . "'";
 		$values [] = "regexVar='" . $this->db->real_escape_string( $new_regexVar ) . "'";
 		
-		$this->UpdateQueries ( 'effects', $values, 'effectId', $effectId );
+		$updateResult = $this->UpdateQueries ( 'effects', $values, 'effectId', $effectId );
+		if (!$updateResult) return $this->reportError("Error: Failed to update record in effects!");
 		
 		$output->addHTML ( "<p>Edits saved for effect #$effectId</p><br>" );
 		$output->addHTML ( "<a href='$baselink/editrule?ruleid=$ruleId'>Rule #$ruleId</a><br>" );
@@ -2033,7 +2056,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$values [] = "'" . $this->db->real_escape_string( $input_suffix ) . "'";
 		$values [] = "'" . $this->db->real_escape_string( $input_dependsOn ) . "'";
 		
-		$this->InsertQueries ( 'computedStats', $cols, $values );
+		$insertResult = $this->InsertQueries ( 'computedStats', $cols, $values );
+		if (!$insertResult) return $this->reportError("Error: Failed to insert record into computedStats!");
 		
 		$output->addHTML ( "<p>New computed Stat added</p><br>" );
 		$output->addHTML ( "<a href='$baselink'>Home</a>" );
@@ -2224,7 +2248,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$values [] = "suffix='" . $this->db->real_escape_string( $new_suffix ) . "'";
 		$values [] = "dependsOn='" . $this->db->real_escape_string( $new_dependsOn ) . "'";
 		
-		$this->UpdateQueries ( 'computedStats', $values, 'statId', $statId );
+		$updateResult = $this->UpdateQueries ( 'computedStats', $values, 'statId', $statId );
+		if (!$updateResult) return $this->reportError("Error: Failed to update record in computedStats!");
 		
 		$output->addHTML ( "<p>Edits saved for computed Stat #$statId</p><br>" );
 		$output->addHTML ( "<a href='$baselink'>Home</a>" );
@@ -2357,8 +2382,11 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 			$values [] = "'" . $this->db->real_escape_string( $suffix ) . "'";
 			$values [] = "'" . $this->db->real_escape_string( $dependsOn ) . "'";
 			
-			$this->InsertQueries ( 'computedStatsArchive', $cols, $values );
-			$this->DeleteQueries ( 'computedStats', 'statId', $statId );
+			$insertResult = $this->InsertQueries ( 'computedStatsArchive', $cols, $values );
+			if (!$insertResult) return $this->reportError("Error: Failed to insert record into computedStatsArchive!");
+			
+			$deleteResult = $this->DeleteQueries ( 'computedStats', 'statId', $statId );
+			if (!$deleteResult) return $this->reportError("Error: Failed to delete record from computedStats!");
 			
 			$output->addHTML ( "<p>computed Stat deleted</p><br>" );
 			$output->addHTML ( "<a href='$baselink'>Home</a>" );

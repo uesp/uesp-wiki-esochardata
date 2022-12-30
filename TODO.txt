@@ -1,6 +1,4 @@
 TODO:
-- SaveNewRule(): Don't redirect on error.
-- Check results of InsertQueries()/Update/Delete
 - De-duplicate $COMPUTED_STAT_CATEGORIES
 - NumberValidate() regex.
 - EffectsRegexValidate regex.
