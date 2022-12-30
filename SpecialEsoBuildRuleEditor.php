@@ -199,7 +199,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 				return $this->reportError("Error: failed to create effects archive table");
 			}
 
-			$DeletedcomputedStats_result = $this->db->query("CREATE TABLE IF NOT EXISTS computedStatsArchives (
+			$DeletedcomputedStats_result = $this->db->query("CREATE TABLE IF NOT EXISTS computedStatsArchive (
                         id TINYTEXT NOT NULL,
 												statId INTEGER NOT NULL,
                         version TINYTEXT NOT NULL,
@@ -496,11 +496,14 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 				$isVisibleDisplay = $this->GetBooleanDispaly($isVisible);
 				$enableOffBarDisplay = $this->GetBooleanDispaly($enableOffBar);
 
-				if ($rulesData['customData'] == '') {
+				if ($rulesData['customData'] == '')
+				{
 					$data = [];
 				}
-        else {
-            $data = json_decode($rulesData['customData'], true);
+				else
+				{
+					$data = json_decode($rulesData['customData'], true);
+					if ($data == null) $data = [];	//TODO: Error handling?
 				}
 
 				$rulesData['customData'] = $data;
@@ -524,7 +527,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 				$output->addHTML("<td>$statRequireValue</td>");
 
 				$output->addHTML("<td>");
-				foreach($rulesData['customData'] as $key => $val) {
+				
+				foreach($rulesData['customData'] as $key => $val)
+				{
 					$output->addHTML("$key = $val<br>");
 				}
 
@@ -580,7 +585,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 		$isEnabled = $this->escapeHtml($this->rule['isEnabled']);
 		$isVisible = $this->escapeHtml($this->rule['isVisible']);
 		$enableOffBar = $this->escapeHtml($this->rule['enableOffBar']);
-		$toggle = $this->escapeHtml($this->rule['isToggle']);
+		$isToggle = $this->escapeHtml($this->rule['isToggle']);
 		$statRequireValue = $this->escapeHtml($this->rule['statRequireValue']);
 
 		if ($this->rule['customData'] == '') {
@@ -651,37 +656,34 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$output->addHTML("<p>Delete cancelled</p><br>");
 			$output->addHTML("<a href='$baselink'>Home</a>");
 		}
-		else {
-			$this->LoadRule($id);
-
-			if ($this->LoadRule($id) == False){
-				return $this->reportError("Error: cannot load Rule");
-			}
-
-			$ruleType = $this->escapeHtml($this->rule['ruleType']);
-			$nameId = $this->escapeHtml($this->rule['nameId']);
-			$displayName = $this->escapeHtml($this->rule['displayName']);
-			$matchRegex = $this->escapeHtml($this->rule['matchRegex']);
-			$displayRegex = $this->escapeHtml($this->rule['displayRegex']);
-			$statRequireId = $this->escapeHtml($this->rule['statRequireId']);
-			$factorStatId = $this->escapeHtml($this->rule['factorStatId']);
-			$originalId = $this->escapeHtml($this->rule['originalId']);
-			$version = $this->escapeHtml($this->rule['version']);
-			$icon = $this->escapeHtml($this->rule['icon']);
-			$groupName = $this->escapeHtml($this->rule['groupName']);
-			$maxTimes = $this->escapeHtml($this->rule['maxTimes']);
-			$comment = $this->escapeHtml($this->rule['comment']);
-			$description = $this->escapeHtml($this->rule['description']);
-			$isEnabled = $this->escapeHtml($this->rule['isEnabled']);
-			$isVisible = $this->escapeHtml($this->rule['isVisible']);
-			$enableOffBar = $this->escapeHtml($this->rule['enableOffBar']);
-			$toggle = $this->escapeHtml($this->rule['isToggle']);
-			$statRequireValue = $this->escapeHtml($this->rule['statRequireValue']);
-			$customData = $this->escapeHtml($this->rule['customData']);
-
-
+		else
+		{
+			if (!$this->LoadRule($id)) return $this->reportError("Error: cannot load Rule");
+			
+			$ruleType = $this->rule['ruleType'];
+			$nameId = $this->rule['nameId'];
+			$displayName = $this->rule['displayName'];
+			$matchRegex = $this->rule['matchRegex'];
+			$displayRegex = $this->rule['displayRegex'];
+			$statRequireId = $this->rule['statRequireId'];
+			$factorStatId = $this->rule['factorStatId'];
+			$originalId = $this->rule['originalId'];
+			$version = $this->rule['version'];
+			$icon = $this->rule['icon'];
+			$groupName = $this->rule['groupName'];
+			$maxTimes = $this->rule['maxTimes'];
+			$comment = $this->rule['comment'];
+			$description = $this->rule['description'];
+			$isEnabled = $this->rule['isEnabled'];
+			$isVisible = $this->rule['isVisible'];
+			$enableOffBar = $this->rule['enableOffBar'];
+			$isToggle = $this->rule['isToggle'];
+			$statRequireValue = $this->rule['statRequireValue'];
+			$customData = $this->rule['customData'];
+			
 			$cols = [];
 			$values = [];
+			
 			$cols[] = 'id';
 			$cols[] = 'ruleType';
 			$cols[] = 'nameId';
@@ -702,7 +704,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$cols[] = 'isToggle';
 			$cols[] = 'statRequireValue';
 			$cols[] = 'customData';
-
+			
 			$values[] = "'" . $this->db->real_escape_string($id) . "'";
 			$values[] = "'" . $this->db->real_escape_string($ruleType) . "'";
 			$values[] = "'" . $this->db->real_escape_string($displayName) . "'";
@@ -723,28 +725,29 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$values[] = "'" . $this->db->real_escape_string($isToggle) . "'";
 			$values[] = "'" . $this->db->real_escape_string($statRequireValue) . "'";
 			$values[] = "'" . $this->db->real_escape_string($customData) . "'";
-
-
+			
 			$this->InsertQueries('rulesArchive', $cols, $values);
 			$this->DeleteQueries('rules', 'id', $id);
-
+			
 			$this->loadEffects();
-			foreach ($this->effectsDatas as $effectsData) {
-
-				$effectId = $this->escapeHtml($effectsData['effectId']);
-				$version = $this->escapeHtml($effectsData['version']);
-				$statId = $this->escapeHtml($effectsData['statId']);
-				$value = $this->escapeHtml($effectsData['value']);
-				$display = $this->escapeHtml($effectsData['display']);
-				$category = $this->escapeHtml($effectsData['category']);
-				$combineAs = $this->escapeHtml($effectsData['combineAs']);
-				$roundNum = $this->escapeHtml($effectsData['roundNum']);
-				$factorValue = $this->escapeHtml($effectsData['factorValue']);
-				$statDesc = $this->escapeHtml($effectsData['statDesc']);
-				$buffId = $this->escapeHtml($effectsData['buffId']);
-
+			
+			foreach ($this->effectsDatas as $effectsData)
+			{
+				$effectId = $effectsData['effectId'];
+				$version = $effectsData['version'];
+				$statId = $effectsData['statId'];
+				$value = $effectsData['value'];
+				$display = $effectsData['display'];
+				$category = $effectsData['category'];
+				$combineAs = $effectsData['combineAs'];
+				$roundNum = $effectsData['roundNum'];
+				$factorValue = $effectsData['factorValue'];
+				$statDesc = $effectsData['statDesc'];
+				$buffId = $effectsData['buffId'];
+				
 				$cols = [];
 				$values = [];
+				
 				$cols[] = 'effectId';
 				$cols[] = 'ruleId';
 				$cols[] = 'version';
@@ -757,7 +760,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 				$cols[] = 'factorValue';
 				$cols[] = 'statDesc';
 				$cols[] = 'buffId';
-
+				
 				$values[] = "'" . $this->db->real_escape_string($effectId) . "'";
 				$values[] = "'" . $this->db->real_escape_string($id) . "'";
 				$values[] = "'" . $this->db->real_escape_string($version) . "'";
@@ -770,20 +773,19 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 				$values[] = "'" . $this->db->real_escape_string($factorValue) . "'";
 				$values[] = "'" . $this->db->real_escape_string($statDesc) . "'";
 				$values[] = "'" . $this->db->real_escape_string($buffId) . "'";
-
+				
 				$this->InsertQueries('effectsArchive', $cols, $values);
 			}
-
+			
 			$this->DeleteQueries('effects', 'ruleId', $id);
-
+			
 			$output->addHTML("<p>Rule deleted</p><br>");
 			$output->addHTML("<a href='$baselink'>Home</a>");
-
 		}
-
-
+	
 	}
-
+	
+	
 	public function LoadRule($primaryKey)
 	{
 			$primaryKey = $this->db->real_escape_string($primaryKey);
@@ -2444,7 +2446,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage
 			$values[] = "'" . $this->db->real_escape_string($suffix) . "'";
 			$values[] = "'" . $this->db->real_escape_string($dependsOn) . "'";
 
-			$this->InsertQueries('computedStatsArchives', $cols, $values);
+			$this->InsertQueries('computedStatsArchive', $cols, $values);
 			$this->DeleteQueries('computedStats', 'statId', $statId);
 
 			$output->addHTML("<p>computed Stat deleted</p><br>");

@@ -1,7 +1,4 @@
 TODO:
-
-
-- ConfirmDeleteRule(): Don't escapeHtml() data before saving to archive.
 - SaveNewRule(): Don't redirect on error.
 - Check results of InsertQueries()/Update/Delete
 - De-duplicate $COMPUTED_STAT_CATEGORIES
