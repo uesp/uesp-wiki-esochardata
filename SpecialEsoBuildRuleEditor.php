@@ -277,7 +277,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$values = [ ];
 		
 		$cols [] = 'version';
-		$values [] = "'" . $this->db->real_escape_string ( $input_version ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_version ) . "'";
 		
 		$this->InsertQueries ( 'versions', $cols, $values );
 		
@@ -347,7 +347,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	
 	
 	public function DeleteQueries($tableName, $conditionName, $value) {
-		$value = $this->db->real_escape_string ( $value );
+		$value = $this->db->real_escape_string( $value );
 		$query = "DELETE FROM $tableName WHERE $conditionName='$value';";
 		$result = $this->db->query ( $query );
 		
@@ -603,7 +603,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$confirm = $req->getVal ( 'confirm' );
 		$id = $this->GetRowId ();
 		
-		$id = $this->db->real_escape_string ( $id );
+		$id = $this->db->real_escape_string( $id );
 		
 		if ($id <= 0) {
 			return $this->reportError ( "Error: invalid rule ID" );
@@ -661,26 +661,26 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 			$cols [] = 'statRequireValue';
 			$cols [] = 'customData';
 			
-			$values [] = "'" . $this->db->real_escape_string ( $id ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $ruleType ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $displayName ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $displayName ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $matchRegex ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $statRequireId ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $factorStatId ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $originalId ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $version ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $icon ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $groupName ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $maxTimes ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $comment ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $description ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $isEnabled ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $isVisible ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $enableOffBar ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $isToggle ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $statRequireValue ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $customData ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $id ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $ruleType ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $displayName ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $displayName ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $matchRegex ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $statRequireId ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $factorStatId ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $originalId ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $version ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $icon ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $groupName ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $maxTimes ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $comment ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $description ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $isEnabled ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $isVisible ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $enableOffBar ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $isToggle ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $statRequireValue ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $customData ) . "'";
 			
 			$this->InsertQueries ( 'rulesArchive', $cols, $values );
 			$this->DeleteQueries ( 'rules', 'id', $id );
@@ -716,18 +716,18 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 				$cols [] = 'statDesc';
 				$cols [] = 'buffId';
 				
-				$values [] = "'" . $this->db->real_escape_string ( $effectId ) . "'";
-				$values [] = "'" . $this->db->real_escape_string ( $id ) . "'";
-				$values [] = "'" . $this->db->real_escape_string ( $version ) . "'";
-				$values [] = "'" . $this->db->real_escape_string ( $statId ) . "'";
-				$values [] = "'" . $this->db->real_escape_string ( $value ) . "'";
-				$values [] = "'" . $this->db->real_escape_string ( $display ) . "'";
-				$values [] = "'" . $this->db->real_escape_string ( $category ) . "'";
-				$values [] = "'" . $this->db->real_escape_string ( $combineAs ) . "'";
-				$values [] = "'" . $this->db->real_escape_string ( $roundNum ) . "'";
-				$values [] = "'" . $this->db->real_escape_string ( $factorValue ) . "'";
-				$values [] = "'" . $this->db->real_escape_string ( $statDesc ) . "'";
-				$values [] = "'" . $this->db->real_escape_string ( $buffId ) . "'";
+				$values [] = "'" . $this->db->real_escape_string( $effectId ) . "'";
+				$values [] = "'" . $this->db->real_escape_string( $id ) . "'";
+				$values [] = "'" . $this->db->real_escape_string( $version ) . "'";
+				$values [] = "'" . $this->db->real_escape_string( $statId ) . "'";
+				$values [] = "'" . $this->db->real_escape_string( $value ) . "'";
+				$values [] = "'" . $this->db->real_escape_string( $display ) . "'";
+				$values [] = "'" . $this->db->real_escape_string( $category ) . "'";
+				$values [] = "'" . $this->db->real_escape_string( $combineAs ) . "'";
+				$values [] = "'" . $this->db->real_escape_string( $roundNum ) . "'";
+				$values [] = "'" . $this->db->real_escape_string( $factorValue ) . "'";
+				$values [] = "'" . $this->db->real_escape_string( $statDesc ) . "'";
+				$values [] = "'" . $this->db->real_escape_string( $buffId ) . "'";
 				
 				$this->InsertQueries ( 'effectsArchive', $cols, $values );
 			}
@@ -741,7 +741,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	
 	
 	public function LoadRule($primaryKey) {
-		$primaryKey = $this->db->real_escape_string ( $primaryKey );
+		$primaryKey = $this->db->real_escape_string( $primaryKey );
 		$query = "SELECT * FROM rules WHERE id= '$primaryKey';";
 		$result = $this->db->query ( $query );
 		
@@ -1098,25 +1098,25 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$cols [] = 'statRequireValue';
 		$cols [] = 'customData';
 		
-		$values [] = "'" . $this->db->real_escape_string ( $input_ruleType ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_nameId ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_displayName ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_matchRegex ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_statRequireId ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_factorStatId ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_originalId ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_version ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_icon ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_groupName ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_maxTimes ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_comment ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_description ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_isEnabled ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_isVisible ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_enableOffBar ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_toggle ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_statRequireValue ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_customData ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_ruleType ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_nameId ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_displayName ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_matchRegex ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_statRequireId ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_factorStatId ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_originalId ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_version ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_icon ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_groupName ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_maxTimes ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_comment ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_description ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_isEnabled ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_isVisible ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_enableOffBar ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_toggle ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_statRequireValue ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_customData ) . "'";
 		
 		$this->InsertQueries ( 'rules', $cols, $values );
 		$lastId = $this->db->insert_id;
@@ -1137,7 +1137,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$req = $this->getRequest ();
 		
 		$id = $this->GetRowId ();
-		$id = $this->db->real_escape_string ( $id );
+		$id = $this->db->real_escape_string( $id );
 		
 		if ($id <= 0) {
 			return $this->reportError ( "Error: invalid rule ID" );
@@ -1181,25 +1181,25 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		
 		$values = [ ];
 		
-		$values [] = "ruleType='" . $this->db->real_escape_string ( $new_ruleType ) . "'";
-		$values [] = "nameId='" . $this->db->real_escape_string ( $new_nameId ) . "'";
-		$values [] = "displayName='" . $this->db->real_escape_string ( $new_displayName ) . "'";
-		$values [] = "matchRegex='" . $this->db->real_escape_string ( $new_matchRegex ) . "'";
-		$values [] = "statRequireId='" . $this->db->real_escape_string ( $new_statRequireId ) . "'";
-		$values [] = "factorStatId='" . $this->db->real_escape_string ( $new_factorStatId ) . "'";
-		$values [] = "originalId='" . $this->db->real_escape_string ( $new_originalId ) . "'";
-		$values [] = "version='" . $this->db->real_escape_string ( $new_version ) . "'";
-		$values [] = "icon='" . $this->db->real_escape_string ( $new_icon ) . "'";
-		$values [] = "groupName='" . $this->db->real_escape_string ( $new_groupName ) . "'";
-		$values [] = "maxTimes='" . $this->db->real_escape_string ( $new_maxTimes ) . "'";
-		$values [] = "comment='" . $this->db->real_escape_string ( $new_comment ) . "'";
-		$values [] = "description='" . $this->db->real_escape_string ( $new_description ) . "'";
-		$values [] = "isEnabled='" . $this->db->real_escape_string ( $new_isEnabled ) . "'";
-		$values [] = "isVisible='" . $this->db->real_escape_string ( $new_isVisible ) . "'";
-		$values [] = "enableOffBar='" . $this->db->real_escape_string ( $new_enableOffBar ) . "'";
-		$values [] = "isToggle='" . $this->db->real_escape_string ( $new_toggle ) . "'";
-		$values [] = "statRequireValue='" . $this->db->real_escape_string ( $new_statRequireValue ) . "'";
-		$values [] = "customData='" . $this->db->real_escape_string ( $new_customData ) . "'";
+		$values [] = "ruleType='" . $this->db->real_escape_string( $new_ruleType ) . "'";
+		$values [] = "nameId='" . $this->db->real_escape_string( $new_nameId ) . "'";
+		$values [] = "displayName='" . $this->db->real_escape_string( $new_displayName ) . "'";
+		$values [] = "matchRegex='" . $this->db->real_escape_string( $new_matchRegex ) . "'";
+		$values [] = "statRequireId='" . $this->db->real_escape_string( $new_statRequireId ) . "'";
+		$values [] = "factorStatId='" . $this->db->real_escape_string( $new_factorStatId ) . "'";
+		$values [] = "originalId='" . $this->db->real_escape_string( $new_originalId ) . "'";
+		$values [] = "version='" . $this->db->real_escape_string( $new_version ) . "'";
+		$values [] = "icon='" . $this->db->real_escape_string( $new_icon ) . "'";
+		$values [] = "groupName='" . $this->db->real_escape_string( $new_groupName ) . "'";
+		$values [] = "maxTimes='" . $this->db->real_escape_string( $new_maxTimes ) . "'";
+		$values [] = "comment='" . $this->db->real_escape_string( $new_comment ) . "'";
+		$values [] = "description='" . $this->db->real_escape_string( $new_description ) . "'";
+		$values [] = "isEnabled='" . $this->db->real_escape_string( $new_isEnabled ) . "'";
+		$values [] = "isVisible='" . $this->db->real_escape_string( $new_isVisible ) . "'";
+		$values [] = "enableOffBar='" . $this->db->real_escape_string( $new_enableOffBar ) . "'";
+		$values [] = "isToggle='" . $this->db->real_escape_string( $new_toggle ) . "'";
+		$values [] = "statRequireValue='" . $this->db->real_escape_string( $new_statRequireValue ) . "'";
+		$values [] = "customData='" . $this->db->real_escape_string( $new_customData ) . "'";
 		
 		$this->UpdateQueries ( 'rules', $values, 'id', $id );
 		
@@ -1226,7 +1226,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	// -------------------Effects table functions---------------
 	public function loadEffects() {
 		$id = $this->GetRowId ();
-		$id = $this->db->real_escape_string ( $id );
+		$id = $this->db->real_escape_string( $id );
 		$query = "SELECT * FROM effects where ruleId =$id;";
 		$effects_result = $this->db->query ( $query );
 		
@@ -1378,7 +1378,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$confirm = $req->getVal ( 'confirm' );
 		$effectId = $req->getVal ( 'effectid' );
 		
-		$effectId = $this->db->real_escape_string ( $effectId );
+		$effectId = $this->db->real_escape_string( $effectId );
 		$id = $this->GetRowId ();
 		
 		if ($effectId <= 0) {
@@ -1422,18 +1422,18 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 			$cols [] = 'buffId';
 			$cols [] = 'regexVar';
 			
-			$values [] = "'" . $this->db->real_escape_string ( $id ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $version ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $statId ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $value ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $display ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $category ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $combineAs ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $round ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $factorValue ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $statDesc ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $buffId ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $regexVar ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $id ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $version ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $statId ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $value ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $display ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $category ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $combineAs ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $round ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $factorValue ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $statDesc ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $buffId ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $regexVar ) . "'";
 			
 			$this->InsertQueries ( 'effectsArchive', $cols, $values );
 			$this->DeleteQueries ( 'effects', 'effectId', $effectId );
@@ -1484,18 +1484,18 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$cols [] = 'buffId';
 		$cols [] = 'regexVar';
 		
-		$values [] = "'" . $this->db->real_escape_string ( $id ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_version ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_statId ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_value ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_display ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_category ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_combineAs ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_round ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_factorValue ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_statDesc ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_buffId ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_regexVar ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $id ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_version ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_statId ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_value ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_display ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_category ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_combineAs ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_round ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_factorValue ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_statDesc ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_buffId ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_regexVar ) . "'";
 		
 		$this->InsertQueries ( 'effects', $cols, $values );
 		
@@ -1570,7 +1570,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	
 	
 	public function loadEffect($effectId) {
-		$effectId = $this->db->real_escape_string ( $effectId );
+		$effectId = $this->db->real_escape_string( $effectId );
 		$query = "SELECT * FROM effects WHERE effectId = '$effectId';";
 		$effects_result = $this->db->query ( $query );
 		
@@ -1699,7 +1699,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$ruleId = $this->GetRowId ();
 		$effectId = $req->getVal ( 'effectid' );
 		
-		$effectId = $this->db->real_escape_string ( $effectId );
+		$effectId = $this->db->real_escape_string( $effectId );
 		
 		if ($effectId <= 0) {
 			return $this->reportError ( "Error: invalid effect ID" );
@@ -1719,17 +1719,17 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		
 		$values = [ ];
 		
-		$values [] = "version='" . $this->db->real_escape_string ( $new_version ) . "'";
-		$values [] = "statId='" . $this->db->real_escape_string ( $new_statId ) . "'";
-		$values [] = "value='" . $this->db->real_escape_string ( $new_value ) . "'";
-		$values [] = "display='" . $this->db->real_escape_string ( $new_display ) . "'";
-		$values [] = "category='" . $this->db->real_escape_string ( $new_category ) . "'";
-		$values [] = "combineAs='" . $this->db->real_escape_string ( $new_combineAs ) . "'";
-		$values [] = "roundNum='" . $this->db->real_escape_string ( $new_round ) . "'";
-		$values [] = "factorValue='" . $this->db->real_escape_string ( $new_factorValue ) . "'";
-		$values [] = "statDesc='" . $this->db->real_escape_string ( $new_statDesc ) . "'";
-		$values [] = "buffId='" . $this->db->real_escape_string ( $new_buffId ) . "'";
-		$values [] = "regexVar='" . $this->db->real_escape_string ( $new_regexVar ) . "'";
+		$values [] = "version='" . $this->db->real_escape_string( $new_version ) . "'";
+		$values [] = "statId='" . $this->db->real_escape_string( $new_statId ) . "'";
+		$values [] = "value='" . $this->db->real_escape_string( $new_value ) . "'";
+		$values [] = "display='" . $this->db->real_escape_string( $new_display ) . "'";
+		$values [] = "category='" . $this->db->real_escape_string( $new_category ) . "'";
+		$values [] = "combineAs='" . $this->db->real_escape_string( $new_combineAs ) . "'";
+		$values [] = "roundNum='" . $this->db->real_escape_string( $new_round ) . "'";
+		$values [] = "factorValue='" . $this->db->real_escape_string( $new_factorValue ) . "'";
+		$values [] = "statDesc='" . $this->db->real_escape_string( $new_statDesc ) . "'";
+		$values [] = "buffId='" . $this->db->real_escape_string( $new_buffId ) . "'";
+		$values [] = "regexVar='" . $this->db->real_escape_string( $new_regexVar ) . "'";
 		
 		$this->UpdateQueries ( 'effects', $values, 'effectId', $effectId );
 		
@@ -2018,20 +2018,20 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$cols [] = 'suffix';
 		$cols [] = 'dependsOn';
 		
-		$values [] = "'" . $this->db->real_escape_string ( $input_statId ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_version ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_roundNum ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_addClass ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_comment ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_minimumValue ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_maximumValue ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_deferLevel ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_display ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_compute ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_idx ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_category ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_suffix ) . "'";
-		$values [] = "'" . $this->db->real_escape_string ( $input_dependsOn ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_statId ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_version ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_roundNum ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_addClass ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_comment ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_minimumValue ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_maximumValue ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_deferLevel ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_display ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_compute ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_idx ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_category ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_suffix ) . "'";
+		$values [] = "'" . $this->db->real_escape_string( $input_dependsOn ) . "'";
 		
 		$this->InsertQueries ( 'computedStats', $cols, $values );
 		
@@ -2041,7 +2041,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	
 	
 	public function LoadComputedStat($primaryKey) {
-		$primaryKey = $this->db->real_escape_string ( $primaryKey );
+		$primaryKey = $this->db->real_escape_string( $primaryKey );
 		$query = "SELECT * FROM computedStats WHERE statId= '$primaryKey';";
 		$computedStats_result = $this->db->query ( $query );
 		
@@ -2184,7 +2184,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$req = $this->getRequest ();
 		
 		$statId = $req->getVal ( 'statid' );
-		$statId = $this->db->real_escape_string ( $statId );
+		$statId = $this->db->real_escape_string( $statId );
 		
 		$new_version = $req->getVal ( 'edit_version' );
 		$new_roundNum = $req->getVal ( 'edit_round' );
@@ -2210,19 +2210,19 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		
 		$values = [ ];
 		
-		$values [] = "version='" . $this->db->real_escape_string ( $new_version ) . "'";
-		$values [] = "roundNum='" . $this->db->real_escape_string ( $new_roundNum ) . "'";
-		$values [] = "addClass='" . $this->db->real_escape_string ( $new_addClass ) . "'";
-		$values [] = "comment='" . $this->db->real_escape_string ( $new_comment ) . "'";
-		$values [] = "minimumValue='" . $this->db->real_escape_string ( $new_minimumValue ) . "'";
-		$values [] = "maximumValue='" . $this->db->real_escape_string ( $new_maximumValue ) . "'";
-		$values [] = "deferLevel='" . $this->db->real_escape_string ( $new_deferLevel ) . "'";
-		$values [] = "display='" . $this->db->real_escape_string ( $new_display ) . "'";
-		$values [] = "compute='" . $this->db->real_escape_string ( $new_compute ) . "'";
-		$values [] = "idx='" . $this->db->real_escape_string ( $new_idx ) . "'";
-		$values [] = "category='" . $this->db->real_escape_string ( $new_category ) . "'";
-		$values [] = "suffix='" . $this->db->real_escape_string ( $new_suffix ) . "'";
-		$values [] = "dependsOn='" . $this->db->real_escape_string ( $new_dependsOn ) . "'";
+		$values [] = "version='" . $this->db->real_escape_string( $new_version ) . "'";
+		$values [] = "roundNum='" . $this->db->real_escape_string( $new_roundNum ) . "'";
+		$values [] = "addClass='" . $this->db->real_escape_string( $new_addClass ) . "'";
+		$values [] = "comment='" . $this->db->real_escape_string( $new_comment ) . "'";
+		$values [] = "minimumValue='" . $this->db->real_escape_string( $new_minimumValue ) . "'";
+		$values [] = "maximumValue='" . $this->db->real_escape_string( $new_maximumValue ) . "'";
+		$values [] = "deferLevel='" . $this->db->real_escape_string( $new_deferLevel ) . "'";
+		$values [] = "display='" . $this->db->real_escape_string( $new_display ) . "'";
+		$values [] = "compute='" . $this->db->real_escape_string( $new_compute ) . "'";
+		$values [] = "idx='" . $this->db->real_escape_string( $new_idx ) . "'";
+		$values [] = "category='" . $this->db->real_escape_string( $new_category ) . "'";
+		$values [] = "suffix='" . $this->db->real_escape_string( $new_suffix ) . "'";
+		$values [] = "dependsOn='" . $this->db->real_escape_string( $new_dependsOn ) . "'";
 		
 		$this->UpdateQueries ( 'computedStats', $values, 'statId', $statId );
 		
@@ -2299,7 +2299,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		
 		$confirm = $req->getVal ( 'confirm' );
 		$statId = $req->getVal ( 'statid' );
-		$statId = $this->db->real_escape_string ( $statId );
+		$statId = $this->db->real_escape_string( $statId );
 		
 		if ($confirm !== 'True') {
 			$output->addHTML ( "<p>Delete cancelled</p><br>" );
@@ -2342,20 +2342,20 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 			$cols [] = 'suffix';
 			$cols [] = 'dependsOn';
 			
-			$values [] = "'" . $this->db->real_escape_string ( $statId ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $version ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $round ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $addClass ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $comment ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $minimumValue ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $maximumValue ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $deferLevel ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $display ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $compute ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $idx ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $category ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $suffix ) . "'";
-			$values [] = "'" . $this->db->real_escape_string ( $dependsOn ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $statId ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $version ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $round ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $addClass ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $comment ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $minimumValue ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $maximumValue ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $deferLevel ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $display ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $compute ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $idx ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $category ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $suffix ) . "'";
+			$values [] = "'" . $this->db->real_escape_string( $dependsOn ) . "'";
 			
 			$this->InsertQueries ( 'computedStatsArchive', $cols, $values );
 			$this->DeleteQueries ( 'computedStats', 'statId', $statId );
