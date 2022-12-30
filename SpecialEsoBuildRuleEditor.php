@@ -4,6 +4,51 @@ require_once ("/home/uesp/secrets/esobuilddata.secrets");
 
 class SpecialEsoBuildRuleEditor extends SpecialPage {
 	
+	
+	public $COMPUTED_STAT_CATEGORIES = array (
+				"basic" => "Basic Stats",
+				"elementresist" => "Elemental Resistances",
+				"healing" => "Healing",
+				"statrestore" => "Stat Restoration",
+				"movement" => "Movement",
+				"combat" => "Bash / Block / Dodge / Break Free / Fear",
+				"damageshield" => "Damage Shield",
+				"damagetaken" => "Damage Taken",
+				"damagedone" => "Damage Done",
+				"harestore" => "Heavy Attack Restoration",
+				"statuseffect" => "Status Effects",
+				"lightattack" => "Light Attacks",
+				"heavyattack" => "Heavy Attacks",
+				"mitigation" => "Mitigation",
+				"abilitycost" => "Ability Costs",
+				"trait" => "Traits",
+				"other" => "Other" 
+		);
+	
+	public $ROUND_OPTIONS = [ 
+			'' => 'None',
+			'floor' => 'Floor',
+			'floor10' => 'Floor10',
+			'floor2' => 'Floor2',
+			'ceil' => 'Ceil' 
+		];
+	
+	
+	public $RULE_TYPE_OPTIONS = [ 
+				'' => 'None',
+				'buff' => 'BUFF',
+				'mundus' => 'MUNDUS',
+				'set' => 'SET',
+				'active' => 'ACTIVE',
+				'passive' => 'PASSIVE',
+				'cp' => 'CP',
+				'armorEnchant' => 'ARMOR ENCHANTMENT',
+				'weaponEnchant' => 'WEAPON ENCHANTMENT',
+				'offHandEnchant' => 'OFF-HAND ENCHANTMENT',
+				'abilityDesc' => 'ABILITY DESCRIPTION' 
+		];
+	
+	
 	public $db = null;
 	
 	
@@ -263,12 +308,13 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		
 		$input_version = $req->getVal ( 'version' );
 		
-		$this->loadVersions ();
+		$this->LoadVersions ();
 		
-		foreach ( $this->versions as $version ) {
-			$versionOption = $this->escapeHtml( $version ['version'] );
-			
-			if ($input_version == $versionOption) {
+		foreach ( $this->versions as $version ) 
+		{
+			if ($input_version == $version['version']) 
+			{
+				$versionOption = $this->escapeHtml( $version['version'] );
 				return $this->reportError ( "Error: version $input_version already exists" );
 			}
 		}
@@ -287,7 +333,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	}
 	
 	
-	public function loadVersions() {
+	public function LoadVersions() {
 		$query = "SELECT version FROM versions;";
 		$result = $this->db->query ( $query );
 		
@@ -305,9 +351,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	}
 	
 	
-	public function versionsList($param, $selectedVersion) {
+	public function OutputVersionListHtml($param, $selectedVersion) {
 		$output = $this->getOutput ();
-		$this->loadVersions ();
+		$this->LoadVersions ();
 		
 		$selected = "";
 		
@@ -328,8 +374,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		}
 		
 		$output->addHTML ( "</select><br>" );
-		
-		// $this->OutputLists($version, $versionOptions, $param);
 	}
 	
 	
@@ -380,18 +424,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	// -------------------Rules table functions---------------
 	public function rounds($param, $round) {
 		$output = $this->getOutput ();
-		
-		$roundOptions = [ 
-				'' => 'None',
-				'floor' => 'Floor',
-				'floor10' => 'Floor10',
-				'floor2' => 'Floor2',
-				'ceil' => 'Ceil' 
-		];
-		
-		// $output->addHTML("<p>Test: $round</p>");
+
 		$output->addHTML ( "<label for='$param'>round </label>" );
-		$this->OutputLists ( $round, $roundOptions, $param );
+		$this->OutputListHtml( $round, $this->ROUND_OPTIONS, $param );
 	}
 	
 	
@@ -521,7 +556,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$output = $this->getOutput ();
 		$baselink = $this->GetBaseLink ();
 		
-		$id = $this->GetRowId ();
+		$id = $this->GetRuleId();
 		$id = $this->escapeHtml( $id );
 		
 		if ($id <= 0) {
@@ -608,7 +643,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$req = $this->getRequest ();
 		
 		$confirm = $req->getVal ( 'confirm' );
-		$id = $this->GetRowId ();
+		$id = $this->GetRuleId();
 		
 		$id = $this->db->real_escape_string( $id );
 		
@@ -779,7 +814,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$output = $this->getOutput ();
 		$baselink = $this->GetBaseLink ();
 		
-		$id = $this->GetRowId ();
+		$id = $this->GetRuleId();
 		
 		$this->LoadRule ( $id );
 		
@@ -817,22 +852,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$output->addHTML ( "<h3>Edit Rule: $id</h3>" );
 		$output->addHTML ( "<form action='$baselink/saveeditruleform?ruleid=$id' method='POST'>" );
 		
-		$ruleTypeOptions = [ 
-				'' => 'None',
-				'buff' => 'BUFF',
-				'mundus' => 'MUNDUS',
-				'set' => 'SET',
-				'active' => 'ACTIVE',
-				'passive' => 'PASSIVE',
-				'cp' => 'CP',
-				'armorEnchant' => 'ARMOR ENCHANTMENT',
-				'weaponEnchant' => 'WEAPON ENCHANTMENT',
-				'offHandEnchant' => 'OFF-HAND ENCHANTMENT',
-				'abilityDesc' => 'ABILITY DESCRIPTION' 
-		];
-		
 		$output->addHTML ( "<label for='ruleType'>Rule Type: </label>" );
-		$this->OutputLists ( $ruleType, $ruleTypeOptions, 'ruleType' );
+		$this->OutputListHtml( $ruleType, $this->RULE_TYPE_OPTIONS, 'ruleType' );
 		
 		$output->addHTML ( "<label for='edit_nameId'>Name ID </label>" );
 		$output->addHTML ( "<input type='text' id='edit_nameId' name='edit_nameId' value='$nameId' size='60'>" );
@@ -857,9 +878,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$output->addHTML ( "<label for='edit_originalId'>Original Id </label>" );
 		$output->addHTML ( "<input type='text' id='edit_originalId' name='edit_originalId' value='$originalId'><br>" );
 		$output->addHTML ( "<label for='edit_statRequireValue'>Stat Require Value </label>" );
-		$output->addHTML ( "<input type='text' id='edit_statRequireValue' name='edit_statRequireValue' value='$edit_statRequireValue'><br>" );
+		$output->addHTML ( "<input type='text' id='edit_statRequireValue' name='edit_statRequireValue' value='$statRequireValue'><br>" );
 		
-		$this->versionsList ( 'edit_version', $version );
+		$this->OutputVersionListHtml( 'edit_version', $version );
 		
 		$output->addHTML ( "<label for='edit_icon'>Icon </label>" );
 		$output->addHTML ( "<input type='text' id='edit_icon' size='60' name='edit_icon' value='$icon'><br>" );
@@ -918,22 +939,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$output->addHTML ( "<h3>Add New Rule</h3>" );
 		$output->addHTML ( "<form action='$baselink/saverule' method='POST'>" );
 		
-		$ruleTypeOptions = [ 
-				'' => 'None',
-				'buff' => 'BUFF',
-				'mundus' => 'MUNDUS',
-				'set' => 'SET',
-				'active' => 'ACTIVE',
-				'passive' => 'PASSIVE',
-				'cp' => 'CP',
-				'armorEnchant' => 'ARMOR ENCHANTMENT',
-				'weaponEnchant' => 'WEAPON ENCHANTMENT',
-				'offHandEnchant' => 'OFF-HAND ENCHANTMENT',
-				'abilityDesc' => 'ABILITY DESCRIPTION' 
-		];
-		
 		$output->addHTML ( "<label for='ruleType'>Rule Type: </label>" );
-		$this->OutputLists ( $ruleType, $ruleTypeOptions, 'ruleType' );
+		$this->OutputListHtml( $ruleType, $this->RULE_TYPE_OPTIONS, 'ruleType' );
 		
 		$output->addHTML ( "<label for='nameId'>Name Id </label>" );
 		$output->addHTML ( "<input type='text' id='nameId' name='nameId' size='60'>" );
@@ -960,7 +967,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$output->addHTML ( "<label for='statRequireValue'>Stat Require Value </label>" );
 		$output->addHTML ( "<input type='text' id='statRequireValue' name='statRequireValue'><br>" );
 		
-		$this->versionsList ( 'version', '1' );
+		$this->OutputVersionListHtml( 'version', '1' );
 		
 		$output->addHTML ( "<label for='icon'>Icon </label>" );
 		$output->addHTML ( "<input type='text' id='icon' name='icon' size='60'><br>" );
@@ -996,21 +1003,21 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	}
 	
 	
-	public function GetCheckboxState($boolValue) {
-		$returnVal = "";
-		
-		if ($boolValue === '1') {
-			$returnVal = "checked";
-		}
-		return $returnVal;
+	public function GetCheckboxState($boolValue)
+	{
+		if ($boolValue === '1') return "checked";
+		return "";
 	}
 	
 	
-	public function OutputLists($option, $array, $listName) {
+	public function OutputListHtml($option, $array, $listName)
+	{
 		$output = $this->getOutput ();
 		
 		$output->addHTML ( "<select id='$listName' name='$listName'>" );
-		foreach ( $array as $key => $value ) {
+		
+		foreach ( $array as $key => $value ) 
+		{
 			$selected = "";
 			if ($key === $option) {
 				$selected = "selected";
@@ -1021,21 +1028,22 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	}
 	
 	
-	public function GetBooleanDispaly($boolValue) {
-		$returnVal = "";
-		
-		if ($boolValue === '1') {
-			$returnVal = "Yes";
-		}
-		return $returnVal;
+	public function GetBooleanDispaly($boolValue)
+	{
+		if ($boolValue === '1') return "Yes";
+		return "";
 	}
 	
 	
-	public function ReportError($msg) {
+	public function ReportError($msg)
+	{
 		$output = $this->getOutput ();
+		
 		$output->addHTML ( $msg . "<br/>" );
-		$output->addHTML ( $this->db->error );
+		$output->addHTML ( $this->db->error );	//TODO: Only output if present?
+		
 		error_log ( $msg );
+		
 		return false;
 	}
 	
@@ -1153,7 +1161,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$baselink = $this->GetBaseLink ();
 		$req = $this->getRequest ();
 		
-		$id = $this->GetRowId ();
+		$id = $this->GetRuleId();
 		$id = $this->db->real_escape_string( $id );
 		
 		if ($id <= 0) {
@@ -1226,7 +1234,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	}
 	
 	
-	public function GetRowId() {
+	public function GetRuleId() {
 		$req = $this->getRequest ();
 		$ruleId = $req->getVal ( 'ruleid' );
 		
@@ -1243,7 +1251,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	
 	// -------------------Effects table functions---------------
 	public function loadEffects() {
-		$id = $this->GetRowId ();
+		$id = $this->GetRuleId();
 		$id = $this->db->real_escape_string( $id );
 		$query = "SELECT * FROM effects where ruleId =$id;";
 		$effects_result = $this->db->query ( $query );
@@ -1268,7 +1276,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$this->loadEffects ();
 		$req = $this->getRequest ();
 		
-		$id = $this->GetRowId ();
+		$id = $this->GetRuleId();
 		$effectId = $req->getVal ( 'effectid' );
 		
 		$output->addHTML ( "<hr><h3>Rule Effects:</h3>" );
@@ -1342,7 +1350,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$this->loadEffects ();
 		$req = $this->getRequest ();
 		
-		$id = $this->GetRowId ();
+		$id = $this->GetRuleId();
 		$effectId = $req->getVal ( 'effectid' );
 		
 		$this->loadEffect ( $effectId );
@@ -1397,7 +1405,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$effectId = $req->getVal ( 'effectid' );
 		
 		$effectId = $this->db->real_escape_string( $effectId );
-		$id = $this->GetRowId ();
+		$id = $this->GetRuleId();
 		
 		if ($effectId <= 0) {
 			return $this->reportError ( "Error: invalid stat ID" );
@@ -1477,7 +1485,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$baselink = $this->GetBaseLink ();
 		$req = $this->getRequest ();
 		
-		$id = $this->GetRowId ();
+		$id = $this->GetRuleId();
 		$input_version = $req->getVal ( 'version' );
 		$input_statId = $req->getVal ( 'statId' );
 		$input_value = $req->getVal ( 'value' );
@@ -1536,13 +1544,13 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		
 		$output = $this->getOutput ();
 		$baselink = $this->GetBaseLink ();
-		$id = $this->GetRowId ();
+		$id = $this->GetRuleId();
 		
 		$output->addHTML ( "<a href='$baselink/editrule?ruleid=$id'>Rule #$id</a>" );
 		$output->addHTML ( "<h3>Add New Effect For Rule: $id</h3>" );
 		$output->addHTML ( "<form action='$baselink/savenewffect?ruleid=$id' method='POST'>" );
 		
-		$this->versionsList ( 'version', '1' );
+		$this->OutputVersionListHtml( 'version', '1' );
 		
 		$this->laodStatIds ();
 		$output->addHTML ( "<label for='statId'>Stat Id </label>" );
@@ -1638,7 +1646,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$req = $this->getRequest ();
 		
 		$effectId = $req->getVal ( 'effectid' );
-		$ruleId = $this->GetRowId ();
+		$ruleId = $this->GetRuleId();
 		
 		$this->loadEffect ( $effectId );
 		
@@ -1659,7 +1667,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$output->addHTML ( "<h3>Edit Effect: $effectId</h3>" );
 		$output->addHTML ( "<form action='$baselink/saveediteffectform?effectid=$effectId&ruleid=$ruleId' method='POST'>" );
 		
-		$this->versionsList ( 'edit_version', $version );
+		$this->OutputVersionListHtml( 'edit_version', $version );
 		
 		$this->laodStatIds ();
 		$output->addHTML ( "<label for='edit_statId'>Stat Id </label>" );
@@ -1718,7 +1726,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$baselink = $this->GetBaseLink ();
 		$req = $this->getRequest ();
 		
-		$ruleId = $this->GetRowId ();
+		$ruleId = $this->GetRuleId();
 		$effectId = $req->getVal ( 'effectid' );
 		
 		$effectId = $this->db->real_escape_string( $effectId );
@@ -1906,7 +1914,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$output->addHTML ( "<label for='statId'>Stat Id </label>" );
 		$output->addHTML ( "<input type='text' id='statId' name='statId'><br>" );
 		
-		$this->versionsList ( 'version', '1' );
+		$this->OutputVersionListHtml( 'version', '1' );
 		$this->rounds ( 'round', '' );
 		
 		$output->addHTML ( "<label for='addClass'>Class </label>" );
@@ -1928,28 +1936,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$output->addHTML ( "<label for='idx'>Idx </label>" );
 		$output->addHTML ( "<input type='text' id='idx' name='idx'><br>" );
 		
-		$COMPUTED_STAT_CATEGORIES = array (
-				"basic" => "Basic Stats",
-				"elementresist" => "Elemental Resistances",
-				"healing" => "Healing",
-				"statrestore" => "Stat Restoration",
-				"movement" => "Movement",
-				"combat" => "Bash / Block / Dodge / Break Free / Fear",
-				"damageshield" => "Damage Shield",
-				"damagetaken" => "Damage Taken",
-				"damagedone" => "Damage Done",
-				"harestore" => "Heavy Attack Restoration",
-				"statuseffect" => "Status Effects",
-				"lightattack" => "Light Attacks",
-				"heavyattack" => "Heavy Attacks",
-				"mitigation" => "Mitigation",
-				"abilitycost" => "Ability Costs",
-				"trait" => "Traits",
-				"other" => "Other" 
-		);
-		
 		$output->addHTML ( "<label for='category'>Category </label>" );
-		$this->OutputLists ( '', $COMPUTED_STAT_CATEGORIES, 'category' );
+		$this->OutputListHtml( '', $this->COMPUTED_STAT_CATEGORIES, 'category' );
 		
 		$output->addHTML ( "<label for='suffix'>Suffix </label>" );
 		$output->addHTML ( "<input type='text' id='suffix' name='suffix'><br>" );
@@ -2113,10 +2101,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		} else {
 			$data = json_decode ( $this->computedStat['compute'], true );
 			if ($data == null) $data = [];	//TODO: Error handling?
-			if (!is_array($data)) $data = ['Error: Not Array!', $computedStatsData['compute']];
+			if (!is_array($data)) $data = ['Error: Not Array!', $this->computedStat['compute']];
 		}
 		
-		$this->computedStat ['compute'] = $data;
+		$this->computedStat['compute'] = $data;
 		
 		if ($this->computedStat ['dependsOn'] == '') {
 			$data = [ ];
@@ -2132,7 +2120,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$output->addHTML ( "<h3>Edit Computed Stat: $statId</h3>" );
 		$output->addHTML ( "<form action='$baselink/saveeditcomputedstatsform?statid=$statId' method='POST'>" );
 		
-		$this->versionsList ( 'edit_version', $version );
+		$this->OutputVersionListHtml( 'edit_version', $version );
 		$roundOptions = $this->rounds ( 'edit_round', $round );
 		
 		$output->addHTML ( "<label for='edit_addClass'>Class </label>" );
@@ -2150,6 +2138,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		
 		$output->addHTML ( "<label for='edit_compute'>Compute </label>" );
 		$output->addHTML ( "<textarea id='edit_compute' name='edit_compute' class='txtArea' rows='15' cols='50'>" );
+		
 		foreach ( $this->computedStat ['compute'] as $key => $val ) {
 			$output->addHTML ( "$val \n" );
 		}
@@ -2158,34 +2147,15 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$output->addHTML ( "<label for='edit_idx'>Idx </label>" );
 		$output->addHTML ( "<input type='text' id='edit_idx' name='edit_idx' value='$idx'><br>" );
 		
-		$COMPUTED_STAT_CATEGORIES = array (
-				"basic" => "Basic Stats",
-				"elementresist" => "Elemental Resistances",
-				"healing" => "Healing",
-				"statrestore" => "Stat Restoration",
-				"movement" => "Movement",
-				"combat" => "Bash / Block / Dodge / Break Free / Fear",
-				"damageshield" => "Damage Shield",
-				"damagetaken" => "Damage Taken",
-				"damagedone" => "Damage Done",
-				"harestore" => "Heavy Attack Restoration",
-				"statuseffect" => "Status Effects",
-				"lightattack" => "Light Attacks",
-				"heavyattack" => "Heavy Attacks",
-				"mitigation" => "Mitigation",
-				"abilitycost" => "Ability Costs",
-				"trait" => "Traits",
-				"other" => "Other" 
-		);
-		
 		$output->addHTML ( "<label for='edit_category'>Category </label>" );
-		$this->OutputLists ( $category, $COMPUTED_STAT_CATEGORIES, 'edit_category' );
+		$this->OutputListHtml( $category, $this->COMPUTED_STAT_CATEGORIES, 'edit_category' );
 		
 		$output->addHTML ( "<label for='edit_suffix'>Suffix </label>" );
 		$output->addHTML ( "<input type='text' id='edit_suffix' name='edit_suffix' value='$suffix'><br>" );
 		
 		$output->addHTML ( "<label for='edit_dependsOn'>Depends On </label>" );
 		$output->addHTML ( "<textarea id='edit_dependsOn' name='edit_dependsOn' class='txtArea' rows='4' cols='50'>" );
+		
 		foreach ( $this->computedStat ['dependsOn'] as $key => $val ) {
 			$output->addHTML ( "$val \n" );
 		}
