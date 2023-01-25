@@ -5,7 +5,7 @@ require_once ("/home/uesp/secrets/esobuilddata.secrets");
 class SpecialEsoBuildRuleEditor extends SpecialPage {
 	
 	
-	public $COMPUTED_STAT_CATEGORIES = array (
+	public $COMPUTED_STAT_CATEGORIES = [
 				"basic" => "Basic Stats",
 				"elementresist" => "Elemental Resistances",
 				"healing" => "Healing",
@@ -22,46 +22,56 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 				"mitigation" => "Mitigation",
 				"abilitycost" => "Ability Costs",
 				"trait" => "Traits",
-				"other" => "Other" 
-		);
+				"other" => "Other", 
+		];
 	
 	public $ROUND_OPTIONS = [ 
 			'' => 'None',
+			'ceil' => 'Ceil', 
 			'floor' => 'Floor',
-			'floor10' => 'Floor10',
 			'floor2' => 'Floor2',
-			'ceil' => 'Ceil' 
+			'floor10' => 'Floor10',
 		];
-	
 	
 	public $RULE_TYPE_OPTIONS = [ 
 				'' => 'None',
-				'buff' => 'BUFF',
-				'mundus' => 'MUNDUS',
-				'set' => 'SET',
-				'active' => 'ACTIVE',
-				'passive' => 'PASSIVE',
+				'abilitydesc' => 'Ability Description',
+				'active' => 'Active',
+				'buff' => 'Buff',
 				'cp' => 'CP',
-				'armorEnchant' => 'ARMOR ENCHANTMENT',
-				'weaponEnchant' => 'WEAPON ENCHANTMENT',
-				'offHandEnchant' => 'OFF-HAND ENCHANTMENT',
-				'abilityDesc' => 'ABILITY DESCRIPTION' 
+				'armorenchant' => 'Enchantment (Armor)',
+				'offhandenchant' => 'Enchantment (Off-Hand Weapon)',
+				'weaponenchant' => 'Enchantment (Weapon)',
+				'mundus' => 'Mundus',
+				'passive' => 'Passive',
+				'set' => 'Set',
 		];
 	
+	public $RULE_TYPE_OPTIONS_ANY = [];
 	
 	public $db = null;
+	public $hasLoadedBuffIds = false;
+	
+	public $rulesDatas = [];
+	public $hasFilteredRules = false;
+	public $totalRuleCount = 0;
 	
 	
-	function __construct() {
+	function __construct()
+	{
 		global $wgOut;
 		global $uespIsMobile;
 		
-		parent::__construct ( 'EsoBuildRuleEditor' );
+		parent::__construct( 'EsoBuildRuleEditor' );
 		
-		$wgOut->addModules ( 'ext.EsoBuildData.ruleseditor.scripts' );
-		$wgOut->addModuleStyles ( 'ext.EsoBuildData.ruleseditor.styles' );
+		$this->RULE_TYPE_OPTIONS_ANY = $this->RULE_TYPE_OPTIONS;
+		$this->RULE_TYPE_OPTIONS_ANY[''] = 'Any';
 		
-		if ($uespIsMobile || (class_exists ( "MobileContext" ) && MobileContext::singleton ()->isMobileDevice ())) {
+		$wgOut->addModules( 'ext.EsoBuildData.ruleseditor.scripts' );
+		$wgOut->addModuleStyles( 'ext.EsoBuildData.ruleseditor.styles' );
+		
+		if ($uespIsMobile || (class_exists( "MobileContext" ) && MobileContext::singleton()->isMobileDevice()))
+		{
 			// TODO: Add any mobile specific CSS/scripts resource modules here
 		}
 		
@@ -69,30 +79,30 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	}
 	
 	
-	public static function escapeHtml($html) {
-		return htmlspecialchars ( $html );
+	public static function escapeHtml($html)
+	{
+		return htmlspecialchars( $html,  ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 );
 	}
 	
 	
-	public function canUserEdit() {
-		$context = $this->getContext ();
-		if ($context == null)
-			return false;
+	public function canUserEdit()
+	{
+		$context = $this->getContext();
+		if ($context == null) return false;
 		
 		$user = $context->getUser ();
-		if ($user == null)
-			return false;
+		if ($user == null) return false;
 		
-		if (! $user->isLoggedIn ())
-			return false;
+		if (! $user->isLoggedIn()) return false;
 		
-		return $user->isAllowedAny ( 'esochardata_ruleedit' );
+		return $user->isAllowedAny( 'esochardata_ruleedit' );
 	}
 	
 	
-	protected function CreateTables() {
+	protected function CreateTables()
+	{
 		
-		$result = $this->db->query ( "CREATE TABLE IF NOT EXISTS rules (
+		$result = $this->db->query( "CREATE TABLE IF NOT EXISTS rules (
 			id INTEGER AUTO_INCREMENT NOT NULL,
 			version TINYTEXT NOT NULL,
 			ruleType TINYTEXT NOT NULL,
@@ -107,9 +117,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 			isVisible TINYINT(1) NOT NULL,
 			isToggle TINYINT(1) NOT NULL,
 			enableOffBar TINYINT(1) NOT NULL,
-			originalId TINYTEXT,
-			icon TINYTEXT,
-			groupName TINYTEXT,
+			originalId TINYTEXT NOT NULL,
+			icon TINYTEXT NOT NULL,
+			groupName TINYTEXT NOT NULL,
 			maxTimes INTEGER,
 			comment TINYTEXT NOT NULL,
 			description MEDIUMTEXT NOT NULL,
@@ -119,74 +129,76 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 			INDEX index_ruleId(originalId(30)));" );
 		
 		if ($result === false) {
-			return $this->reportError ( "Error: failed to create rules table" );
+			return $this->reportError( "Error: failed to create rules table" );
 		}
 		
-		$effects_result = $this->db->query ( "CREATE TABLE IF NOT EXISTS effects (
-			effectId INTEGER AUTO_INCREMENT NOT NULL,
+		$effects_result = $this->db->query( "CREATE TABLE IF NOT EXISTS effects (
+			id INTEGER AUTO_INCREMENT NOT NULL,
 			ruleId INTEGER NOT NULL,
 			version TINYTEXT NOT NULL,
 			statId TINYTEXT NOT NULL,
-			value TINYTEXT,
-			display TINYTEXT,
-			category TINYTEXT,
-			combineAs TINYTEXT,
-			roundNum TINYTEXT,
+			value TINYTEXT NOT NULL,
+			display TINYTEXT NOT NULL,
+			category TINYTEXT NOT NULL,
+			combineAs TINYTEXT NOT NULL,
+			roundNum TINYTEXT NOT NULL,
 			factorValue FLOAT,
-			statDesc TINYTEXT,
-			buffId TINYTEXT,
+			statDesc TINYTEXT NOT NULL,
+			buffId TINYTEXT NOT NULL,
 			regexVar TINYTEXT NOT NULL,
-			PRIMARY KEY (effectId),
+			PRIMARY KEY (id),
 			INDEX index_ruleId(ruleId),
 			INDEX index_stat(statId(32)),
 			INDEX index_version(version(10)));" );
 		
 		if ($effects_result === false) {
-			return $this->reportError ( "Error: failed to create effects table" );
+			return $this->reportError( "Error: failed to create effects table" );
 		}
 		
-		$computedStats_result = $this->db->query ( "CREATE TABLE IF NOT EXISTS computedStats (
+		$computedStats_result = $this->db->query( "CREATE TABLE IF NOT EXISTS computedStats (
+			id INTEGER AUTO_INCREMENT NOT NULL,
 			statId TINYTEXT NOT NULL,
 			version TINYTEXT NOT NULL,
 			title TINYTEXT NOT NULL,
-			roundNum TINYTEXT,
-			addClass TINYTEXT,
-			comment TINYTEXT,
+			roundNum TINYTEXT NOT NULL,
+			addClass TINYTEXT NOT NULL,
+			comment TINYTEXT NOT NULL,
 			minimumValue FLOAT,
 			maximumValue FLOAT,
 			deferLevel TINYINT,
-			display TINYTEXT,
+			display TINYTEXT NOT NULL,
 			compute TEXT NOT NULL,
 			idx TINYINT NOT NULL,
 			category TINYTEXT NOT NULL,
 			suffix TINYTEXT NOT NULL,
 			dependsOn MEDIUMTEXT NOT NULL,
-			PRIMARY KEY (statId(32)),
+			PRIMARY KEY (id),
+			INDEX index_statId(statId(32)),
 			INDEX index_version(version(10)));" );
 		
 		if ($computedStats_result === false) {
-			return $this->reportError ( "Error: failed to create computed Stats table" );
+			return $this->reportError( "Error: failed to create computed Stats table" );
 		}
 		
-		$deleteRule_result = $this->db->query ( "CREATE TABLE IF NOT EXISTS rulesArchive (
+		$deleteRule_result = $this->db->query( "CREATE TABLE IF NOT EXISTS rulesArchive (
 			archiveId INTEGER AUTO_INCREMENT NOT NULL,
 			id INTEGER NOT NULL,
 			version TINYTEXT NOT NULL,
 			ruleType TINYTEXT NOT NULL,
-			nameId TINYTEXT,
-			displayName TINYTEXT,
+			nameId TINYTEXT NOT NULL,
+			displayName TINYTEXT NOT NULL,
 			matchRegex TINYTEXT NOT NULL,
-			displayRegex TINYTEXT,
-			statRequireId TINYTEXT,
-			statRequireValue TINYTEXT,
-			factorStatId TINYTEXT,
+			displayRegex TINYTEXT NOT NULL,
+			statRequireId TINYTEXT NOT NULL,
+			statRequireValue TINYTEXT NOT NULL,
+			factorStatId TINYTEXT NOT NULL,
 			isEnabled TINYINT(1) NOT NULL,
 			isVisible TINYINT(1) NOT NULL,
 			isToggle TINYINT(1) NOT NULL,
 			enableOffBar TINYINT(1) NOT NULL,
-			originalId TINYTEXT,
-			icon TINYTEXT,
-			groupName TINYTEXT,
+			originalId TINYTEXT NOT NULL,
+			icon TINYTEXT NOT NULL,
+			groupName TINYTEXT NOT NULL,
 			maxTimes INTEGER,
 			comment TINYTEXT NOT NULL,
 			description MEDIUMTEXT NOT NULL,
@@ -196,23 +208,23 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 			INDEX index_ruleId(originalId(30)) );" );
 		
 		if ($deleteRule_result === false) {
-			return $this->reportError ( "Error: failed to create rules archive table" );
+			return $this->reportError( "Error: failed to create rules archive table" );
 		}
 		
-		$deletedEffects_result = $this->db->query ( "CREATE TABLE IF NOT EXISTS effectsArchive (
+		$deletedEffects_result = $this->db->query( "CREATE TABLE IF NOT EXISTS effectsArchive (
 			archiveId INTEGER AUTO_INCREMENT NOT NULL,
-			effectId INTEGER NOT NULL,
+			id INTEGER NOT NULL,
 			ruleId INTEGER NOT NULL,
 			version TINYTEXT NOT NULL,
 			statId TINYTEXT NOT NULL,
-			value TINYTEXT,
-			display TINYTEXT,
-			category TINYTEXT,
-			combineAs TINYTEXT,
-			roundNum TINYTEXT,
+			value TINYTEXT NOT NULL,
+			display TINYTEXT NOT NULL,
+			category TINYTEXT NOT NULL,
+			combineAs TINYTEXT NOT NULL,
+			roundNum TINYTEXT NOT NULL,
 			factorValue FLOAT,
-			statDesc TINYTEXT,
-			buffId TINYTEXT,
+			statDesc TINYTEXT NOT NULL,
+			buffId TINYTEXT NOT NULL,
 			regexVar TINYTEXT NOT NULL,
 			PRIMARY KEY (archiveId),
 			INDEX index_ruleId(ruleId),
@@ -220,510 +232,917 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 			INDEX index_version(version(10)) );" );
 		
 		if ($deletedEffects_result === false) {
-			return $this->reportError ( "Error: failed to create effects archive table" );
+			return $this->reportError( "Error: failed to create effects archive table" );
 		}
 		
-		$DeletedcomputedStats_result = $this->db->query ( "CREATE TABLE IF NOT EXISTS computedStatsArchive (
-			id TINYTEXT NOT NULL,
-			statId INTEGER NOT NULL,
+		$DeletedcomputedStats_result = $this->db->query( "CREATE TABLE IF NOT EXISTS computedStatsArchive (
+			archiveId INTEGER AUTO_INCREMENT NOT NULL,
+			id INTEGER NOT NULL,
+			statId TINYTEXT NOT NULL,
 			version TINYTEXT NOT NULL,
 			title TINYTEXT NOT NULL,
-			roundNum TINYTEXT,
-			addClass TINYTEXT,
-			comment TINYTEXT,
+			roundNum TINYTEXT NOT NULL,
+			addClass TINYTEXT NOT NULL,
+			comment TINYTEXT NOT NULL,
 			minimumValue FLOAT,
 			maximumValue FLOAT,
 			deferLevel TINYINT,
-			display TINYTEXT,
+			display TINYTEXT NOT NULL,
 			compute TEXT NOT NULL,
 			idx TINYINT NOT NULL,
 			category TINYTEXT NOT NULL,
 			suffix TINYTEXT NOT NULL,
 			dependsOn MEDIUMTEXT NOT NULL,
-			PRIMARY KEY (id(32)),
+			PRIMARY KEY (archiveId),
 			INDEX index_version(version(10)) ); " );
 		
 		if ($computedStats_result === false) {
-			return $this->reportError ( "Error: failed to create computed Stats archive table" );
+			return $this->reportError( "Error: failed to create computed Stats archive table" );
 		}
 		
-		$versions_result = $this->db->query ( "CREATE TABLE IF NOT EXISTS versions (
+		$versions_result = $this->db->query( "CREATE TABLE IF NOT EXISTS versions (
 			version TINYTEXT NOT NULL,
 			PRIMARY KEY idx_version(version(16)) );" );
 		
 		if ($computedStats_result === false) {
-			return $this->reportError ( "Error: failed to create versions table" );
+			return $this->reportError( "Error: failed to create versions table" );
 		}
 		
 		return true;
 	}
 	
 	
-	public function InitDatabase() {
+	public function InitDatabase()
+	{
 		global $uespEsoBuildDataWriteDBHost, $uespEsoBuildDataWriteUser, $uespEsoBuildDataWritePW, $uespEsoBuildDataDatabase;
 		
 		$this->db = new mysqli ( $uespEsoBuildDataWriteDBHost, $uespEsoBuildDataWriteUser, $uespEsoBuildDataWritePW, $uespEsoBuildDataDatabase );
-		if ($this->db->connect_error) {
-			return $this->reportError ( "Error: failed to initialize database" );
-			;
-		}
+		if ($this->db->connect_error) return $this->reportError( "Error: failed to initialize database" );
+		
 		$this->CreateTables ();
 		return true;
 	}
 	
 	
-	// ------------------ Versions functions ---------------
-	public function OutputAddVersionForm() {
-		$permission = $this->canUserEdit ();
-		
-		if ($permission === False) {
-			return $this->reportError ( "Error: you have no permission to add versions" );
-		}
+	public function OutputAddVersionForm() 
+	{
+		$permission = $this->canUserEdit();
+		if ($permission === false) return $this->reportError( "Error: you have no permission to add versions" );
 		
 		$output = $this->getOutput ();
 		$baselink = $this->GetBaseLink ();
 		
-		$output->addHTML ( "<h3>Adding New Version</h3>" );
-		$output->addHTML ( "<form action='$baselink/saveversion' method='POST'>" );
+		$output->addHTML( "<h3>Adding New Version</h3>" );
+		$output->addHTML( "<form action='$baselink/saveversion' method='POST'>" );
 		
-		$output->addHTML ( "<label for='version'>Version: </label>" );
-		$output->addHTML ( "<input type='text' id='version' name='version'>" );
-		$output->addHTML ( "<p class='errorMsg'></p>" );
+		$output->addHTML( "<label for='version'>Source Version</label>" );
+		$output->addHTML( "<input type='text' id='sourceversion' name='sourceversion'>" );
+		$output->addHTML( "<p class='errorMsg'></p>" );
+		$output->addHTML( "<p>If you specify an existing source version all rules, effects, and computed stats will be copied from the source to the new version.</p>" );
 		
-		$output->addHTML ( "<br><input type='submit' value='Save Version' class='submit_btn'>" );
-		$output->addHTML ( "</form>" );
+		$output->addHTML( "<label for='version'>New Version</label>" );
+		$output->addHTML( "<input type='text' id='version' name='version'>" );
+		$output->addHTML( "<p class='errorMsg'></p>" );
+		
+		$output->addHTML( "<br><input type='submit' value='Save Version' class='submit_btn'>" );
+		$output->addHTML( "</form>" );
 	}
 	
 	
-	public function SaveNewVersion() {
-		$permission = $this->canUserEdit ();
-		
-		if ($permission === False) {
-			return $this->reportError ( "Error: you have no permission to add versions" );
-		}
+	public function SaveNewVersion()
+	{
+		$permission = $this->canUserEdit();
+		if ($permission === false) return $this->reportError( "Error: you have no permission to add versions" );
 		
 		$output = $this->getOutput ();
 		$baselink = $this->GetBaseLink ();
 		$req = $this->getRequest ();
 		
-		$input_version = $req->getVal ( 'version' );
+		$output->addHTML( "<a href='$baselink'>Home</a><br/>" );
 		
-		$this->LoadVersions ();
+		$input_version = trim($req->getVal( 'version' ));
+		$input_sourceVersion = trim($req->getVal( 'sourceversion' ));
+		if ($input_sourceVersion == null) $input_sourceVersion = '';
 		
-		foreach ( $this->versions as $version ) 
+		if (!preg_match('/^[0-9]+(pts)?$/', $input_version)) return $this->reportError( "Error: New version '$input_version' does not match the expected format of '##' or '##pts'!" );
+		if ($input_sourceVersion && !preg_match('/^[0-9]+(pts)?$/', $input_sourceVersion)) return $this->reportError( "Error: Source version '$input_sourceVersion' does not match the expected format of '##' or '##pts'!" );
+		
+		$this->LoadVersions();
+		
+		$versionList = [];
+		
+		foreach ( $this->versions as $version )
 		{
-			if ($input_version == $version['version']) 
+			$versionList[$version] = true;
+			
+			if ($input_version == $version)
 			{
-				$versionOption = $this->escapeHtml( $version['version'] );
-				return $this->reportError ( "Error: version $input_version already exists" );
+				$versionOption = $this->escapeHtml( $version );
+				return $this->reportError( "Error: version $input_version already exists" );
 			}
 		}
+		
+		if ($input_sourceVersion && !array_key_exists($input_sourceVersion, $versionList)) return $this->reportError("Error: Source version $input_sourceVersion is not currently in use!");
 		
 		$cols = [ ];
 		$values = [ ];
 		
-		$cols [] = 'version';
-		$values [] = "'" . $this->db->real_escape_string( $input_version ) . "'";
+		$cols[] = 'version';
+		$values[] = "'" . $this->db->real_escape_string( $input_version ) . "'";
 		
 		$insertResult = $this->InsertQueries ( 'versions', $cols, $values );
 		if (!$insertResult) return $this->reportError("Error: Failed to insert record into versions!");
 		
-		$output->addHTML ( "<p>New version added</p><br>" );
-		$output->addHTML ( "<a href='$baselink'>Home</a>" );
+		if ($input_sourceVersion)
+		{
+			$copyResult = $this->CopyVersions($input_sourceVersion, $input_version);
+			if (!$copyResult) return $this->reportError("Error: Failed to copy data from version $input_version to $input_sourceVersion!");
+			
+			$output->addHTML( "<p>New version '$input_version' added using source data from '$input_sourceVersion'!</p><br>" );
+		}
+		else
+		{
+			$output->addHTML( "<p>New version '$input_version' added!</p><br>" );
+		}
 	}
 	
 	
-	public function LoadVersions() {
-		$query = "SELECT version FROM versions;";
-		$result = $this->db->query ( $query );
+	public function CopyVersions($sourceVersion, $destVersion)
+	{
+		if ($sourceVersion == null || $sourceVersion == "") return true;
 		
-		if ($result === false) {
-			return $this->reportError ( "Error: failed to load versions from database" );
+		$output = $this->getOutput();
+		
+		$safeSource = $this->db->real_escape_string($sourceVersion);
+		$safeDest   = $this->db->real_escape_string($destVersion);
+		
+		$newRules = 0;
+		$newEffects = 0;
+		$newStats = 0;
+		
+		if (!$this->LoadRules($sourceVersion)) return false;
+		
+		foreach ($this->rulesDatas as $rule)
+		{
+			$ruleId = $rule['id'];
+			
+			$cols = [ ];
+			$values = [ ];
+			$cols[] = 'ruleType';
+			$cols[] = 'nameId';
+			$cols[] = 'displayName';
+			$cols[] = 'matchRegex';
+			$cols[] = 'statRequireId';
+			$cols[] = 'factorStatId';
+			$cols[] = 'originalId';
+			$cols[] = 'version';
+			$cols[] = 'icon';
+			$cols[] = 'groupName';
+			$cols[] = 'maxTimes';
+			$cols[] = 'comment';
+			$cols[] = 'description';
+			$cols[] = 'isEnabled';
+			$cols[] = 'isVisible';
+			$cols[] = 'enableOffBar';
+			$cols[] = 'isToggle';
+			$cols[] = 'statRequireValue';
+			$cols[] = 'customData';
+			
+			$values[] = "'" . $this->db->real_escape_string( $rule['ruleType'] ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $rule['nameId'] ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $rule['displayName'] ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $rule['matchRegex'] ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $rule['statRequireId'] ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $rule['factorStatId'] ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $rule['originalId'] ) . "'";
+			$values[] = "'" . $safeDest . "'";
+			$values[] = "'" . $this->db->real_escape_string( $rule['icon'] ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $rule['groupName'] ) . "'";
+			
+			if ($rule['maxTimes'] == null || $rule['maxTimes'] == '')
+				$values[] = "NULL";
+			else
+				$values[] = "'" . $this->db->real_escape_string( $rule['maxTimes'] ) . "'";
+			
+			$values[] = "'" . $this->db->real_escape_string( $rule['comment'] ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $rule['description'] ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $rule['isEnabled'] ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $rule['isVisible'] ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $rule['enableOffBar'] ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $rule['isToggle'] ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $rule['statRequireId'] ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $rule['customData'] ) . "'";
+			
+			$insertResult = $this->InsertQueries( 'rules', $cols, $values );
+			if (!$insertResult) return $this->ReportError("Error: Failed to copy rule #$ruleId from version $sourceVersion to $destVersion!");
+			
+			++$newRules;
+			$newRuleId = $this->db->insert_id;
+			
+			$copyResult = $this->CopyRuleEffects($ruleId, $newRuleId, $sourceVersion, $destVersion);
+			if (!$copyResult) return $this->ReportError("Error: Failed to copy effects for rule #$ruleId from version $sourceVersion to $destVersion!");
+			
+			$newEffects += $this->newEffects;
 		}
 		
-		$this->versions = [ ];
+		if (!$this->LoadComputedStats($sourceVersion)) return $this->reportError("Error: Failed to load computed stats!");
 		
-		while ( $row = mysqli_fetch_assoc ( $result ) ) {
-			$this->versions [] = $row;
+		foreach ($this->computedStatsDatas as $computedStat)
+		{
+			$cols = [];
+			$values = [];
+			
+			$cols[] = 'statId';
+			$cols[] = 'version';
+			$cols[] = 'roundNum';
+			$cols[] = 'addClass';
+			$cols[] = 'comment';
+			$cols[] = 'title';
+			$cols[] = 'minimumValue';
+			$cols[] = 'maximumValue';
+			$cols[] = 'deferLevel';
+			$cols[] = 'display';
+			$cols[] = 'compute';
+			$cols[] = 'idx';
+			$cols[] = 'category';
+			$cols[] = 'suffix';
+			$cols[] = 'dependsOn';
+			
+			$values[] = "'" . $this->db->real_escape_string( $computedStat['statId'] ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $destVersion ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $computedStat['roundNum'] ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $computedStat['addClass'] ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $computedStat['comment'] ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $computedStat['title'] ) . "'";
+			
+			if ($computedStat['minimumValue'] == null || $computedStat['minimumValue'] == '')
+				$values[] = "NULL";
+			else
+				$values[] = "'" . $this->db->real_escape_string( $computedStat['minimumValue'] ) . "'";
+			
+			if ($computedStat['maximumValue'] == null || $computedStat['maximumValue'] == '')
+				$values[] = "NULL";
+			else
+				$values[] = "'" . $this->db->real_escape_string( $computedStat['maximumValue'] ) . "'";
+			
+			if ($computedStat['deferLevel'] == null || $computedStat['deferLevel'] == '')
+				$values[] = "NULL";
+			else
+				$values[] = "'" . $this->db->real_escape_string( $computedStat['deferLevel'] ) . "'";
+			
+			$values[] = "'" . $this->db->real_escape_string( $computedStat['display'] ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $computedStat['compute'] ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $computedStat['idx'] ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $computedStat['category'] ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $computedStat['suffix'] ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $computedStat['dependsOn'] ) . "'";
+			
+			$insertResult = $this->InsertQueries( 'computedStats', $cols, $values );
+			if (!$insertResult) return $this->reportError("Error: Failed to insert record into computedStats!");
+			
+			++$newStats;
+		}
+		
+		$output->addHTML("Copied $newRules rules, $newEffects effects, and $newStats computed stats!\n<br/>");
+		
+		return true;
+	}
+	
+	
+	public function CopyRuleEffects($ruleId, $newRuleId, $sourceVersion, $destVersion)
+	{
+		$this->newEffects = 0;
+		
+		if (!$this->LoadEffects($ruleId)) return $this->reportError("Error: Failed to load effects for rtule $ruleId!");
+		
+		foreach ($this->effectsDatas as $effect)
+		{
+			$cols = [ ];
+			$values = [ ];
+			
+			$cols[] = 'ruleId';
+			$cols[] = 'version';
+			$cols[] = 'statId';
+			$cols[] = 'value';
+			$cols[] = 'display';
+			$cols[] = 'category';
+			$cols[] = 'combineAs';
+			$cols[] = 'roundNum';
+			$cols[] = 'factorValue';
+			$cols[] = 'statDesc';
+			$cols[] = 'buffId';
+			$cols[] = 'regexVar';
+			
+			$values[] = "'" . $this->db->real_escape_string( $newRuleId ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $destVersion ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $effect['statId'] ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $effect['value'] ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $effect['display'] ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $effect['category'] ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $effect['combineAs'] ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $effect['roundNum'] ) . "'";
+			
+			if ($effect['factorValue'] == null || $effect['factorValue'] == '')
+				$values[] = 'NULL';
+			else
+				$values[] = "'" . $this->db->real_escape_string( $effect['factorValue'] ) . "'";
+			
+			$values[] = "'" . $this->db->real_escape_string( $effect['statDesc'] ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $effect['buffId'] ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $effect['regexVar'] ) . "'";
+			
+			$insertResult = $this->InsertQueries ( 'effects', $cols, $values );
+			if (!$insertResult) return $this->reportError("Error: Failed to insert record into effects!");
+			
+			++$this->newEffects;
 		}
 		
 		return true;
 	}
 	
 	
-	public function OutputVersionListHtml($param, $selectedVersion) {
-		$output = $this->getOutput ();
-		$this->LoadVersions ();
+	public function LoadVersions()
+	{
+		$query = "SELECT version FROM versions;";
+		$result = $this->db->query( $query );
 		
-		$selected = "";
-		
-		$output->addHTML ( "<label for='$param'>version: </label>" );
-		$output->addHTML ( "<select id='$param' name='$param'> " );
-		
-		foreach ( $this->versions as $version ) {
-			
-			$versionOption = $this->escapeHtml( $version ['version'] );
-			
-			if ($versionOption == $selectedVersion) {
-				$selected = "selected";
-			}
-			
-			if ($versionOption != "") {
-				$output->addHTML ( "<option value='$versionOption' $selected >$versionOption</option>" );
-			}
+		if ($result === false) {
+			return $this->reportError( "Error: failed to load versions from database" );
 		}
 		
-		$output->addHTML ( "</select><br>" );
+		$this->versions = [];
+		
+		while ( $row = $result->fetch_assoc() )
+		{
+			$this->versions[] = $row['version'];
+		}
+		
+		natsort($this->versions);
+		
+		return true;
 	}
 	
 	
-	// -------------------Queries fucntions---------------
-	public function InsertQueries($tableName, $cols, $values) {
-		$cols = implode ( ',', $cols );
-		$values = implode ( ',', $values );
+	public function OutputBuffListHtml ($elementId, $selected = '')
+	{
+		$this->LoadBuffIds();
+		
+		$output = $this->getOutput();
+		
+		$output->addHTML( "<label for='$elementId'>Buff ID</label>" );
+		$output->addHTML( "<select name='$elementId' id='$elementId'>" );
+		
+		$output->addHTML( "<option value=''></option>" );
+		
+		foreach ( $this->buffIds as $buffIdVal )
+		{
+			$optionVal = $buffIdVal['nameId'];
+			
+			$selectAttr = '';
+			if ($optionVal == $selected) $selectAttr = "selected";
+			
+			if ($optionVal != '') 
+			{
+				$optionVal = $this->escapeHtml( $buffIdVal['nameId'] );
+				$output->addHTML( "<option value='$optionVal' $selectAttr>$optionVal</option>" );
+			}
+		}
+		
+		$output->addHTML( "</select>" );
+	}
+	
+	
+	public function OutputVersionListHtml($elementId, $selectedVersion, $includeAny = false)
+	{
+		$this->LoadVersions();
+		
+		$output = $this->getOutput();
+		
+		$output->addHTML( "<label for='$elementId'>Version</label>" );
+		$output->addHTML( "<select id='$elementId' name='$elementId'> " );
+		
+		if ($includeAny) $output->addHTML( "<option value=''>Any</option>" );
+		
+		foreach ( $this->versions as $version )
+		{
+			$selected = '';
+			$versionOption = $this->escapeHtml( $version );
+			
+			if ($versionOption == $selectedVersion) $selected = "selected";
+			if ($versionOption != "") $output->addHTML( "<option value='$versionOption' $selected >$versionOption</option>" );
+		}
+		
+		$output->addHTML( "</select>" );
+	}
+	
+	
+	public function InsertQueries($tableName, $cols, $values)
+	{
+		$cols = implode( ',', $cols );
+		$values = implode( ',', $values );
 		$query = "INSERT INTO $tableName($cols) VALUES($values);";
 		
-		$result = $this->db->query ( $query );
+		$result = $this->db->query( $query );
 		
-		if ($result === false) {
-			return $this->reportError ( "Error: failed to INSERT data into database" );
-		}
-		
+		if ($result === false) return $this->reportError( "Error: failed to INSERT data into database" );
 		return true;
 	}
 	
 	
-	public function DeleteQueries($tableName, $conditionName, $value) {
+	public function DeleteQueries($tableName, $conditionName, $value)
+	{
 		$value = $this->db->real_escape_string( $value );
 		$query = "DELETE FROM $tableName WHERE $conditionName='$value';";
-		$result = $this->db->query ( $query );
+		$result = $this->db->query( $query );
 		
-		if ($result === false) {
-			return $this->reportError ( "Error: failed to DELETE data from database" );
-		}
-		
+		if ($result === false) return $this->reportError( "Error: failed to DELETE data from database" );
 		return true;
 	}
 	
 	
-	public function UpdateQueries($tableName, $values, $conditionName, $value) {
-		$values = implode ( ',', $values );
+	public function UpdateQueries($tableName, $values, $conditionName, $value)
+	{
+		$values = implode( ',', $values );
 		
 		$query = "UPDATE $tableName SET $values WHERE $conditionName='$value';";
 		
-		$result = $this->db->query ( $query );
+		error_log($query);
 		
-		if ($result === false) {
-			return $this->reportError ( "Error: failed to UPDATE data in database" );
-		}
+		$result = $this->db->query( $query );
 		
+		if ($result === false) return $this->reportError( "Error: failed to UPDATE data in database" );
 		return true;
 	}
 	
 	
-	// -------------------Rules table functions---------------
-	public function rounds($param, $round) {
-		$output = $this->getOutput ();
-
-		$output->addHTML ( "<label for='$param'>round </label>" );
+	public function OutputRoundsListHtml($param, $round)
+	{
+		$output = $this->getOutput();
+		
+		$output->addHTML( "<label for='$param'>Round</label>" );
 		$this->OutputListHtml( $round, $this->ROUND_OPTIONS, $param );
+		$output->addHTML( "<br/>" );
 	}
 	
 	
-	public function LoadRules() {
-		$query = "SELECT * FROM rules;";
-		$result = $this->db->query ( $query );
+	public function LoadTotalRuleCount()
+	{
+		$query = "SELECT count(*) as c FROM rules;";
 		
-		if ($result === false) {
-			return $this->reportError ( "Error: failed to load rules from database" );
+		$result = $this->db->query( $query );
+		if ($result === false) return $this->reportError( "Error: Failed to load total rule count from database!" );
+		
+		$row = $result->fetch_assoc();
+		$this->totalRuleCount = intval($row['c']);
+		
+		return $this->totalRuleCount;
+	}
+	
+	
+	public function LoadRules($version = '')
+	{
+		$this->LoadTotalRuleCount();
+		
+		if ($version == '')
+		{
+			$query = "SELECT * FROM rules;";
+		}
+		else
+		{
+			$safeVersion = $this->db->real_escape_string($version);
+			$query = "SELECT * FROM rules WHERE version='$safeVersion';";
 		}
 		
-		$this->rulesDatas = [ ];
+		$result = $this->db->query( $query );
+		if ($result === false) return $this->reportError( "Error: Failed to load rules from database!" );
 		
-		while ( $row = mysqli_fetch_assoc ( $result ) ) {
-			$this->rulesDatas [] = $row;
+		$this->rulesDatas = [];
+		
+		while ( $row = $result->fetch_assoc() )
+		{
+			$this->rulesDatas[] = $row;
 		}
 		
 		return true;
 	}
 	
 	
-	public function OutputShowRulesTable() {
-		$this->LoadRules ();
+	public function MakeFilteredRuleQuery($filters)
+	{
+		$query = "";
+		$where = [];
+		$req = $this->getRequest();
 		
-		$output = $this->getOutput ();
-		$baselink = $this->GetBaseLink ();
+		$version = $req->getVal('version');
+		if ($version) $where[] = $this->MakeSafeMatchQuery('version', $version);
 		
-		$output->addHTML ( "<a href='$baselink'>Home</a>" );
-		$output->addHTML ( "<h3>Showing All Rules</h3>" );
+		$ruleType = $req->getVal('ruletype');
+		if ($ruleType) $where[] = $this->MakeSafeMatchQuery('ruleType', $ruleType);
 		
-		$output->addHTML ( "<table class='wikitable sortable jquery-tablesorter' id='rules'><thead>" );
+		$searchText = $req->getVal('searchtext');
+		if ($searchText) $where[] = $this->MakeSafeLikeQuery('displayName', $searchText);
 		
-		$output->addHTML ( "<tr>" );
-		$output->addHTML ( "<th>Edit</th>" );
-		$output->addHTML ( "<th>Id</th>" );
-		$output->addHTML ( "<th>Rule Type</th>" );
-		$output->addHTML ( "<th>Name ID</th>" );
-		$output->addHTML ( "<th>Display Name</th>" );
-		$output->addHTML ( "<th>Match Regex</th>" );
-		$output->addHTML ( "<th>statRequireId</th>" );
-		$output->addHTML ( "<th>Original Id</th>" );
-		$output->addHTML ( "<th>Group Name</th>" );
-		$output->addHTML ( "<th>Description</th>" );
-		$output->addHTML ( "<th>Version</th>" );
-		$output->addHTML ( "<th>Enabled</th>" );
-		$output->addHTML ( "<th>Toggle</th>" );
-		$output->addHTML ( "<th>Visible</th>" );
-		$output->addHTML ( "<th>Enable Off Bar</th>" );
-		$output->addHTML ( "<th>Stat Require Value</th>" );
-		$output->addHTML ( "<th>Custom Data</th>" );
-		$output->addHTML ( "<th>Delete</th>" );
-		$output->addHTML ( "</tr></thead><tbody>" );
+		$where = implode(' AND ', $where);
+		
+		if ($where)
+		{
+			$this->hasFilteredRules = true;
+			$query = "SELECT * FROM rules WHERE $where;";
+		}
+		else
+		{
+			$query = "SELECT * FROM rules;";
+			$this->hasFilteredRules = false;
+		}
+		
+		return $query;
+	}
+	
+	
+	public function MakeSafeMatchQuery($col, $value)
+	{
+		$safeValue = $this->db->real_escape_string($value);
+		return "`$col`='$safeValue'";
+	}
+	
+	
+	public function MakeSafeLikeQuery($col, $value)
+	{
+		$safeValue = $this->db->real_escape_string($value);
+		return "`$col` LIKE '$safeValue%'";
+	}
+	
+	
+	public function LoadFilteredRules($filters = [])
+	{
+		$this->rulesDatas = [];
+		$this->LoadTotalRuleCount();
+		
+		$query = $this->MakeFilteredRuleQuery($filters);
+		
+		$result = $this->db->query( $query );
+		if ($result === false) return $this->reportError( "Error: Failed to load filtered rules from database!" );
+		
+		while ( $row = $result->fetch_assoc() )
+		{
+			$this->rulesDatas[] = $row;
+		}
+		
+		return true;
+	}
+	
+	
+	public function OutputShowRulesFilterForm()
+	{
+		$req = $this->getRequest();
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
+		
+		$version = $req->getVal('version');
+		$ruleType = $req->getVal('ruletype');
+		$searchText = $req->getVal('searchtext');
+		
+		$safeRuleType = $this->escapeHtml($ruleType);
+		$safeSearchType = $this->escapeHtml($searchText);
+		
+		$output->addHTML( "<form id='filterRuleForm' action='$baselink/showrules'>" );
+		
+		$this->OutputVersionListHtml( 'version', $version, true );
+		$output->addHTML( "<label for='ruletype'>Rule Type</label>" );
+		$this->OutputListHtml( $ruleType, $this->RULE_TYPE_OPTIONS_ANY, 'ruletype' );
+		
+		$output->addHTML( "<label for='filterRuleSearch'></label><input type='text' id='filterRuleSearch' name='searchtext' value='$safeSearchType'/>" );
+		
+		$output->addHTML( " <input type='submit' value='Filter'/>" );
+		$output->addHTML( " <input type='button' value='Clear' onclick='OnClearRuleFilterForm();'/>" );
+		
+		$output->addHTML( "</form>" );
+		
+		$ruleCount = count($this->rulesDatas);
+		$totalRuleCount = $this->totalRuleCount;
+		
+		if ($this->hasFilteredRules)
+			$output->addHTML( "Showing matching $ruleCount rules out of $totalRuleCount total." );
+		else
+			$output->addHTML( "Showing all $ruleCount rules." );
+	}
+	
+	
+	public function MakeNiceShortRuleType($ruleType)
+	{
+		$RULETYPES = [
+				'' => '',
+				'abilitydesc' => 'Ability Desc',
+				'active' => 'Active',
+				'buff' => 'Buff',
+				'cp' => 'CP',
+				'armorenchant' => 'Enchant (Armor)',
+				'offhandenchant' => 'Enchant (Off-Hand)',
+				'offhandweaponenchant ' => 'Enchant (Off-Hand)',
+				'weaponenchant' => 'Enchant (Weapon)',
+				'mundus' => 'Mundus',
+				'passive' => 'Passive',
+				'set' => 'Set',
+		];
+		
+		$ruleType = strtolower($ruleType);
+		if (array_key_exists($ruleType, $RULETYPES)) return $RULETYPES[$ruleType];
+		
+		return ucwords($ruleType);
+	}
+	
+	
+	public function OutputShowRulesTable()
+	{
+		if (!$this->LoadFilteredRules()) return false;
+		
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
+		
+		$output->addHTML( "<a href='$baselink'>Home</a> : <a href='$baselink/addrule'>Add New Rule</a>" );
+		
+		if ($this->hasFilteredRules)
+			$output->addHTML( "<h3>Showing Matching Rules</h3>" );
+		else
+			$output->addHTML( "<h3>Showing All Rules</h3>" );
+		
+		$this->OutputShowRulesFilterForm();
+		
+		$output->addHTML( "<table class='wikitable sortable jquery-tablesorter' id='rules'><thead>" );
+		
+		$output->addHTML( "<tr>" );
+		$output->addHTML( "<th>Edit</th>" );
+		//$output->addHTML( "<th>ID</th>" );
+		$output->addHTML( "<th>Version</th>" );
+		$output->addHTML( "<th>Rule Type</th>" );
+		$output->addHTML( "<th>Name ID</th>" );
+		$output->addHTML( "<th>Display Name</th>" );
+		$output->addHTML( "<th>Match Regex</th>" );
+		$output->addHTML( "<th>Required Stat</th>" );
+		$output->addHTML( "<th>Original Id</th>" );
+		$output->addHTML( "<th>Group Name</th>" );
+		$output->addHTML( "<th>Description</th>" );
+		
+		$output->addHTML( "<th>Enabled</th>" );
+		$output->addHTML( "<th>Toggle</th>" );
+		$output->addHTML( "<th>Visible</th>" );
+		$output->addHTML( "<th>Enable Off Bar</th>" );
+		$output->addHTML( "<th>Stat Require Value</th>" );
+		$output->addHTML( "<th>Custom Data</th>" );
+		$output->addHTML( "<th>Delete</th>" );
+		$output->addHTML( "</tr></thead><tbody>" );
 		
 		foreach ( $this->rulesDatas as $rulesData ) {
 			
-			$id = $this->escapeHtml( $rulesData ['id'] );
-			$ruleType = $this->escapeHtml( $rulesData ['ruleType'] );
-			$nameId = $this->escapeHtml( $rulesData ['nameId'] );
-			$displayName = $this->escapeHtml( $rulesData ['displayName'] );
-			$matchRegex = $this->escapeHtml( $rulesData ['matchRegex'] );
-			$statRequireId = $this->escapeHtml( $rulesData ['statRequireId'] );
-			$originalId = $this->escapeHtml( $rulesData ['originalId'] );
-			$groupName = $this->escapeHtml( $rulesData ['groupName'] );
-			$description = $this->escapeHtml( $rulesData ['description'] );
-			$version = $this->escapeHtml( $rulesData ['version'] );
-			$isEnabled = $this->escapeHtml( $rulesData ['isEnabled'] );
-			$toggle = $this->escapeHtml( $rulesData ['isToggle'] );
-			$isVisible = $this->escapeHtml( $rulesData ['isVisible'] );
-			$enableOffBar = $this->escapeHtml( $rulesData ['enableOffBar'] );
-			$statRequireValue = $this->escapeHtml( $rulesData ['statRequireValue'] );
+			$id = $this->escapeHtml( $rulesData['id'] );
+			$ruleType = $this->escapeHtml( $this->MakeNiceShortRuleType($rulesData['ruleType']) );
+			$nameId = $this->escapeHtml( $rulesData['nameId'] );
+			$displayName = $this->escapeHtml( $rulesData['displayName'] );
+			$matchRegex = $this->escapeHtml( $rulesData['matchRegex'] );
+			$statRequireId = $this->escapeHtml( $rulesData['statRequireId'] );
+			$originalId = $this->escapeHtml( $rulesData['originalId'] );
+			$groupName = $this->escapeHtml( $rulesData['groupName'] );
+			$description = $this->escapeHtml( $rulesData['description'] );
+			$version = $this->escapeHtml( $rulesData['version'] );
+			$isEnabled = $this->escapeHtml( $rulesData['isEnabled'] );
+			$toggle = $this->escapeHtml( $rulesData['isToggle'] );
+			$isVisible = $this->escapeHtml( $rulesData['isVisible'] );
+			$enableOffBar = $this->escapeHtml( $rulesData['enableOffBar'] );
+			$statRequireValue = $this->escapeHtml( $rulesData['statRequireValue'] );
 			
 			$isEnabledDisplay = $this->GetBooleanDispaly ( $isEnabled );
 			$toggleDisplay = $this->GetBooleanDispaly ( $toggle );
 			$isVisibleDisplay = $this->GetBooleanDispaly ( $isVisible );
 			$enableOffBarDisplay = $this->GetBooleanDispaly ( $enableOffBar );
 			
-			if ($rulesData ['customData'] == '') {
+			if ($rulesData['customData'] == '')
+			{
 				$data = [ ];
 			} else {
-				$data = json_decode ( $rulesData['customData'], true );
+				$data = json_decode( $rulesData['customData'], true );
 				if ($data == null) $data = []; // TODO: Error handling?
 				if (!is_array($data)) $data = ['Error: Not Array!', $rulesData['customData']];
+				
+				foreach ($data as $i => $d)
+				{
+					if (is_string($d)) $data[$i] = trim($d);
+				}
+				
+				array_filter($data, 'strlen');
 			}
 			
-			$rulesData ['customData'] = $data;
+			$rulesData['customData'] = $data;
 			
-			$output->addHTML ( "<tr>" );
-			$output->addHTML ( "<td><a href='$baselink/editrule?ruleid=$id'>Edit</a></td>" );
-			$output->addHTML ( "<td>$id</td>" );
-			$output->addHTML ( "<td>$ruleType</td>" );
-			$output->addHTML ( "<td>$nameId</td>" );
-			$output->addHTML ( "<td>$displayName</td>" );
-			$output->addHTML ( "<td>$matchRegex</td>" );
-			$output->addHTML ( "<td>$statRequireId</td>" );
-			$output->addHTML ( "<td>$originalId</td>" );
-			$output->addHTML ( "<td>$groupName</td>" );
-			$output->addHTML ( "<td>$description</td>" );
-			$output->addHTML ( "<td>$version</td>" );
-			$output->addHTML ( "<td>$isEnabledDisplay</td>" );
-			$output->addHTML ( "<td>$toggleDisplay</td>" );
-			$output->addHTML ( "<td>$isVisibleDisplay</td>" );
-			$output->addHTML ( "<td>$enableOffBarDisplay</td>" );
-			$output->addHTML ( "<td>$statRequireValue</td>" );
+			$output->addHTML( "<tr>" );
+			$output->addHTML( "<td><a href='$baselink/editrule?ruleid=$id'>Edit</a></td>" );
+			//$output->addHTML( "<td>$id</td>" );
+			$output->addHTML( "<td>$version</td>" );
+			$output->addHTML( "<td>$ruleType</td>" );
+			$output->addHTML( "<td>$nameId</td>" );
+			$output->addHTML( "<td>$displayName</td>" );
+			$output->addHTML( "<td>$matchRegex</td>" );
+			$output->addHTML( "<td>$statRequireId</td>" );
+			$output->addHTML( "<td>$originalId</td>" );
+			$output->addHTML( "<td>$groupName</td>" );
+			$output->addHTML( "<td>$description</td>" );
+			$output->addHTML( "<td>$isEnabledDisplay</td>" );
+			$output->addHTML( "<td>$toggleDisplay</td>" );
+			$output->addHTML( "<td>$isVisibleDisplay</td>" );
+			$output->addHTML( "<td>$enableOffBarDisplay</td>" );
+			$output->addHTML( "<td>$statRequireValue</td>" );
 			
-			$output->addHTML ( "<td>" );
+			$output->addHTML( "<td>" );
 			
-			foreach ( $rulesData ['customData'] as $key => $val ) {
-				$output->addHTML ( "$key = $val<br>" );
+			foreach ( $rulesData['customData'] as $key => $val )
+			{
+				if ($val === true) $val = "true";
+				if ($val === false) $val = "false";
+				$output->addHTML( "$key = $val<br>" );
 			}
 			
-			$output->addHTML ( "</td>" );
+			$output->addHTML( "</td>" );
 			
-			$output->addHTML ( "<td><a href='$baselink/deleterule?ruleid=$id'>Delete</a></td>" );
-			$output->addHTML ( "</tr>" );
+			$output->addHTML( "<td><a href='$baselink/deleterule?ruleid=$id'>Delete</a></td>" );
+			$output->addHTML( "</tr>" );
 		}
 		
-		$output->addHTML ( "</table>" );
+		$output->addHTML( "</table>" );
 	}
 	
 	
-	public function OutputDeleteRule() {
-		$permission = $this->canUserEdit ();
-		
-		if ($permission === False) {
-			return $this->reportError ( "Error: you have no permission to delete rules" );
-		}
+	public function OutputDeleteRule()
+	{
+		$permission = $this->canUserEdit();
+		if ($permission === false) return $this->reportError( "Error: you have no permission to delete rules" );
 		
 		$output = $this->getOutput ();
 		$baselink = $this->GetBaseLink ();
 		
 		$id = $this->GetRuleId();
+		if ($id <= 0) return $this->reportError( "Error: invalid rule ID" );
+		
+		if (!$this->LoadRule( $id )) return $this->reportError( "Error: cannot load Rule" );
+		
 		$id = $this->escapeHtml( $id );
+		$ruleType = $this->escapeHtml( $this->rule['ruleType'] );
+		$nameId = $this->escapeHtml( $this->rule['nameId'] );
+		$displayName = $this->escapeHtml( $this->rule['displayName'] );
+		$matchRegex = $this->escapeHtml( $this->rule['matchRegex'] );
+		$displayRegex = $this->escapeHtml( $this->rule['displayRegex'] );
+		$statRequireId = $this->escapeHtml( $this->rule['statRequireId'] );
+		$factorStatId = $this->escapeHtml( $this->rule['factorStatId'] );
+		$originalId = $this->escapeHtml( $this->rule['originalId'] );
+		$version = $this->escapeHtml( $this->rule['version'] );
+		$icon = $this->escapeHtml( $this->rule['icon'] );
+		$groupName = $this->escapeHtml( $this->rule['groupName'] );
+		$maxTimes = $this->escapeHtml( $this->rule['maxTimes'] );
+		$comment = $this->escapeHtml( $this->rule['comment'] );
+		$description = $this->escapeHtml( $this->rule['description'] );
+		$isEnabled = $this->escapeHtml( $this->rule['isEnabled'] );
+		$isVisible = $this->escapeHtml( $this->rule['isVisible'] );
+		$enableOffBar = $this->escapeHtml( $this->rule['enableOffBar'] );
+		$isToggle = $this->escapeHtml( $this->rule['isToggle'] );
+		$statRequireValue = $this->escapeHtml( $this->rule['statRequireValue'] );
 		
-		if ($id <= 0) {
-			return $this->reportError ( "Error: invalid rule ID" );
-		}
-		
-		$this->LoadRule ( $id );
-		
-		if ($this->LoadRule ( $id ) == False) {
-			return $this->reportError ( "Error: cannot load Rule" );
-		}
-		
-		$ruleType = $this->escapeHtml( $this->rule ['ruleType'] );
-		$nameId = $this->escapeHtml( $this->rule ['nameId'] );
-		$displayName = $this->escapeHtml( $this->rule ['displayName'] );
-		$matchRegex = $this->escapeHtml( $this->rule ['matchRegex'] );
-		$displayRegex = $this->escapeHtml( $this->rule ['displayRegex'] );
-		$statRequireId = $this->escapeHtml( $this->rule ['statRequireId'] );
-		$factorStatId = $this->escapeHtml( $this->rule ['factorStatId'] );
-		$originalId = $this->escapeHtml( $this->rule ['originalId'] );
-		$version = $this->escapeHtml( $this->rule ['version'] );
-		$icon = $this->escapeHtml( $this->rule ['icon'] );
-		$groupName = $this->escapeHtml( $this->rule ['groupName'] );
-		$maxTimes = $this->escapeHtml( $this->rule ['maxTimes'] );
-		$comment = $this->escapeHtml( $this->rule ['comment'] );
-		$description = $this->escapeHtml( $this->rule ['description'] );
-		$isEnabled = $this->escapeHtml( $this->rule ['isEnabled'] );
-		$isVisible = $this->escapeHtml( $this->rule ['isVisible'] );
-		$enableOffBar = $this->escapeHtml( $this->rule ['enableOffBar'] );
-		$isToggle = $this->escapeHtml( $this->rule ['isToggle'] );
-		$statRequireValue = $this->escapeHtml( $this->rule ['statRequireValue'] );
-		
-		if ($this->rule ['customData'] == '') {
+		if ($this->rule['customData'] == '')
+		{
 			$data = [ ];
-		} else {
+		} else
+		{
 			$data = json_decode ( $this->rule['customData'], true );
 			if ($data == null) $data = [];	//TODO: Error handling?
 			if (!is_array($data)) $data = ['Error: Not Array!', $this->rule['customData']];
+			
+			foreach ($data as $i => $d)
+			{
+				$data[$i] = trim($d);
+			}
+			
+			array_filter($data, 'strlen');
 		}
 		
-		$this->rule ['customData'] = $data;
+		$this->rule['customData'] = $data;
 		
-		$output->addHTML ( "<h3>Are you sure you want to delete this rule: </h3>" );
-		$output->addHTML ( "<label><b>id:</b> $id </label><br>" );
-		$output->addHTML ( "<label><b>Rule Type:</b> $ruleType </label><br>" );
-		$output->addHTML ( "<label><b>Name Id:</b> $nameId </label><br>" );
-		$output->addHTML ( "<label><b>Display Name:</b> $displayName </label><br>" );
-		$output->addHTML ( "<label><b>Match Regex:</b> $matchRegex </label><br>" );
-		$output->addHTML ( "<label><b>Stat Require Id:</b> $statRequireId </label><br>" );
-		$output->addHTML ( "<label><b>Factor Stat Id:</b> $factorStatId </label><br>" );
-		$output->addHTML ( "<label><b>Original Id:</b> $originalId </label><br>" );
-		$output->addHTML ( "<label><b>Version:</b> $version </label><br>" );
-		$output->addHTML ( "<label><b>Icon:</b> $icon </label><br>" );
-		$output->addHTML ( "<label><b>Group Name:</b> $groupName </label><br>" );
-		$output->addHTML ( "<label><b>Max Times:</b> $maxTimes </label><br>" );
-		$output->addHTML ( "<label><b>Comment:</b> $comment </label><br>" );
-		$output->addHTML ( "<label><b>Description:</b> $description </label><br>" );
-		$output->addHTML ( "<label><b>Enabled:</b> $isEnabled </label><br>" );
-		$output->addHTML ( "<label><b>Visible:</b> $isVisible </label><br>" );
-		$output->addHTML ( "<label><b>Enable Off Bar:</b> $enableOffBar </label><br>" );
-		$output->addHTML ( "<label><b>Stat Require Value:</b> $statRequireValue </label><br>" );
-		$output->addHTML ( "<label><b>Toggle:</b> $isToggle </label><br>" );
+		$output->addHTML( "<h3>Are you sure you want to delete this rule: </h3>" );
+		$output->addHTML( "<label><b>id:</b> $id</label><br>" );
+		$output->addHTML( "<label><b>Rule Type:</b> $ruleType</label><br>" );
+		$output->addHTML( "<label><b>Name Id:</b> $nameId</label><br>" );
+		$output->addHTML( "<label><b>Display Name:</b> $displayName</label><br>" );
+		$output->addHTML( "<label><b>Match Regex:</b> $matchRegex</label><br>" );
+		$output->addHTML( "<label><b>Stat Require Id:</b> $statRequireId</label><br>" );
+		$output->addHTML( "<label><b>Stat Require Value:</b> $statRequireValue</label><br>" );
+		$output->addHTML( "<label><b>Factor Stat Id:</b> $factorStatId</label><br>" );
+		$output->addHTML( "<label><b>Original Id:</b> $originalId</label><br>" );
+		$output->addHTML( "<label><b>Version:</b> $version</label><br>" );
+		$output->addHTML( "<label><b>Icon:</b> $icon</label><br>" );
+		$output->addHTML( "<label><b>Group Name:</b> $groupName</label><br>" );
+		$output->addHTML( "<label><b>Max Times:</b> $maxTimes</label><br>" );
+		$output->addHTML( "<label><b>Comment:</b> $comment</label><br>" );
+		$output->addHTML( "<label><b>Description:</b> $description</label><br>" );
+		$output->addHTML( "<label><b>Enabled:</b> $isEnabled</label><br>" );
+		$output->addHTML( "<label><b>Visible:</b> $isVisible</label><br>" );
+		$output->addHTML( "<label><b>Enable Off Bar:</b> $enableOffBar</label><br>" );
+		$output->addHTML( "<label><b>Toggle:</b> $isToggle</label><br>" );
 		
-		$output->addHTML ( "<b>custom Data:</b><br>" );
+		$output->addHTML( "<b>custom Data:</b><br/>" );
 		
-		foreach ( $this->rule ['customData'] as $key => $val ) {
-			$output->addHTML ( "<li class='costumeDataLi'>$key = $val</li>" );
+		foreach ( $this->rule['customData'] as $key => $val ) {
+			$output->addHTML( "<li class='customData'>$key = $val</li>" );
 		}
 		
-		$output->addHTML ( "<br><a href='$baselink/ruledeleteconfirm?ruleid=$id&confirm=True'>Delete </a>" );
-		$output->addHTML ( "<a href='$baselink/ruledeleteconfirm?ruleid=$id&confirm=False'> Cancel</a>" );
+		$output->addHTML( "<br><a href='$baselink/ruledeleteconfirm?ruleid=$id&confirm=True'>Delete </a>" );
+		$output->addHTML( "<a href='$baselink/ruledeleteconfirm?ruleid=$id&confirm=false'> Cancel</a>" );
 	}
 	
 	
-	public function ConfirmDeleteRule() {
-		$permission = $this->canUserEdit ();
-		
-		if ($permission === False) {
-			return $this->reportError ( "Error: you have no permission to delete rules" );
-		}
+	public function ConfirmDeleteRule()
+	{
+		$permission = $this->canUserEdit();
+		if ($permission === false)return $this->reportError( "Error: you have no permission to delete rules" );
 		
 		$output = $this->getOutput ();
 		$baselink = $this->GetBaseLink ();
 		$req = $this->getRequest ();
 		
-		$confirm = $req->getVal ( 'confirm' );
+		$confirm = $req->getVal( 'confirm' );
+		
 		$id = $this->GetRuleId();
+		if ($id <= 0) return $this->reportError( "Error: invalid rule ID" );
 		
-		$id = $this->db->real_escape_string( $id );
-		
-		if ($id <= 0) {
-			return $this->reportError ( "Error: invalid rule ID" );
+		if ($confirm !== 'True')
+		{
+			$output->addHTML( "<p>Delete cancelled</p><br>" );
+			$output->addHTML( "<a href='$baselink'>Home</a>" );
 		}
-		
-		if ($confirm !== 'True') {
-			$output->addHTML ( "<p>Delete cancelled</p><br>" );
-			$output->addHTML ( "<a href='$baselink'>Home</a>" );
-		} else {
-			if (! $this->LoadRule ( $id ))
-				return $this->reportError ( "Error: cannot load Rule" );
+		else 
+		{
+			if (!$this->LoadRule( $id )) return $this->reportError( "Error: Failed to load rule #$id!" );
 			
-			$ruleType = $this->rule ['ruleType'];
-			$nameId = $this->rule ['nameId'];
-			$displayName = $this->rule ['displayName'];
-			$matchRegex = $this->rule ['matchRegex'];
-			$displayRegex = $this->rule ['displayRegex'];
-			$statRequireId = $this->rule ['statRequireId'];
-			$factorStatId = $this->rule ['factorStatId'];
-			$originalId = $this->rule ['originalId'];
-			$version = $this->rule ['version'];
-			$icon = $this->rule ['icon'];
-			$groupName = $this->rule ['groupName'];
-			$maxTimes = $this->rule ['maxTimes'];
-			$comment = $this->rule ['comment'];
-			$description = $this->rule ['description'];
-			$isEnabled = $this->rule ['isEnabled'];
-			$isVisible = $this->rule ['isVisible'];
-			$enableOffBar = $this->rule ['enableOffBar'];
-			$isToggle = $this->rule ['isToggle'];
-			$statRequireValue = $this->rule ['statRequireValue'];
-			$customData = $this->rule ['customData'];
+			$ruleType = $this->rule['ruleType'];
+			$nameId = $this->rule['nameId'];
+			$displayName = $this->rule['displayName'];
+			$matchRegex = $this->rule['matchRegex'];
+			$displayRegex = $this->rule['displayRegex'];
+			$statRequireId = $this->rule['statRequireId'];
+			$factorStatId = $this->rule['factorStatId'];
+			$originalId = $this->rule['originalId'];
+			$version = $this->rule['version'];
+			$icon = $this->rule['icon'];
+			$groupName = $this->rule['groupName'];
+			$maxTimes = $this->rule['maxTimes'];
+			$comment = $this->rule['comment'];
+			$description = $this->rule['description'];
+			$isEnabled = $this->rule['isEnabled'];
+			$isVisible = $this->rule['isVisible'];
+			$enableOffBar = $this->rule['enableOffBar'];
+			$isToggle = $this->rule['isToggle'];
+			$statRequireValue = $this->rule['statRequireValue'];
+			$customData = $this->rule['customData'];
 			
 			$cols = [ ];
 			$values = [ ];
 			
-			$cols [] = 'id';
-			$cols [] = 'ruleType';
-			$cols [] = 'nameId';
-			$cols [] = 'displayName';
-			$cols [] = 'matchRegex';
-			$cols [] = 'statRequireId';
-			$cols [] = 'factorStatId';
-			$cols [] = 'originalId';
-			$cols [] = 'version';
-			$cols [] = 'icon';
-			$cols [] = 'groupName';
-			$cols [] = 'maxTimes';
-			$cols [] = 'comment';
-			$cols [] = 'description';
-			$cols [] = 'isEnabled';
-			$cols [] = 'isVisible';
-			$cols [] = 'enableOffBar';
-			$cols [] = 'isToggle';
-			$cols [] = 'statRequireValue';
-			$cols [] = 'customData';
+			$cols[] = 'id';
+			$cols[] = 'ruleType';
+			$cols[] = 'nameId';
+			$cols[] = 'displayName';
+			$cols[] = 'matchRegex';
+			$cols[] = 'statRequireId';
+			$cols[] = 'factorStatId';
+			$cols[] = 'originalId';
+			$cols[] = 'version';
+			$cols[] = 'icon';
+			$cols[] = 'groupName';
+			$cols[] = 'maxTimes';
+			$cols[] = 'comment';
+			$cols[] = 'description';
+			$cols[] = 'isEnabled';
+			$cols[] = 'isVisible';
+			$cols[] = 'enableOffBar';
+			$cols[] = 'isToggle';
+			$cols[] = 'statRequireValue';
+			$cols[] = 'customData';
 			
-			$values [] = "'" . $this->db->real_escape_string( $id ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $ruleType ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $displayName ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $displayName ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $matchRegex ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $statRequireId ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $factorStatId ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $originalId ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $version ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $icon ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $groupName ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $maxTimes ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $comment ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $description ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $isEnabled ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $isVisible ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $enableOffBar ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $isToggle ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $statRequireValue ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $customData ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $id ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $ruleType ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $displayName ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $displayName ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $matchRegex ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $statRequireId ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $factorStatId ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $originalId ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $version ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $icon ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $groupName ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $maxTimes ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $comment ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $description ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $isEnabled ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $isVisible ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $enableOffBar ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $isToggle ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $statRequireValue ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $customData ) . "'";
 			
 			$insertResult = $this->InsertQueries ( 'rulesArchive', $cols, $values );
 			if (!$insertResult) return $this->reportError("Error: Failed to insert record into rulesArchive!");
@@ -731,10 +1150,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 			$deleteResult = $this->DeleteQueries ( 'rules', 'id', $id );
 			if (!$deleteResult) return $this->reportError("Error: Failed to delete record from rules!");
 			
-			$this->loadEffects ();
+			if (!$this->LoadEffects($id)) return $this->reportError("Error: Failed to load effects for rule #$id!");
 			
 			foreach ( $this->effectsDatas as $effectsData ) {
-				$effectId = $effectsData ['effectId'];
+				$effectId = $effectsData['id'];
 				$version = $effectsData ['version'];
 				$statId = $effectsData ['statId'];
 				$value = $effectsData ['value'];
@@ -745,35 +1164,38 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 				$factorValue = $effectsData ['factorValue'];
 				$statDesc = $effectsData ['statDesc'];
 				$buffId = $effectsData ['buffId'];
+				$regexVar = $effectsData ['regexVar'];
 				
 				$cols = [ ];
 				$values = [ ];
 				
-				$cols [] = 'effectId';
-				$cols [] = 'ruleId';
-				$cols [] = 'version';
-				$cols [] = 'statId';
-				$cols [] = 'value';
-				$cols [] = 'display';
-				$cols [] = 'category';
-				$cols [] = 'combineAs';
-				$cols [] = 'roundNum';
-				$cols [] = 'factorValue';
-				$cols [] = 'statDesc';
-				$cols [] = 'buffId';
+				$cols[] = 'id';
+				$cols[] = 'ruleId';
+				$cols[] = 'version';
+				$cols[] = 'statId';
+				$cols[] = 'value';
+				$cols[] = 'display';
+				$cols[] = 'category';
+				$cols[] = 'combineAs';
+				$cols[] = 'roundNum';
+				$cols[] = 'factorValue';
+				$cols[] = 'statDesc';
+				$cols[] = 'buffId';
+				$cols[] = 'regexVar';
 				
-				$values [] = "'" . $this->db->real_escape_string( $effectId ) . "'";
-				$values [] = "'" . $this->db->real_escape_string( $id ) . "'";
-				$values [] = "'" . $this->db->real_escape_string( $version ) . "'";
-				$values [] = "'" . $this->db->real_escape_string( $statId ) . "'";
-				$values [] = "'" . $this->db->real_escape_string( $value ) . "'";
-				$values [] = "'" . $this->db->real_escape_string( $display ) . "'";
-				$values [] = "'" . $this->db->real_escape_string( $category ) . "'";
-				$values [] = "'" . $this->db->real_escape_string( $combineAs ) . "'";
-				$values [] = "'" . $this->db->real_escape_string( $roundNum ) . "'";
-				$values [] = "'" . $this->db->real_escape_string( $factorValue ) . "'";
-				$values [] = "'" . $this->db->real_escape_string( $statDesc ) . "'";
-				$values [] = "'" . $this->db->real_escape_string( $buffId ) . "'";
+				$values[] = "'" . $this->db->real_escape_string( $effectId ) . "'";
+				$values[] = "'" . $this->db->real_escape_string( $id ) . "'";
+				$values[] = "'" . $this->db->real_escape_string( $version ) . "'";
+				$values[] = "'" . $this->db->real_escape_string( $statId ) . "'";
+				$values[] = "'" . $this->db->real_escape_string( $value ) . "'";
+				$values[] = "'" . $this->db->real_escape_string( $display ) . "'";
+				$values[] = "'" . $this->db->real_escape_string( $category ) . "'";
+				$values[] = "'" . $this->db->real_escape_string( $combineAs ) . "'";
+				$values[] = "'" . $this->db->real_escape_string( $roundNum ) . "'";
+				$values[] = "'" . $this->db->real_escape_string( $factorValue ) . "'";
+				$values[] = "'" . $this->db->real_escape_string( $statDesc ) . "'";
+				$values[] = "'" . $this->db->real_escape_string( $buffId ) . "'";
+				$values[] = "'" . $this->db->real_escape_string( $regexVar ) . "'";
 				
 				$insertResult = $this->InsertQueries ( 'effectsArchive', $cols, $values );
 				if (!$insertResult) return $this->reportError("Error: Failed to insert record into effectsArchive!");
@@ -782,24 +1204,25 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 			$deleteResult = $this->DeleteQueries ( 'effects', 'ruleId', $id );
 			if (!$deleteResult) return $this->reportError("Error: Failed to delete record from effects!");
 			
-			$output->addHTML ( "<p>Rule deleted</p><br>" );
-			$output->addHTML ( "<a href='$baselink'>Home</a>" );
+			$output->addHTML( "<p>Rule deleted</p><br>" );
+			$output->addHTML( "<a href='$baselink'>Home</a>" );
 		}
 	}
 	
 	
-	public function LoadRule($primaryKey) {
+	public function LoadRule($primaryKey)
+	{
 		$primaryKey = $this->db->real_escape_string( $primaryKey );
-		$query = "SELECT * FROM rules WHERE id= '$primaryKey';";
-		$result = $this->db->query ( $query );
+		$query = "SELECT * FROM rules WHERE id='$primaryKey';";
+		$result = $this->db->query( $query );
 		
 		if ($result === false) {
-			return $this->reportError ( "Error: failed to load rule from database" );
+			return $this->reportError( "Error: failed to load rule from database" );
 		}
 		
 		$row = [ ];
-		$row [] = $result->fetch_assoc ();
-		$this->rule = $row [0];
+		$row[] = $result->fetch_assoc ();
+		$this->rule = $row[0];
 		
 		return true;
 	}
@@ -807,104 +1230,118 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	
 	public function OutputEditRuleForm()
 	{
-		$permission = $this->canUserEdit ();
+		$permission = $this->canUserEdit();
+		if ($permission === false) return $this->reportError( "Error: you have no permission to edit rules" );
 		
-		if ($permission === False) {
-			return $this->reportError ( "Error: you have no permission to edit rules" );
-		}
-		
-		$output = $this->getOutput ();
-		$baselink = $this->GetBaseLink ();
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
 		
 		$id = $this->GetRuleId();
 		
-		$this->LoadRule ( $id );
+		if (!$this->LoadRule( $id )) return $this->reportError("Error: Failed to load rule #id!");
 		
-		$ruleType = $this->escapeHtml( $this->rule ['ruleType'] );
-		$nameId = $this->escapeHtml( $this->rule ['nameId'] );
-		$displayName = $this->escapeHtml( $this->rule ['displayName'] );
-		$matchRegex = $this->escapeHtml( $this->rule ['matchRegex'] );
-		$displayRegex = $this->escapeHtml( $this->rule ['displayRegex'] );
-		$statRequireId = $this->escapeHtml( $this->rule ['statRequireId'] );
-		$factorStatId = $this->escapeHtml( $this->rule ['factorStatId'] );
-		$originalId = $this->escapeHtml( $this->rule ['originalId'] );
-		$version = $this->escapeHtml( $this->rule ['version'] );
-		$icon = $this->escapeHtml( $this->rule ['icon'] );
-		$groupName = $this->escapeHtml( $this->rule ['groupName'] );
-		$maxTimes = $this->escapeHtml( $this->rule ['maxTimes'] );
-		$comment = $this->escapeHtml( $this->rule ['comment'] );
-		$description = $this->escapeHtml( $this->rule ['description'] );
-		$isEnabled = $this->escapeHtml( $this->rule ['isEnabled'] );
-		$isVisible = $this->escapeHtml( $this->rule ['isVisible'] );
-		$enableOffBar = $this->escapeHtml( $this->rule ['enableOffBar'] );
-		$toggle = $this->escapeHtml( $this->rule ['isToggle'] );
-		$statRequireValue = $this->escapeHtml( $this->rule ['statRequireValue'] );
+		$ruleType = $this->escapeHtml( $this->rule['ruleType'] );
+		$nameId = $this->escapeHtml( $this->rule['nameId'] );
+		$displayName = $this->escapeHtml( $this->rule['displayName'] );
+		$matchRegex = $this->escapeHtml( $this->rule['matchRegex'] );
+		$displayRegex = $this->escapeHtml( $this->rule['displayRegex'] );
+		$statRequireId = $this->escapeHtml( $this->rule['statRequireId'] );
+		$factorStatId = $this->escapeHtml( $this->rule['factorStatId'] );
+		$originalId = $this->escapeHtml( $this->rule['originalId'] );
+		$version = $this->escapeHtml( $this->rule['version'] );
+		$icon = $this->escapeHtml( $this->rule['icon'] );
+		$groupName = $this->escapeHtml( $this->rule['groupName'] );
+		$maxTimes = $this->escapeHtml( $this->rule['maxTimes'] );
+		$comment = $this->escapeHtml( $this->rule['comment'] );
+		$description = $this->escapeHtml( $this->rule['description'] );
+		$isEnabled = $this->escapeHtml( $this->rule['isEnabled'] );
+		$isVisible = $this->escapeHtml( $this->rule['isVisible'] );
+		$enableOffBar = $this->escapeHtml( $this->rule['enableOffBar'] );
+		$toggle = $this->escapeHtml( $this->rule['isToggle'] );
+		$statRequireValue = $this->escapeHtml( $this->rule['statRequireValue'] );
 		
-		if ($this->rule ['customData'] == '') {
+		if ($this->rule['customData'] == '')
+		{
 			$data = [ ];
-		} else {
-			$data = json_decode ( $this->rule['customData'], true );
+		} else
+		{
+			$data = json_decode( $this->rule['customData'], true );
 			if ($data == null) $data = [];	//TODO: Error handling?
 			if (!is_array($data)) $data = ['Error: Not Array!', $this->rule['customData']];
+			
+			foreach ($data as $i => $d)
+			{
+				if (is_string($d)) $data[$i] = trim($d);
+			}
+			
+			array_filter($data, 'strlen');
 		}
 		
-		$this->rule ['customData'] = $data;
+		$this->rule['customData'] = $data;
 		
-		$output->addHTML ( "<a href='$baselink/showrules'>Show Rules</a><br>" );
-		$output->addHTML ( "<h3>Editing Rule #$id</h3>" );
-		$output->addHTML ( "<form action='$baselink/saveeditruleform?ruleid=$id' method='POST'>" );
-		
-		$output->addHTML ( "<label for='ruleType'>Rule Type: </label>" );
-		$this->OutputListHtml( $ruleType, $this->RULE_TYPE_OPTIONS, 'ruleType' );
-		
-		$output->addHTML ( "<label for='edit_nameId'>Name ID </label>" );
-		$output->addHTML ( "<input type='text' id='edit_nameId' name='edit_nameId' value='$nameId' size='60'>" );
-		$output->addHTML ( "<p class='errorMsg'></p>" );
-		
-		$output->addHTML ( "<label for='edit_displayName'>Display Name </label>" );
-		$output->addHTML ( "<input type='text' id='edit_displayName' name='edit_displayName' value='$displayName' size='60'><br>" );
-		
-		$output->addHTML ( "<label for='edit_matchRegex'>Match Regex </label>" );
-		$output->addHTML ( "<input type='text' id='edit_matchRegex' name='edit_matchRegex' value='$matchRegex' size='60'>" );
-		$output->addHTML ( "<p class='errorMsg'></p>" );
-		$output->addHTML ( "<p class='warningErr'></p>" );
-		
-		$output->addHTML ( "<label for='edit_displayRegex'>Display Regex </label>" );
-		$output->addHTML ( "<input type='text' id='edit_displayRegex' name='edit_displayRegex' value='$displayRegex' size='60'>" );
-		$output->addHTML ( "<p class='errorMsg'></p>" );
-		
-		$output->addHTML ( "<label for='edit_statRequireId'>Stat Require Id </label>" );
-		$output->addHTML ( "<input type='text' id='edit_statRequireId' name='edit_statRequireId' value='$statRequireId'><br>" );
-		$output->addHTML ( "<label for='edit_factorStatId'>Factor Stat Id </label>" );
-		$output->addHTML ( "<input type='text' id='edit_factorStatId' name='edit_factorStatId' value='$factorStatId'><br>" );
-		$output->addHTML ( "<label for='edit_originalId'>Original Id </label>" );
-		$output->addHTML ( "<input type='text' id='edit_originalId' name='edit_originalId' value='$originalId'><br>" );
-		$output->addHTML ( "<label for='edit_statRequireValue'>Stat Require Value </label>" );
-		$output->addHTML ( "<input type='text' id='edit_statRequireValue' name='edit_statRequireValue' value='$statRequireValue'><br>" );
+		$output->addHTML( "<a href='$baselink/showrules'>Show Rules</a> : <a href='$baselink/deleterule?ruleid=$id'>Delete Rule</a><br/>" );
+		$output->addHTML( "<h3>Editing Rule #$id</h3>" );
+		$output->addHTML( "<form action='$baselink/saveeditruleform?ruleid=$id' method='POST'>" );
 		
 		$this->OutputVersionListHtml( 'edit_version', $version );
+		$output->addHTML( "<br/>" );
 		
-		$output->addHTML ( "<label for='edit_icon'>Icon </label>" );
-		$output->addHTML ( "<input type='text' id='edit_icon' size='60' name='edit_icon' value='$icon'><br>" );
-		$output->addHTML ( "<label for='edit_groupName'>Group Name </label>" );
-		$output->addHTML ( "<input type='text' id='edit_groupName' name='edit_groupName' value='$groupName'><br>" );
-		$output->addHTML ( "<label for='edit_maxTimes'>Maximum Times </label>" );
-		$output->addHTML ( "<input type='text' id='edit_maxTimes' name='edit_maxTimes' value='$maxTimes'><br>" );
-		$output->addHTML ( "<label for='edit_comment'>Comment </label>" );
-		$output->addHTML ( "<input type='text' id='edit_comment' name='edit_comment' value='$comment' size='60'><br>" );
+		$output->addHTML( "<label for='ruleType'>Rule Type</label>" );
+		$this->OutputListHtml( $ruleType, $this->RULE_TYPE_OPTIONS, 'ruleType' );
+		$output->addHTML( "<br/>" );
 		
-		$output->addHTML ( "<label for='edit_description'>Description </label>" );
-		$output->addHTML ( "<textarea id='edit_description' name='edit_description' class='txtArea' rows='4' cols='50'>$description</textarea><br>" );
+		$output->addHTML( "<label for='edit_nameId'>Name ID</label>" );
+		$output->addHTML( "<input type='text' id='edit_nameId' name='edit_nameId' value='$nameId' size='60'>" );
+		$output->addHTML( "<p class='errorMsg'></p>" );
 		
-		$output->addHTML ( "<label for='edit_customData'>Custom Data </label><br />" );
-		foreach ( $this->rule ['customData'] as $key => $val ) {
-			$output->addHTML ( "<input type='text' id='edit_customName' name='edit_customName[]' class='custCol' value='$key'>   </input>" );
-			$output->addHTML ( "<input type='text' id='edit_customValue' name='edit_customValue[]' value='$val'></input><br>" );
+		$output->addHTML( "<label for='edit_displayName'>Display Name</label>" );
+		$output->addHTML( "<input type='text' id='edit_displayName' name='edit_displayName' value='$displayName' size='60'><br>" );
+		
+		$output->addHTML( "<label for='edit_matchRegex'>Match Regex</label>" );
+		$output->addHTML( "<input type='text' id='edit_matchRegex' name='edit_matchRegex' value='$matchRegex' size='60'>" );
+		$output->addHTML( "<p class='errorMsg'></p>" );
+		$output->addHTML( "<p class='warningErr'></p>" );
+		
+		$output->addHTML( "<label for='edit_displayRegex'>Display Regex</label>" );
+		$output->addHTML( "<input type='text' id='edit_displayRegex' name='edit_displayRegex' value='$displayRegex' size='60'>" );
+		$output->addHTML( "<p class='errorMsg'></p>" );
+		
+		$output->addHTML( "<label for='edit_statRequireId'>Stat Require Id</label>" );
+		$output->addHTML( "<input type='text' id='edit_statRequireId' name='edit_statRequireId' value='$statRequireId'><br>" );
+		$output->addHTML( "<label for='edit_statRequireValue'>Stat Require Value</label>" );
+		$output->addHTML( "<input type='text' id='edit_statRequireValue' name='edit_statRequireValue' value='$statRequireValue'><br>" );
+		$output->addHTML( "<label for='edit_factorStatId'>Factor Stat Id</label>" );
+		$output->addHTML( "<input type='text' id='edit_factorStatId' name='edit_factorStatId' value='$factorStatId'><br>" );
+		$output->addHTML( "<label for='edit_originalId'>Original Id</label>" );
+		$output->addHTML( "<input type='text' id='edit_originalId' name='edit_originalId' value='$originalId'><br>" );
+		
+		$output->addHTML( "<label for='edit_icon'>Icon</label>" );
+		$output->addHTML( "<input type='text' id='edit_icon' size='60' name='edit_icon' value='$icon'><br>" );
+		$output->addHTML( "<label for='edit_groupName'>Group Name</label>" );
+		$output->addHTML( "<input type='text' id='edit_groupName' name='edit_groupName' value='$groupName'><br>" );
+		$output->addHTML( "<label for='edit_maxTimes'>Maximum Times</label>" );
+		$output->addHTML( "<input type='text' id='edit_maxTimes' name='edit_maxTimes' value='$maxTimes'><br>" );
+		$output->addHTML( "<label for='edit_comment'>Comment</label>" );
+		$output->addHTML( "<input type='text' id='edit_comment' name='edit_comment' value='$comment' size='60'><br>" );
+		
+		$output->addHTML( "<label for='edit_description'>Description</label>" );
+		$output->addHTML( "<textarea id='edit_description' name='edit_description' class='txtArea' rows='4' cols='50'>$description</textarea><br>" );
+		
+		$output->addHTML( "<label for='edit_customData'>Custom Data</label>" );
+		$output->addHTML( "<input type='text' class='custReadOnly' value='name' readonly></input> " );
+		$output->addHTML( "<input type='text' class='custReadOnly' value='value' readonly></input><br/>" );
+		
+		foreach ( $this->rule['customData'] as $key => $val )
+		{
+			if ($val === true) $val = "true";
+			if ($val === false) $val = "false";
+			$output->addHTML( "<input type='text' id='edit_customName' name='edit_customName[]' class='custCol' value='$key'>   </input>" );
+			$output->addHTML( "<input type='text' id='edit_customValue' name='edit_customValue[]' value='$val'></input><br>" );
 		}
-		$output->addHTML ( "<input type='text' id='edit_customName' name='edit_customName[]' class='custCol'>   </input>" );
-		$output->addHTML ( "<input type='text' id='edit_customValue' name='edit_customValue[]'></input><br>" );
-		$output->addHTML ( "<input type='text' id='edit_customName' name='edit_customName[]' class='custCol'>   </input>" );
-		$output->addHTML ( "<input type='text' id='edit_customValue' name='edit_customValue[]'></input><br>" );
+		$output->addHTML( "<input type='text' id='edit_customName' name='edit_customName[]' class='custCol'>   </input>" );
+		$output->addHTML( "<input type='text' id='edit_customValue' name='edit_customValue[]'></input><br>" );
+		$output->addHTML( "<input type='text' id='edit_customName' name='edit_customName[]' class='custCol'>   </input>" );
+		$output->addHTML( "<input type='text' id='edit_customValue' name='edit_customValue[]'></input><br>" );
 		
 		$isEnabledBoxCheck = $this->GetCheckboxState ( $isEnabled );
 		$isVisibleBoxCheck = $this->GetCheckboxState ( $isVisible );
@@ -912,96 +1349,100 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$isEnabledBoxCheck = $this->GetCheckboxState ( $isEnabled );
 		$toggleBoxCheck = $this->GetCheckboxState ( $toggle );
 		
-		$output->addHTML ( "<br><label for='edit_isEnabled'>Enabled</label>" );
-		$output->addHTML ( "<input $isEnabledBoxCheck type='checkbox' id='edit_isEnabled' name='edit_isEnabled' value='1'><br> " );
-		$output->addHTML ( "<label for='edit_isVisible'>Visible</label>" );
-		$output->addHTML ( "<input $isVisibleBoxCheck type='checkbox' id='edit_isVisible' name='edit_isVisible' value='1'><br>" );
-		$output->addHTML ( "<label for='edit_enableOffBar'>Enable Off Bar</label>" );
-		$output->addHTML ( "<input $enableOffBarBoxCheck type='checkbox' id='edit_enableOffBar' name='edit_enableOffBar' value='1'><br>" );
-		$output->addHTML ( "<label for='edit_toggle'>Toggle</label>" );
-		$output->addHTML ( "<input $toggleBoxCheck type='checkbox' id='edit_toggle' name='edit_toggle' value='1'><br>" );
+		$output->addHTML( "<br><label for='edit_isEnabled'>Enabled</label>" );
+		$output->addHTML( "<input $isEnabledBoxCheck type='checkbox' id='edit_isEnabled' name='edit_isEnabled' value='1'><br> " );
+		$output->addHTML( "<label for='edit_isVisible'>Visible</label>" );
+		$output->addHTML( "<input $isVisibleBoxCheck type='checkbox' id='edit_isVisible' name='edit_isVisible' value='1'><br>" );
+		$output->addHTML( "<label for='edit_enableOffBar'>Enable Off Bar</label>" );
+		$output->addHTML( "<input $enableOffBarBoxCheck type='checkbox' id='edit_enableOffBar' name='edit_enableOffBar' value='1'><br>" );
+		$output->addHTML( "<label for='edit_toggle'>Toggle</label>" );
+		$output->addHTML( "<input $toggleBoxCheck type='checkbox' id='edit_toggle' name='edit_toggle' value='1'><br>" );
 		
-		$output->addHTML ( "<br><input type='submit' value='Save Edits' class='submit_btn'>" );
-		$output->addHTML ( "</form><br>" );
+		$output->addHTML( "<br><input type='submit' value='Save Edits' class='submit_btn'>" );
+		$output->addHTML( "</form><br>" );
 		
 		$this->OutputShowEffectsTable ();
 	}
 	
 	
-	public function OutputAddRuleForm() {
-		$permission = $this->canUserEdit ();
+	public function OutputAddRuleForm()
+	{
+		$permission = $this->canUserEdit();
+		if ($permission === false) return $this->reportError( "Error: you have no permission to add rules" );
 		
-		if ($permission === False) {
-			return $this->reportError ( "Error: you have no permission to add rules" );
-		}
-		$output = $this->getOutput ();
+		$output = $this->getOutput();
 		
-		$baselink = $this->GetBaseLink ();
+		$baselink = $this->GetBaseLink();
 		
-		$output->addHTML ( "<h3>Adding New Rule</h3>" );
-		$output->addHTML ( "<form action='$baselink/saverule' method='POST'>" );
-		
-		$output->addHTML ( "<label for='ruleType'>Rule Type: </label>" );
-		$this->OutputListHtml( $ruleType, $this->RULE_TYPE_OPTIONS, 'ruleType' );
-		
-		$output->addHTML ( "<label for='nameId'>Name Id </label>" );
-		$output->addHTML ( "<input type='text' id='nameId' name='nameId' size='60'>" );
-		$output->addHTML ( "<p class='errorMsg'></p>" );
-		
-		$output->addHTML ( "<label for='displayName'>Display Name </label>" );
-		$output->addHTML ( "<input type='text' id='displayName' name='displayname' size='60'><br>" );
-		
-		$output->addHTML ( "<label for='matchRegex'>Match Regex </label>" );
-		$output->addHTML ( "<input type='text' id='matchRegex' name='matchRegex' size='60'>" );
-		$output->addHTML ( "<p class='errorMsg'></p>" );
-		$output->addHTML ( "<p class='warningErr'></p>" );
-		
-		$output->addHTML ( "<label for='displayRegex'>Display Regex </label>" );
-		$output->addHTML ( "<input type='text' id='displayRegex' name='displayRegex' size='60'>" );
-		$output->addHTML ( "<p class='errorMsg'></p>" );
-		
-		$output->addHTML ( "<label for='statRequireId'>Stat Require Id </label>" );
-		$output->addHTML ( "<input type='text' id='statRequireId' name='statRequireId'><br>" );
-		$output->addHTML ( "<label for='factorStatId'>Factor Stat Id </label>" );
-		$output->addHTML ( "<input type='text' id='factorStatId' name='factorStatId'><br>" );
-		$output->addHTML ( "<label for='originalId'>Original Id </label>" );
-		$output->addHTML ( "<input type='text' id='originalId' name='originalId'><br>" );
-		$output->addHTML ( "<label for='statRequireValue'>Stat Require Value </label>" );
-		$output->addHTML ( "<input type='text' id='statRequireValue' name='statRequireValue'><br>" );
+		$output->addHTML( "<h3>Adding New Rule</h3>" );
+		$output->addHTML( "<form action='$baselink/saverule' method='POST'>" );
 		
 		$this->OutputVersionListHtml( 'version', '1' );
+		$output->addHTML( "<br/>" );
 		
-		$output->addHTML ( "<label for='icon'>Icon </label>" );
-		$output->addHTML ( "<input type='text' id='icon' name='icon' size='60'><br>" );
-		$output->addHTML ( "<label for='groupName'>Group Name </label>" );
-		$output->addHTML ( "<input type='text' id='groupName' name='groupName'><br>" );
-		$output->addHTML ( "<label for='maxTimes'>Maximum Times </label>" );
-		$output->addHTML ( "<input type='text' id='maxTimes' name='maxTimes'><br>" );
-		$output->addHTML ( "<label for='comment'>Comment </label>" );
-		$output->addHTML ( "<input type='text' id='comment' name='comment' size='60'><br>" );
-		$output->addHTML ( "<label for='description'>Description </label>" );
-		$output->addHTML ( "<textarea id='description' name='description' class='txtArea' rows='4' cols='50'></textarea><br>" );
+		$output->addHTML( "<label for='ruleType'>Rule Type</label>" );
+		$this->OutputListHtml( '', $this->RULE_TYPE_OPTIONS, 'ruleType' );
+		$output->addHTML( "<br/>" );
 		
-		$output->addHTML ( "<label for='customData'>Custom Data </label><br />" );
-		$output->addHTML ( "<input type='text' id='customNames' name='customNames[]' class='custCol'></input>  " );
-		$output->addHTML ( "<input type='text' id='customValues' name='customValues[]'></input><br>" );
-		$output->addHTML ( "<input type='text' id='customNames' name='customNames[]'class='custCol'></input>  " );
-		$output->addHTML ( "<input type='text' id='customValues' name='customValues[]'></input><br>" );
-		$output->addHTML ( "<input type='text' id='customNames' name='customNames[]'class='custCol'></input>  " );
-		$output->addHTML ( "<input type='text' id='customValues' name='customValues[]'></input><br>" );
+		$output->addHTML( "<label for='nameId'>Name Id</label>" );
+		$output->addHTML( "<input type='text' id='nameId' name='nameId' size='60'>" );
+		$output->addHTML( "<p class='errorMsg'></p>" );
+		
+		$output->addHTML( "<label for='displayName'>Display Name</label>" );
+		$output->addHTML( "<input type='text' id='displayName' name='displayname' size='60'><br>" );
+		
+		$output->addHTML( "<label for='matchRegex'>Match Regex</label>" );
+		$output->addHTML( "<input type='text' id='matchRegex' name='matchRegex' size='60'>" );
+		$output->addHTML( "<p class='errorMsg'></p>" );
+		$output->addHTML( "<p class='warningErr'></p>" );
+		
+		$output->addHTML( "<label for='displayRegex'>Display Regex</label>" );
+		$output->addHTML( "<input type='text' id='displayRegex' name='displayRegex' size='60'>" );
+		$output->addHTML( "<p class='errorMsg'></p>" );
+		
+		$output->addHTML( "<label for='statRequireId'>Stat Require Id</label>" );
+		$output->addHTML( "<input type='text' id='statRequireId' name='statRequireId'><br>" );
+		$output->addHTML( "<label for='statRequireValue'>Stat Require Value</label>" );
+		$output->addHTML( "<input type='text' id='statRequireValue' name='statRequireValue'><br>" );
+		$output->addHTML( "<label for='factorStatId'>Factor Stat Id</label>" );
+		$output->addHTML( "<input type='text' id='factorStatId' name='factorStatId'><br>" );
+		$output->addHTML( "<label for='originalId'>Original Id</label>" );
+		$output->addHTML( "<input type='text' id='originalId' name='originalId'><br>" );
+		
+		$output->addHTML( "<label for='icon'>Icon</label>" );
+		$output->addHTML( "<input type='text' id='icon' name='icon' size='60'><br>" );
+		$output->addHTML( "<label for='groupName'>Group Name</label>" );
+		$output->addHTML( "<input type='text' id='groupName' name='groupName'><br>" );
+		$output->addHTML( "<label for='maxTimes'>Maximum Times</label>" );
+		$output->addHTML( "<input type='text' id='maxTimes' name='maxTimes'><br>" );
+		$output->addHTML( "<label for='comment'>Comment</label>" );
+		$output->addHTML( "<input type='text' id='comment' name='comment' size='60'><br>" );
+		$output->addHTML( "<label for='description'>Description</label>" );
+		$output->addHTML( "<textarea id='description' name='description' class='txtArea' rows='4' cols='50'></textarea><br>" );
+		
+		$output->addHTML( "<label for='customData'>Custom Data</label>" );
+		$output->addHTML( "<input type='text' class='custReadOnly' value='name' readonly></input> " );
+		$output->addHTML( "<input type='text' class='custReadOnly' value='value' readonly></input><br/>" );
+		
+		$output->addHTML( "<input type='text' id='customNames' name='customNames[]' class='custCol'></input>  " );
+		$output->addHTML( "<input type='text' id='customValues' name='customValues[]'></input><br>" );
+		$output->addHTML( "<input type='text' id='customNames' name='customNames[]'class='custCol'></input>  " );
+		$output->addHTML( "<input type='text' id='customValues' name='customValues[]'></input><br>" );
+		$output->addHTML( "<input type='text' id='customNames' name='customNames[]'class='custCol'></input>  " );
+		$output->addHTML( "<input type='text' id='customValues' name='customValues[]'></input><br>" );
 		
 		// could only be true or false (1 or 0)
-		$output->addHTML ( "<br><label for='isEnabled'>Enabled</label>" );
-		$output->addHTML ( "<input type='checkbox' id='isEnabled' name='isEnabled' value='1'><br>" );
-		$output->addHTML ( "<label for='isVisible'>Visible</label>" );
-		$output->addHTML ( "<input type='checkbox' id='isVisible' name='isVisible' value='1' checked><br>" );
-		$output->addHTML ( "<label for='enableOffBar'>Enable Off Bar</label>" );
-		$output->addHTML ( "<input type='checkbox' id='enableOffBar' name='enableOffBar' value='1'><br>" );
-		$output->addHTML ( "<label for='toggle'>Toggle</label>" );
-		$output->addHTML ( "<input type='checkbox' id='toggle' name='toggle' value='1'><br>" );
+		$output->addHTML( "<br><label for='isEnabled'>Enabled</label>" );
+		$output->addHTML( "<input type='checkbox' id='isEnabled' name='isEnabled' value='1'><br>" );
+		$output->addHTML( "<label for='isVisible'>Visible</label>" );
+		$output->addHTML( "<input type='checkbox' id='isVisible' name='isVisible' value='1' checked><br>" );
+		$output->addHTML( "<label for='enableOffBar'>Enable Off Bar</label>" );
+		$output->addHTML( "<input type='checkbox' id='enableOffBar' name='enableOffBar' value='1'><br>" );
+		$output->addHTML( "<label for='toggle'>Toggle</label>" );
+		$output->addHTML( "<input type='checkbox' id='toggle' name='toggle' value='1'><br>" );
 		
-		$output->addHTML ( "<br><input type='submit' value='Save Rule' class='submit_btn'>" );
-		$output->addHTML ( "</form>" );
+		$output->addHTML( "<br><input type='submit' value='Save Rule' class='submit_btn'>" );
+		$output->addHTML( "</form>" );
 	}
 	
 	
@@ -1016,17 +1457,16 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	{
 		$output = $this->getOutput ();
 		
-		$output->addHTML ( "<select id='$listName' name='$listName'>" );
+		$output->addHTML( "<select id='$listName' name='$listName'>" );
 		
-		foreach ( $array as $key => $value ) 
+		foreach ( $array as $key => $value )
 		{
 			$selected = "";
-			if ($key === $option) {
-				$selected = "selected";
-			}
-			$output->addHTML ( "<option value='$key' $selected >$value</option>" );
+			if ($key === $option) $selected = "selected";
+			
+			$output->addHTML( "<option value='$key' $selected >$value</option>" );
 		}
-		$output->addHTML ( "</select><br>" );
+		$output->addHTML( "</select>" );
 	}
 	
 	
@@ -1039,10 +1479,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	
 	public function ReportError($msg)
 	{
-		$output = $this->getOutput ();
+		$output = $this->getOutput();
 		
-		$output->addHTML ( $msg . "<br/>" );
-		$output->addHTML ( $this->db->error );	//TODO: Only output if present?
+		$output->addHTML( $msg . "<br/>" );
+		$output->addHTML( $this->db->error );	//TODO: Only output if present?
 		
 		error_log ( $msg );
 		
@@ -1050,1407 +1490,1625 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	}
 	
 	
-	public function SaveNewRule() {
-		$permission = $this->canUserEdit ();
+	public function TransformCustomValue($value)
+	{
+		$lcValue = strtolower($value);
 		
-		if ($permission === False) {
-			return $this->reportError ( "Error: you have no permission to add rules" );
-		}
+		if ($lcValue == 'true') return true;
+		if ($lcValue == 'false') return false;
+		if ($lcValue == 'null') return null;
 		
-		$output = $this->getOutput ();
-		$baselink = $this->GetBaseLink ();
-		$req = $this->getRequest ();
+		if (is_numeric($value)) return floatval($value);
 		
-		$input_ruleType = $req->getVal ( 'ruleType' );
-		$input_nameId = $req->getVal ( 'nameId' );
-		$input_displayName = $req->getVal ( 'displayName' );
-		$input_matchRegex = $req->getVal ( 'matchRegex' );
-		$input_statRequireId = $req->getVal ( 'statRequireId' );
-		$input_factorStatId = $req->getVal ( 'factorStatId' );
-		$input_originalId = $req->getVal ( 'originalId' );
-		$input_version = $req->getVal ( 'version' );
-		$input_icon = $req->getVal ( 'icon' );
-		$input_groupName = $req->getVal ( 'groupName' );
-		$input_maxTimes = $req->getVal ( 'maxTimes' );
-		$input_comment = $req->getVal ( 'comment' );
-		$input_description = $req->getVal ( 'description' );
-		$input_isEnabled = $req->getVal ( 'isEnabled' );
-		$input_isVisible = $req->getVal ( 'isVisible' );
-		$input_enableOffBar = $req->getVal ( 'enableOffBar' );
-		$input_toggle = $req->getVal ( 'toggle' );
-		$input_statRequireValue = $req->getVal ( 'statRequireValue' );
+		return $value;
+	}
+	
+	
+	public function SaveNewRule()
+	{
+		$permission = $this->canUserEdit();
+		if ($permission === false) return $this->reportError( "Error: you have no permission to add rules" );
 		
-		$customNames = $req->getArray ( 'customNames' );
-		$customValues = $req->getArray ( 'customValues' );
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
+		$req = $this->getRequest();
+		
+		$input_ruleType = $req->getVal( 'ruleType' );
+		$input_nameId = $req->getVal( 'nameId' );
+		$input_displayName = $req->getVal( 'displayName' );
+		$input_matchRegex = $req->getVal( 'matchRegex' );
+		$input_statRequireId = $req->getVal( 'statRequireId' );
+		$input_factorStatId = $req->getVal( 'factorStatId' );
+		$input_originalId = $req->getVal( 'originalId' );
+		$input_version = $req->getVal( 'version' );
+		$input_icon = $req->getVal( 'icon' );
+		$input_groupName = $req->getVal( 'groupName' );
+		$input_maxTimes = trim($req->getVal( 'maxTimes' ));
+		$input_comment = $req->getVal( 'comment' );
+		$input_description = $req->getVal( 'description' );
+		$input_isEnabled = $req->getVal( 'isEnabled' );
+		$input_isVisible = $req->getVal( 'isVisible' );
+		$input_enableOffBar = $req->getVal( 'enableOffBar' );
+		$input_toggle = $req->getVal( 'toggle' );
+		$input_statRequireValue = $req->getVal( 'statRequireValue' );
+		
+		$customNames = $req->getArray( 'customNames' );
+		$customValues = $req->getArray( 'customValues' );
 		$input_customData = [ ];
 		
-		foreach ( $customNames as $i => $name ) {
-			$name = trim ( $name );
-			$value = $customValues [$i];
+		foreach ( $customNames as $i => $name )
+		{
+			$name = trim( $name );
+			$value = $customValues[$i];
 			
-			if ($name == '')
-				continue;
-			if ($value === undefined)
-				continue;
+			if ($name == '') continue;
+			if ($value === null) continue;
 			
-			$input_customData [$name] = $value;
+			$value = $this->TransformCustomValue($value);
+			
+			$input_customData[$name] = $value;
 		}
 		
-		$input_customData = json_encode ( $input_customData );
+		$input_customData = json_encode( $input_customData );
 		
 		$cols = [ ];
 		$values = [ ];
-		$cols [] = 'ruleType';
-		$cols [] = 'nameId';
-		$cols [] = 'displayName';
-		$cols [] = 'matchRegex';
-		$cols [] = 'statRequireId';
-		$cols [] = 'factorStatId';
-		$cols [] = 'originalId';
-		$cols [] = 'version';
-		$cols [] = 'icon';
-		$cols [] = 'groupName';
-		$cols [] = 'maxTimes';
-		$cols [] = 'comment';
-		$cols [] = 'description';
-		$cols [] = 'isEnabled';
-		$cols [] = 'isVisible';
-		$cols [] = 'enableOffBar';
-		$cols [] = 'isToggle';
-		$cols [] = 'statRequireValue';
-		$cols [] = 'customData';
+		$cols[] = 'ruleType';
+		$cols[] = 'nameId';
+		$cols[] = 'displayName';
+		$cols[] = 'matchRegex';
+		$cols[] = 'statRequireId';
+		$cols[] = 'factorStatId';
+		$cols[] = 'originalId';
+		$cols[] = 'version';
+		$cols[] = 'icon';
+		$cols[] = 'groupName';
+		$cols[] = 'maxTimes';
+		$cols[] = 'comment';
+		$cols[] = 'description';
+		$cols[] = 'isEnabled';
+		$cols[] = 'isVisible';
+		$cols[] = 'enableOffBar';
+		$cols[] = 'isToggle';
+		$cols[] = 'statRequireValue';
+		$cols[] = 'customData';
 		
-		$values [] = "'" . $this->db->real_escape_string( $input_ruleType ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_nameId ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_displayName ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_matchRegex ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_statRequireId ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_factorStatId ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_originalId ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_version ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_icon ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_groupName ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_maxTimes ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_comment ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_description ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_isEnabled ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_isVisible ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_enableOffBar ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_toggle ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_statRequireValue ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_customData ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $input_ruleType ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $input_nameId ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $input_displayName ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $input_matchRegex ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $input_statRequireId ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $input_factorStatId ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $input_originalId ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $input_version ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $input_icon ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $input_groupName ) . "'";
+		
+		if ($input_maxTimes == '')
+			$values[] = "NULL";
+		else
+			$values[] = "'" . $this->db->real_escape_string( $input_maxTimes ) . "'";
+		
+		$values[] = "'" . $this->db->real_escape_string( $input_comment ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $input_description ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $input_isEnabled ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $input_isVisible ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $input_enableOffBar ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $input_toggle ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $input_statRequireValue ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $input_customData ) . "'";
 		
 		$insertResult = $this->InsertQueries ( 'rules', $cols, $values );
 		$lastId = $this->db->insert_id;
 		
-		if ($insertResult) 
+		if ($insertResult)
 			header ( "Location: $baselink/editrule?ruleid=$lastId" );
 		else
-			$this->reportError("Error: Failed to insert record into rules!");
+			$this->reportError("Error: Failed to save new rule record!");
 		
 		return $insertResult;
 	}
 	
 	
-	public function SaveEditRuleForm() {
-		$permission = $this->canUserEdit ();
+	public function SaveEditRuleForm()
+	{
+		$permission = $this->canUserEdit();
+		if ($permission === false) return $this->reportError( "Error: you have no permission to edit rules" );
 		
-		if ($permission === False) {
-			return $this->reportError ( "Error: you have no permission to edit rules" );
-		}
-		
-		$output = $this->getOutput ();
-		$baselink = $this->GetBaseLink ();
-		$req = $this->getRequest ();
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
+		$req = $this->getRequest();
 		
 		$id = $this->GetRuleId();
-		$id = $this->db->real_escape_string( $id );
+		if ($id <= 0) return $this->reportError( "Error: invalid rule ID" );
+		$id = $this->db->real_escape_string($id);
 		
-		if ($id <= 0) {
-			return $this->reportError ( "Error: invalid rule ID" );
-		}
+		$new_ruleType = $req->getVal( 'ruleType' );
+		$new_nameId = $req->getVal( 'edit_nameId' );
+		$new_displayName = $req->getVal( 'edit_displayName' );
+		$new_matchRegex = $req->getVal( 'edit_matchRegex' );
+		$new_statRequireId = $req->getVal( 'edit_statRequireId' );
+		$new_factorStatId = $req->getVal( 'edit_factorStatId' );
+		$new_originalId = $req->getVal( 'edit_originalId' );
+		$new_version = $req->getVal( 'edit_version' );
+		$new_icon = $req->getVal( 'edit_icon' );
+		$new_groupName = $req->getVal( 'edit_groupName' );
+		$new_maxTimes = $req->getVal( 'edit_maxTimes' );
+		$new_comment = $req->getVal( 'edit_comment' );
+		$new_description = $req->getVal( 'edit_description' );
+		$new_isEnabled = $req->getVal( 'edit_isEnabled' );
+		$new_isVisible = $req->getVal( 'edit_isVisible' );
+		$new_enableOffBar = $req->getVal( 'edit_enableOffBar' );
+		$new_toggle = $req->getVal( 'edit_toggle' );
+		$new_statRequireValue = $req->getVal( 'edit_statRequireValue' );
 		
-		$new_ruleType = $req->getVal ( 'ruleType' );
-		$new_nameId = $req->getVal ( 'edit_nameId' );
-		$new_displayName = $req->getVal ( 'edit_displayName' );
-		$new_matchRegex = $req->getVal ( 'edit_matchRegex' );
-		$new_statRequireId = $req->getVal ( 'edit_statRequireId' );
-		$new_factorStatId = $req->getVal ( 'edit_factorStatId' );
-		$new_originalId = $req->getVal ( 'edit_originalId' );
-		$new_version = $req->getVal ( 'edit_version' );
-		$new_icon = $req->getVal ( 'edit_icon' );
-		$new_groupName = $req->getVal ( 'edit_groupName' );
-		$new_maxTimes = $req->getVal ( 'edit_maxTimes' );
-		$new_comment = $req->getVal ( 'edit_comment' );
-		$new_description = $req->getVal ( 'edit_description' );
-		$new_isEnabled = $req->getVal ( 'edit_isEnabled' );
-		$new_isVisible = $req->getVal ( 'edit_isVisible' );
-		$new_enableOffBar = $req->getVal ( 'edit_enableOffBar' );
-		$new_toggle = $req->getVal ( 'edit_toggle' );
-		$new_statRequireValue = $req->getVal ( 'edit_statRequireValue' );
-		
-		$customNames = $req->getArray ( 'edit_customName' );
-		$customValues = $req->getArray ( 'edit_customValue' );
+		$customNames = $req->getArray( 'edit_customName' );
+		$customValues = $req->getArray( 'edit_customValue' );
 		$new_customData = [ ];
 		
-		foreach ( $customNames as $i => $name ) {
-			$name = trim ( $name );
-			$value = $customValues [$i];
+		foreach ( $customNames as $i => $name )
+		{
+			$name = trim( $name );
+			$value = $customValues[$i];
 			
-			if ($name == '')
-				continue;
-			if ($value === undefined)
-				continue;
+			if ($name == '') continue;
+			if ($value === null) continue;
 			
-			$new_customData [$name] = $value;
+			$value = $this->TransformCustomValue($value);
+			
+			$new_customData[$name] = $value;
 		}
-		$new_customData = json_encode ( $new_customData );
+		$new_customData = json_encode( $new_customData );
 		
 		$values = [ ];
 		
-		$values [] = "ruleType='" . $this->db->real_escape_string( $new_ruleType ) . "'";
-		$values [] = "nameId='" . $this->db->real_escape_string( $new_nameId ) . "'";
-		$values [] = "displayName='" . $this->db->real_escape_string( $new_displayName ) . "'";
-		$values [] = "matchRegex='" . $this->db->real_escape_string( $new_matchRegex ) . "'";
-		$values [] = "statRequireId='" . $this->db->real_escape_string( $new_statRequireId ) . "'";
-		$values [] = "factorStatId='" . $this->db->real_escape_string( $new_factorStatId ) . "'";
-		$values [] = "originalId='" . $this->db->real_escape_string( $new_originalId ) . "'";
-		$values [] = "version='" . $this->db->real_escape_string( $new_version ) . "'";
-		$values [] = "icon='" . $this->db->real_escape_string( $new_icon ) . "'";
-		$values [] = "groupName='" . $this->db->real_escape_string( $new_groupName ) . "'";
-		$values [] = "maxTimes='" . $this->db->real_escape_string( $new_maxTimes ) . "'";
-		$values [] = "comment='" . $this->db->real_escape_string( $new_comment ) . "'";
-		$values [] = "description='" . $this->db->real_escape_string( $new_description ) . "'";
-		$values [] = "isEnabled='" . $this->db->real_escape_string( $new_isEnabled ) . "'";
-		$values [] = "isVisible='" . $this->db->real_escape_string( $new_isVisible ) . "'";
-		$values [] = "enableOffBar='" . $this->db->real_escape_string( $new_enableOffBar ) . "'";
-		$values [] = "isToggle='" . $this->db->real_escape_string( $new_toggle ) . "'";
-		$values [] = "statRequireValue='" . $this->db->real_escape_string( $new_statRequireValue ) . "'";
-		$values [] = "customData='" . $this->db->real_escape_string( $new_customData ) . "'";
+		$values[] = "ruleType='" . $this->db->real_escape_string( $new_ruleType ) . "'";
+		$values[] = "nameId='" . $this->db->real_escape_string( $new_nameId ) . "'";
+		$values[] = "displayName='" . $this->db->real_escape_string( $new_displayName ) . "'";
+		$values[] = "matchRegex='" . $this->db->real_escape_string( $new_matchRegex ) . "'";
+		$values[] = "statRequireId='" . $this->db->real_escape_string( $new_statRequireId ) . "'";
+		$values[] = "factorStatId='" . $this->db->real_escape_string( $new_factorStatId ) . "'";
+		$values[] = "originalId='" . $this->db->real_escape_string( $new_originalId ) . "'";
+		$values[] = "version='" . $this->db->real_escape_string( $new_version ) . "'";
+		$values[] = "icon='" . $this->db->real_escape_string( $new_icon ) . "'";
+		$values[] = "groupName='" . $this->db->real_escape_string( $new_groupName ) . "'";
+		
+		if ($new_maxTimes == '')
+			$values[] = "maxTimes=NULL";
+		else
+			$values[] = "maxTimes='" . $this->db->real_escape_string( $new_maxTimes ) . "'";
+		
+		$values[] = "comment='" . $this->db->real_escape_string( $new_comment ) . "'";
+		$values[] = "description='" . $this->db->real_escape_string( $new_description ) . "'";
+		$values[] = "isEnabled='" . $this->db->real_escape_string( $new_isEnabled ) . "'";
+		$values[] = "isVisible='" . $this->db->real_escape_string( $new_isVisible ) . "'";
+		$values[] = "enableOffBar='" . $this->db->real_escape_string( $new_enableOffBar ) . "'";
+		$values[] = "isToggle='" . $this->db->real_escape_string( $new_toggle ) . "'";
+		$values[] = "statRequireValue='" . $this->db->real_escape_string( $new_statRequireValue ) . "'";
+		$values[] = "customData='" . $this->db->real_escape_string( $new_customData ) . "'";
 		
 		$updateResult = $this->UpdateQueries ( 'rules', $values, 'id', $id );
-		if (!$updateResult) return $this->reportError("Error: Failed to update record in rules!");
+		if (!$updateResult) return $this->reportError("Error: Failed to save rule record!");
 		
-		$output->addHTML ( "<p>Edits saved for rule #$id</p><br>" );
-		$output->addHTML ( "<a href='$baselink'>Home</a>" );
+		$output->addHTML( "<p>Successfully saved rule #$id!</p><br>" );
+		$output->addHTML( "<a href='$baselink'>Home</a> : <a href='$baselink/showrules'>Show Rules</a> <br/>" );
 	}
 	
 	
-	public function GetRuleId() {
+	public function GetRuleId()
+	{
 		$req = $this->getRequest ();
-		$ruleId = $req->getVal ( 'ruleid' );
+		$ruleId = $req->getVal( 'ruleid' );
 		
 		return $ruleId;
 	}
 	
 	
-	public static function GetBaseLink() {
+	public static function GetBaseLink()
+	{
 		$link = "https://dev.uesp.net/wiki/Special:EsoBuildRuleEditor";
 		
 		return ($link);
 	}
 	
 	
-	// -------------------Effects table functions---------------
-	public function loadEffects() {
-		$id = $this->GetRuleId();
-		$id = $this->db->real_escape_string( $id );
-		$query = "SELECT * FROM effects where ruleId =$id;";
-		$effects_result = $this->db->query ( $query );
+	public function LoadEffects($ruleId)
+	{
+		$id = $this->db->real_escape_string( $ruleId );
+		$query = "SELECT * FROM effects where ruleId='$id';";
+		$effects_result = $this->db->query( $query );
 		
 		if ($effects_result === false) {
-			return $this->reportError ( "Error: failed to load effects from database" );
+			return $this->reportError( "Error: failed to load effects for rule #$ruleId!" );
 		}
 		
-		$this->effectsDatas = [ ];
+		$this->effectsDatas = [];
 		
-		while ( $row = mysqli_fetch_assoc ( $effects_result ) ) {
-			$this->effectsDatas [] = $row;
+		while ( $row = $effects_result->fetch_assoc() ) {
+			$this->effectsDatas[] = $row;
 		}
 		
 		return true;
 	}
 	
 	
-	public function OutputShowEffectsTable() {
-		$output = $this->getOutput ();
-		$baselink = $this->GetBaseLink ();
-		$this->loadEffects ();
-		$req = $this->getRequest ();
+	public function LoadAllEffects($version = '')
+	{
+		if ($version == '')
+		{
+			$query = "SELECT * FROM effects;";
+		}
+		else
+		{
+			$safeVersion = $this->db->real_escape_string( $version );
+			$query = "SELECT * FROM effects WHERE version='$safeVersion';";
+		}
+		$effects_result = $this->db->query( $query );
 		
-		$id = $this->GetRuleId();
-		$effectId = $req->getVal ( 'effectid' );
-		
-		$output->addHTML ( "<hr><h3>All Rule Effects</h3>" );
-		$output->addHTML ( "<a href='$baselink/addneweffect?ruleid=$id'>Add new effect</a>" );
-		
-		$output->addHTML ( "<table class='wikitable sortable jquery-tablesorter' id='effects'><thead>" );
-		$output->addHTML ( "<tr>" );
-		$output->addHTML ( "<th>Edit</th>" );
-		$output->addHTML ( "<th>Id</th>" );
-		$output->addHTML ( "<th>version</th>" );
-		$output->addHTML ( "<th>statId</th>" );
-		$output->addHTML ( "<th>value</th>" );
-		$output->addHTML ( "<th>display</th>" );
-		$output->addHTML ( "<th>category</th>" );
-		$output->addHTML ( "<th>combineAs</th>" );
-		$output->addHTML ( "<th>round</th>" );
-		$output->addHTML ( "<th>factorValue</th>" );
-		$output->addHTML ( "<th>statDesc</th>" );
-		$output->addHTML ( "<th>buffId</th>" );
-		$output->addHTML ( "<th>regexVar</th>" );
-		$output->addHTML ( "<th>Delete</th>" );
-		$output->addHTML ( "</tr></thead><tbody>" );
-		
-		foreach ( $this->effectsDatas as $effectsData ) {
-			
-			$effectId = $this->escapeHtml( $effectsData ['effectId'] );
-			$version = $this->escapeHtml( $effectsData ['version'] );
-			$statId = $this->escapeHtml( $effectsData ['statId'] );
-			$value = $this->escapeHtml( $effectsData ['value'] );
-			$display = $this->escapeHtml( $effectsData ['display'] );
-			$category = $this->escapeHtml( $effectsData ['category'] );
-			$combineAs = $this->escapeHtml( $effectsData ['combineAs'] );
-			$round = $this->escapeHtml( $effectsData ['roundNum'] );
-			$factorValue = $this->escapeHtml( $effectsData ['factorValue'] );
-			$statDesc = $this->escapeHtml( $effectsData ['statDesc'] );
-			$buffId = $this->escapeHtml( $effectsData ['buffId'] );
-			$regexVar = $this->escapeHtml( $effectsData ['regexVar'] );
-			
-			$output->addHTML ( "<tr>" );
-			$output->addHTML ( "<td><a href='$baselink/editeffect?effectid=$effectId&ruleid=$id'>Edit</a></td>" );
-			$output->addHTML ( "<td>$effectId</td>" );
-			$output->addHTML ( "<td>$version</td>" );
-			$output->addHTML ( "<td>$statId</td>" );
-			$output->addHTML ( "<td>$value</td>" );
-			$output->addHTML ( "<td>$display</td>" );
-			$output->addHTML ( "<td>$category</td>" );
-			$output->addHTML ( "<td>$combineAs</td>" );
-			$output->addHTML ( "<td>$round</td>" );
-			$output->addHTML ( "<td>$factorValue</td>" );
-			$output->addHTML ( "<td>$statDesc</td>" );
-			$output->addHTML ( "<td>$buffId</td>" );
-			$output->addHTML ( "<td>$regexVar</td>" );
-			$output->addHTML ( "<td><a href='$baselink/deleteeffect?effectid=$effectId&ruleid=$id' >Delete</a></td>" );
+		if ($effects_result === false) {
+			return $this->reportError( "Error: failed to load effects for rule #$ruleId!" );
 		}
 		
-		$output->addHTML ( "</table>" );
+		$this->effectsDatas = [];
+		
+		while ( $row = $effects_result->fetch_assoc( ) ) {
+			$this->effectsDatas[] = $row;
+		}
+		
+		return true;
+	}
+	
+	
+	public function OutputShowEffectsTable()
+	{
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
+		$req = $this->getRequest();
+		
+		if (!$this->LoadEffects($this->GetRuleId())) return $this->reportError("Error: Failed to load effects for rule!");
+		
+		$id = $this->GetRuleId();
+		$effectId = $req->getVal( 'effectid' );
+		
+		$output->addHTML( "<hr><h3>All Rule Effects</h3>" );
+		$output->addHTML( "<a href='$baselink/addneweffect?ruleid=$id'>Add new effect</a>" );
+		
+		$output->addHTML( "<table class='wikitable sortable jquery-tablesorter' id='effects'><thead>" );
+		$output->addHTML( "<tr>" );
+		$output->addHTML( "<th>Edit</th>" );
+		//$output->addHTML( "<th>ID</th>" );
+		$output->addHTML( "<th>version</th>" );
+		$output->addHTML( "<th>statId</th>" );
+		$output->addHTML( "<th>value</th>" );
+		$output->addHTML( "<th>display</th>" );
+		$output->addHTML( "<th>category</th>" );
+		$output->addHTML( "<th>combineAs</th>" );
+		$output->addHTML( "<th>round</th>" );
+		$output->addHTML( "<th>factorValue</th>" );
+		$output->addHTML( "<th>statDesc</th>" );
+		$output->addHTML( "<th>buffId</th>" );
+		$output->addHTML( "<th>regexVar</th>" );
+		$output->addHTML( "<th>Delete</th>" );
+		$output->addHTML( "</tr></thead><tbody>" );
+		
+		foreach ( $this->effectsDatas as $effectsData )
+		{
+			$effectId = $this->escapeHtml( $effectsData['id'] );
+			$version = $this->escapeHtml( $effectsData['version'] );
+			$statId = $this->escapeHtml( $effectsData['statId'] );
+			$value = $this->escapeHtml( $effectsData['value'] );
+			$display = $this->escapeHtml( $effectsData['display'] );
+			$category = $this->escapeHtml( $effectsData['category'] );
+			$combineAs = $this->escapeHtml( $effectsData['combineAs'] );
+			$round = $this->escapeHtml( $effectsData['roundNum'] );
+			$factorValue = $this->escapeHtml( $effectsData['factorValue'] );
+			$statDesc = $this->escapeHtml( $effectsData['statDesc'] );
+			$buffId = $this->escapeHtml( $effectsData['buffId'] );
+			$regexVar = $this->escapeHtml( $effectsData['regexVar'] );
+			
+			$output->addHTML( "<tr>" );
+			$output->addHTML( "<td><a href='$baselink/editeffect?effectid=$effectId&ruleid=$id'>Edit</a></td>" );
+			//$output->addHTML( "<td>$effectId</td>" );
+			$output->addHTML( "<td>$version</td>" );
+			$output->addHTML( "<td>$statId</td>" );
+			$output->addHTML( "<td>$value</td>" );
+			$output->addHTML( "<td>$display</td>" );
+			$output->addHTML( "<td>$category</td>" );
+			$output->addHTML( "<td>$combineAs</td>" );
+			$output->addHTML( "<td>$round</td>" );
+			$output->addHTML( "<td>$factorValue</td>" );
+			$output->addHTML( "<td>$statDesc</td>" );
+			$output->addHTML( "<td>$buffId</td>" );
+			$output->addHTML( "<td>$regexVar</td>" );
+			$output->addHTML( "<td><a href='$baselink/deleteeffect?effectid=$effectId&ruleid=$id' >Delete</a></td>" );
+		}
+		
+		$output->addHTML( "</table>" );
 		$jsonEffects = json_encode ( $this->effectsDatas );
-		$output->addHTML ( "<script>window.g_RuleEffectData = $jsonEffects;</script>" );
+		$output->addHTML( "<script>window.g_RuleEffectData = $jsonEffects;</script>" );
 	}
 	
 	
-	public function OutputDeleteEffect() {
-		$permission = $this->canUserEdit ();
+	public function OutputDeleteEffect()
+	{
+		$permission = $this->canUserEdit();
+		if ($permission === false) return $this->reportError( "Error: you have no permission to delete effects" );
 		
-		if ($permission === False) {
-			return $this->reportError ( "Error: you have no permission to delete effects" );
-		}
-		
-		$output = $this->getOutput ();
-		$baselink = $this->GetBaseLink ();
-		$this->loadEffects ();
-		$req = $this->getRequest ();
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
+		$req = $this->getRequest();
 		
 		$id = $this->GetRuleId();
-		$effectId = $req->getVal ( 'effectid' );
+		$effectId = $req->getVal( 'effectid' );
 		
-		$this->loadEffect ( $effectId );
+		//if (!$this->LoadEffects($id)) return $this->reportError("Error: Failed to load effects for rule #$id!");
+		if (!$this->LoadEffect( $effectId ))return $this->reportError( "Error: cannot load effect" );
 		
-		if ($this->loadEffect ( $effectId ) == False) {
-			return $this->reportError ( "Error: cannot load effect" );
-		}
+		$version = $this->escapeHtml( $this->effect['version'] );
+		$statId = $this->escapeHtml( $this->effect['statId'] );
+		$value = $this->escapeHtml( $this->effect['value'] );
+		$display = $this->escapeHtml( $this->effect['display'] );
+		$category = $this->escapeHtml( $this->effect['category'] );
+		$combineAs = $this->escapeHtml( $this->effect['combineAs'] );
+		$round = $this->escapeHtml( $this->effect['roundNum'] );
+		$factorValue = $this->escapeHtml( $this->effect['factorValue'] );
+		$statDesc = $this->escapeHtml( $this->effect['statDesc'] );
+		$buffId = $this->escapeHtml( $this->effect['buffId'] );
+		$regexVar = $this->escapeHtml( $this->effect['regexVar'] );
 		
-		$version = $this->escapeHtml( $this->effect ['version'] );
-		$statId = $this->escapeHtml( $this->effect ['statId'] );
-		$value = $this->escapeHtml( $this->effect ['value'] );
-		$display = $this->escapeHtml( $this->effect ['display'] );
-		$category = $this->escapeHtml( $this->effect ['category'] );
-		$combineAs = $this->escapeHtml( $this->effect ['combineAs'] );
-		$round = $this->escapeHtml( $this->effect ['roundNum'] );
-		$factorValue = $this->escapeHtml( $this->effect ['factorValue'] );
-		$statDesc = $this->escapeHtml( $this->effect ['statDesc'] );
-		$buffId = $this->escapeHtml( $this->effect ['buffId'] );
-		$regexVar = $this->escapeHtml( $this->effect ['regexVar'] );
+		$output->addHTML( "<h3>Are you sure you want to delete this effect: </h3>" );
+		$output->addHTML( "<label><b>Id</b> $effectId</label><br>" );
+		$output->addHTML( "<label><b>Version</b> $version</label><br>" );
+		$output->addHTML( "<label><b>Stat Id</b> $statId</label><br>" );
+		$output->addHTML( "<label><b>Value</b> $value</label><br>" );
+		$output->addHTML( "<label><b>Display</b> $display</label><br>" );
+		$output->addHTML( "<label><b>Category</b> $category</label><br>" );
+		$output->addHTML( "<label><b>Combine As</b> $combineAs</label><br>" );
+		$output->addHTML( "<label><b>Round</b> $round</label><br>" );
+		$output->addHTML( "<label><b>Factor Value</b> $factorValue</label><br>" );
+		$output->addHTML( "<label><b>Stat Desc</b> $statDesc</label><br>" );
+		$output->addHTML( "<label><b>Buff ID</b> $buffId</label><br>" );
+		$output->addHTML( "<label><b>Regex Variable</b> $regexVar</label><br>" );
 		
-		$output->addHTML ( "<h3>Are you sure you want to delete this effect: </h3>" );
-		$output->addHTML ( "<label><b>Id</b> $effectId </label><br>" );
-		$output->addHTML ( "<label><b>Version</b> $version </label><br>" );
-		$output->addHTML ( "<label><b>Stat Id</b> $statId </label><br>" );
-		$output->addHTML ( "<label><b>Value</b> $value </label><br>" );
-		$output->addHTML ( "<label><b>Display</b> $display </label><br>" );
-		$output->addHTML ( "<label><b>Category</b> $category </label><br>" );
-		$output->addHTML ( "<label><b>Combine As</b> $combineAs </label><br>" );
-		$output->addHTML ( "<label><b>Round</b> $round </label><br>" );
-		$output->addHTML ( "<label><b>Factor Value</b> $factorValue </label><br>" );
-		$output->addHTML ( "<label><b>Stat Desc</b> $statDesc </label><br>" );
-		$output->addHTML ( "<label><b>Buff Id</b> $buffId </label><br>" );
-		$output->addHTML ( "<label><b>Regex Var</b> $regexVar </label><br>" );
-		
-		$output->addHTML ( "<br><a href='$baselink/effectdeleteconfirm?ruleid=$id&effectid=$effectId&confirm=True'>Delete </a>" );
-		$output->addHTML ( "<a href='$baselink/effectdeleteconfirm?effectid=$effectId&confirm=False'> Cancel</a>" );
+		$output->addHTML( "<br><a href='$baselink/effectdeleteconfirm?ruleid=$id&effectid=$effectId&confirm=True'>Delete </a>" );
+		$output->addHTML( "<a href='$baselink/effectdeleteconfirm?effectid=$effectId&confirm=false'> Cancel</a>" );
 	}
 	
 	
-	public function ConfirmDeleteEffect() {
-		$permission = $this->canUserEdit ();
+	public function ConfirmDeleteEffect()
+	{
+		$permission = $this->canUserEdit();
+		if ($permission === false) return $this->reportError( "Error: you have no permission to delete effects" );
 		
-		if ($permission === False) {
-			return $this->reportError ( "Error: you have no permission to delete effects" );
-		}
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
+		$req = $this->getRequest();
 		
-		$output = $this->getOutput ();
-		$baselink = $this->GetBaseLink ();
-		$req = $this->getRequest ();
-		
-		$confirm = $req->getVal ( 'confirm' );
-		$effectId = $req->getVal ( 'effectid' );
+		$confirm = $req->getVal( 'confirm' );
+		$effectId = $req->getVal( 'effectid' );
 		
 		$effectId = $this->db->real_escape_string( $effectId );
 		$id = $this->GetRuleId();
 		
 		if ($effectId <= 0) {
-			return $this->reportError ( "Error: invalid stat ID" );
+			return $this->reportError( "Error: invalid stat ID" );
 		}
 		
-		if ($confirm !== 'True') {
-			$output->addHTML ( "<p>Delete cancelled</p><br>" );
-			$output->addHTML ( "<a href='$baselink'>Home</a>" );
-		} else {
-			$this->loadEffect ( $effectId );
+		if ($confirm !== 'True')
+		{
+			$output->addHTML( "<p>Delete cancelled</p><br>" );
+			$output->addHTML( "<a href='$baselink'>Home</a>" );
+		} else
+		{
+			if (!$this->LoadEffect( $effectId )) return $this->reportError( "Error: cannot load effect" );
 			
-			if ($this->loadEffect ( $effectId ) == False) {
-				return $this->reportError ( "Error: cannot load effect" );
-			}
-			
-			$version = $this->escapeHtml( $this->effect ['version'] );
-			$statId = $this->escapeHtml( $this->effect ['statId'] );
-			$value = $this->escapeHtml( $this->effect ['value'] );
-			$display = $this->escapeHtml( $this->effect ['display'] );
-			$category = $this->escapeHtml( $this->effect ['category'] );
-			$combineAs = $this->escapeHtml( $this->effect ['combineAs'] );
-			$round = $this->escapeHtml( $this->effect ['roundNum'] );
-			$factorValue = $this->escapeHtml( $this->effect ['factorValue'] );
-			$statDesc = $this->escapeHtml( $this->effect ['statDesc'] );
-			$buffId = $this->escapeHtml( $this->effect ['buffId'] );
-			$regexVar = $this->escapeHtml( $this->effect ['regexVar'] );
+			$version = $this->escapeHtml( $this->effect['version'] );
+			$statId = $this->escapeHtml( $this->effect['statId'] );
+			$value = $this->escapeHtml( $this->effect['value'] );
+			$display = $this->escapeHtml( $this->effect['display'] );
+			$category = $this->escapeHtml( $this->effect['category'] );
+			$combineAs = $this->escapeHtml( $this->effect['combineAs'] );
+			$round = $this->escapeHtml( $this->effect['roundNum'] );
+			$factorValue = $this->escapeHtml( $this->effect['factorValue'] );
+			$statDesc = $this->escapeHtml( $this->effect['statDesc'] );
+			$buffId = $this->escapeHtml( $this->effect['buffId'] );
+			$regexVar = $this->escapeHtml( $this->effect['regexVar'] );
 			
 			$cols = [ ];
 			$values = [ ];
-			$cols [] = 'ruleId';
-			$cols [] = 'version';
-			$cols [] = 'statId';
-			$cols [] = 'value';
-			$cols [] = 'display';
-			$cols [] = 'category';
-			$cols [] = 'combineAs';
-			$cols [] = 'roundNum';
-			$cols [] = 'factorValue';
-			$cols [] = 'statDesc';
-			$cols [] = 'buffId';
-			$cols [] = 'regexVar';
+			$cols[] = 'ruleId';
+			$cols[] = 'version';
+			$cols[] = 'statId';
+			$cols[] = 'value';
+			$cols[] = 'display';
+			$cols[] = 'category';
+			$cols[] = 'combineAs';
+			$cols[] = 'roundNum';
+			$cols[] = 'factorValue';
+			$cols[] = 'statDesc';
+			$cols[] = 'buffId';
+			$cols[] = 'regexVar';
 			
-			$values [] = "'" . $this->db->real_escape_string( $id ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $version ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $statId ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $value ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $display ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $category ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $combineAs ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $round ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $factorValue ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $statDesc ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $buffId ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $regexVar ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $id ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $version ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $statId ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $value ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $display ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $category ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $combineAs ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $round ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $factorValue ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $statDesc ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $buffId ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $regexVar ) . "'";
 			
 			$insertResult = $this->InsertQueries ( 'effectsArchive', $cols, $values );
 			if (!$insertResult) return $this->reportError("Error: Failed to insert record into effectsArchive!");
 			
-			$deleteResult = $this->DeleteQueries ( 'effects', 'effectId', $effectId );
+			$deleteResult = $this->DeleteQueries ( 'effects', 'id', $effectId );
 			if (!$deleteResult) return $this->reportError("Error: Failed to delete record from effects!");
 			
-			$output->addHTML ( "<p>Effect deleted</p><br>" );
-			$output->addHTML ( "<a href='$baselink'>Home : </a>" );
-			$output->addHTML ( "<a href='$baselink/editrule?ruleid=$id'>Rule #$id</a>" );
+			$output->addHTML( "<p>Effect deleted</p><br>" );
+			$output->addHTML( "<a href='$baselink'>Home : </a>" );
+			$output->addHTML( "<a href='$baselink/editrule?ruleid=$id'>Rule #$id</a>" );
 		}
 	}
 	
 	
-	public function SaveNewEffect() {
-		$permission = $this->canUserEdit ();
-		
-		if ($permission === False) {
-			return $this->reportError ( "Error: you have no permission to add effects" );
-		}
+	public function SaveNewEffect()
+	{
+		$permission = $this->canUserEdit();
+		if ($permission === false) return $this->reportError( "Error: you have no permission to add effects" );
 		
 		$output = $this->getOutput ();
 		$baselink = $this->GetBaseLink ();
 		$req = $this->getRequest ();
 		
 		$id = $this->GetRuleId();
-		$input_version = $req->getVal ( 'version' );
-		$input_statId = $req->getVal ( 'statId' );
-		$input_value = $req->getVal ( 'value' );
-		$input_display = $req->getVal ( 'display' );
-		$input_category = $req->getVal ( 'category' );
-		$input_combineAs = $req->getVal ( 'combineAs' );
-		$input_round = $req->getVal ( 'round' );
-		$input_factorValue = $req->getVal ( 'factorValue' );
-		$input_statDesc = $req->getVal ( 'statDesc' );
-		$input_buffId = $req->getVal ( 'buffId' );
-		$input_regexVar = $req->getVal ( 'regexVar' );
+		$input_version = $req->getVal( 'version' );
+		$input_statId = $req->getVal( 'statId' );
+		$input_value = $req->getVal( 'value' );
+		$input_display = $req->getVal( 'display' );
+		$input_category = $req->getVal( 'category' );
+		$input_combineAs = $req->getVal( 'combineAs' );
+		$input_round = $req->getVal( 'round' );
+		$input_factorValue = trim($req->getVal( 'factorValue' ));
+		$input_statDesc = $req->getVal( 'statDesc' );
+		$input_buffId = $req->getVal( 'buffId' );
+		$input_regexVar = $req->getVal( 'regexVar' );
 		
 		$cols = [ ];
 		$values = [ ];
-		$cols [] = 'ruleId';
-		$cols [] = 'version';
-		$cols [] = 'statId';
-		$cols [] = 'value';
-		$cols [] = 'display';
-		$cols [] = 'category';
-		$cols [] = 'combineAs';
-		$cols [] = 'roundNum';
-		$cols [] = 'factorValue';
-		$cols [] = 'statDesc';
-		$cols [] = 'buffId';
-		$cols [] = 'regexVar';
+		$cols[] = 'ruleId';
+		$cols[] = 'version';
+		$cols[] = 'statId';
+		$cols[] = 'value';
+		$cols[] = 'display';
+		$cols[] = 'category';
+		$cols[] = 'combineAs';
+		$cols[] = 'roundNum';
+		$cols[] = 'factorValue';
+		$cols[] = 'statDesc';
+		$cols[] = 'buffId';
+		$cols[] = 'regexVar';
 		
-		$values [] = "'" . $this->db->real_escape_string( $id ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_version ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_statId ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_value ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_display ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_category ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_combineAs ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_round ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_factorValue ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_statDesc ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_buffId ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_regexVar ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $id ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $input_version ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $input_statId ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $input_value ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $input_display ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $input_category ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $input_combineAs ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $input_round ) . "'";
+		
+		if ($input_factorValue == '')
+			$values[] = "NULL";
+		else
+			$values[] = "'" . $this->db->real_escape_string( $input_factorValue ) . "'";
+		
+		$values[] = "'" . $this->db->real_escape_string( $input_statDesc ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $input_buffId ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $input_regexVar ) . "'";
 		
 		$insertResult = $this->InsertQueries ( 'effects', $cols, $values );
 		if (!$insertResult) return $this->reportError("Error: Failed to insert record into effects!");
 		
-		$output->addHTML ( "<p>New effect added</p><br>" );
-		$output->addHTML ( "<a href='$baselink'>Home : </a>" );
-		$output->addHTML ( "<a href='$baselink/editrule?ruleid=$id'>Rule #$id</a>" );
+		$output->addHTML( "<p>New effect added</p><br>" );
+		$output->addHTML( "<a href='$baselink'>Home : </a>" );
+		$output->addHTML( "<a href='$baselink/editrule?ruleid=$id'>Rule #$id</a>" );
 	}
 	
 	
-	public function OutputAddtEffectForm() {
-		$permission = $this->canUserEdit ();
+	public function OutputAddEffectForm()
+	{
+		$permission = $this->canUserEdit();
+		if ($permission === false) return $this->reportError( "Error: you have no permission to add effects" );
 		
-		if ($permission === False) {
-			return $this->reportError ( "Error: you have no permission to add effects" );
-		}
-		
-		$output = $this->getOutput ();
-		$baselink = $this->GetBaseLink ();
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
 		$id = $this->GetRuleId();
 		
-		$output->addHTML ( "<a href='$baselink/editrule?ruleid=$id'>Rule #$id</a>" );
-		$output->addHTML ( "<h3>Adding New Effect For Rule #$id</h3>" );
-		$output->addHTML ( "<form action='$baselink/savenewffect?ruleid=$id' method='POST'>" );
+		if (!$this->LoadRule( $id )) return $this->reportError("Error: Failed to load rule #id!");
 		
-		$this->OutputVersionListHtml( 'version', '1' );
+		$output->addHTML( "<a href='$baselink/editrule?ruleid=$id'>Rule #$id</a>" );
+		$output->addHTML( "<h3>Adding New Effect For Rule #$id</h3>" );
+		$output->addHTML( "<form action='$baselink/saveneweffect?ruleid=$id' method='POST'>" );
 		
-		$this->laodStatIds ();
-		$output->addHTML ( "<label for='statId'>Stat Id </label>" );
-		$output->addHTML ( "<input list='statIds' id='statId' name='statId'>" );
-		$output->addHTML ( "<datalist id='statIds' name='statId'>" );
-		foreach ( $this->ids as $id ) {
-			$statIdVal = $this->escapeHtml( $id ['statId'] );
-			$output->addHTML ( "<option value='$statIdVal'>$statIdVal</option>" );
+		$version = $this->rule['version'];
+		$this->OutputVersionListHtml( 'version', $version );
+		$output->addHTML( "<br/>" );
+		
+		if (!$this->LoadStatIds()) return $this->reportError("Error: Failed to load statIds!");
+		
+		$output->addHTML( "<label for='statId'>Stat Id</label>" );
+		$output->addHTML( "<input list='statIds' id='statId' name='statId'>" );
+		$output->addHTML( "<datalist id='statIds' name='statId'>" );
+		
+		foreach ( $this->ids as $id )
+		{
+			$statIdValue = $this->escapeHtml( $id ['statId'] );
+			$output->addHTML( "<option value='$statIdValue'>$statIdValue</option>" );
 		}
-		$output->addHTML ( "</datalist><br />" );
 		
-		$output->addHTML ( "<label for='value'>Value </label>" );
-		$output->addHTML ( "<input type='text' id='value' name='value'><br>" );
-		$output->addHTML ( "<label for='display'>Display </label>" );
-		$output->addHTML ( "<input type='text' id='display' name='display'><br>" );
-		$output->addHTML ( "<label for='category'>Category </label>" );
-		$output->addHTML ( "<input type='text' id='category' name='category'><br>" );
-		$output->addHTML ( "<label for='combineAs'>Combine As </label>" );
-		$output->addHTML ( "<input type='text' id='combineAs' name='combineAs'><br>" );
+		$output->addHTML( "</datalist><br />" );
 		
-		$this->rounds ( 'round', '' );
+		$output->addHTML( "<label for='value'>Value</label>" );
+		$output->addHTML( "<input type='text' id='value' name='value'><br>" );
+		$output->addHTML( "<label for='display'>Display</label>" );
+		$output->addHTML( "<input type='text' id='display' name='display'><br>" );
+		$output->addHTML( "<label for='category'>Category</label>" );
+		$output->addHTML( "<input type='text' id='category' name='category'><br>" );
+		$output->addHTML( "<label for='combineAs'>Combine As</label>" );
+		$output->addHTML( "<input type='text' id='combineAs' name='combineAs'><br>" );
 		
-		$output->addHTML ( "<label for='factorValue'>Factor Value </label>" );
-		$output->addHTML ( "<input type='text' id='factorValue' name='factorValue'><br>" );
-		$output->addHTML ( "<label for='statDesc'>Stat Desc </label>" );
-		$output->addHTML ( "<input type='text' id='statDesc' name='statDesc'><br>" );
+		$this->OutputRoundsListHtml( 'round', '' );
 		
-		$this->loadBuffIds ();
-		$output->addHTML ( "<label for='buffId'>Buff Id </label>" );
-		$output->addHTML ( "<select name='buffId' id='buffId'>" );
-		foreach ( $this->buffIds as $buffIdVal ) {
-			$optionVal = $this->escapeHtml( $buffIdVal ['nameId'] );
-			if ($optionVal != '') {
-				$output->addHTML ( "<option value='$optionVal'>$optionVal</option>" );
-			}
-		}
-		$output->addHTML ( "</select><br />" );
+		$output->addHTML( "<label for='factorValue'>Factor Value</label>" );
+		$output->addHTML( "<input type='text' id='factorValue' name='factorValue'><br>" );
+		$output->addHTML( "<label for='statDesc'>Stat Desc</label>" );
+		$output->addHTML( "<input type='text' id='statDesc' name='statDesc'><br>" );
 		
-		$output->addHTML ( "<label for='regexVar'>Regex Var </label>" );
-		$output->addHTML ( "<input type='text' id='regexVar' name='regexVar' size='60'>" );
-		$output->addHTML ( "<p class='errorMsg'></p>" );
+		$this->OutputBuffListHtml('buffId', '');
 		
-		$output->addHTML ( "<br><input type='submit' value='Save Effect' class='submit_btn'>" );
+		$output->addHTML( "<br/><label for='regexVar'>Regex Variable</label>" );
+		$output->addHTML( "<input type='text' id='regexVar' name='regexVar'>" );
+		$output->addHTML( "<p class='errorMsg'></p>" );
 		
-		$output->addHTML ( "</form>" );
+		$output->addHTML( "<br><input type='submit' value='Save Effect' class='submit_btn'>" );
+		
+		$output->addHTML( "</form>" );
 	}
 	
 	
-	public function loadEffect($effectId) {
+	public function LoadEffect($effectId)
+	{
 		$effectId = $this->db->real_escape_string( $effectId );
-		$query = "SELECT * FROM effects WHERE effectId = '$effectId';";
-		$effects_result = $this->db->query ( $query );
+		$query = "SELECT * FROM effects WHERE id = '$effectId';";
+		$effects_result = $this->db->query( $query );
 		
 		if ($effects_result === false) {
-			return $this->reportError ( "Error: failed to load effect from database" );
+			return $this->reportError( "Error: failed to load effect from database" );
 		}
 		
 		$row = [ ];
-		$row [] = $effects_result->fetch_assoc ();
-		$this->effect = $row [0];
+		$row[] = $effects_result->fetch_assoc ();
+		$this->effect = $row[0];
 		
 		return true;
 	}
 	
 	
-	public function loadBuffIds() {
+	public function LoadBuffIds()
+	{
+		if ($this->hasLoadedBuffIds) return true;
+		
 		$query = "SELECT nameId FROM rules where ruleType='buff';";
-		$result = $this->db->query ( $query );
 		
-		if ($result === false) {
-			return $this->reportError ( "Error: failed to load buffs from database" );
+		$result = $this->db->query( $query );
+		if ($result === false) return $this->reportError( "Error: failed to load buffs from database" );
+		
+		$this->buffIds = [];
+		
+		while ( $data = $result->fetch_assoc() )
+		{
+			$this->buffIds[] = $data;
 		}
 		
-		$this->buffIds = [ ];
+		sort($this->buffIds);
 		
-		while ( $data = mysqli_fetch_assoc ( $result ) ) {
-			$this->buffIds [] = $data;
-		}
-		
+		$this->hasLoadedBuffIds = false;
 		return true;
 	}
 	
 	
-	public function OutputEditEffectForm() {
-		$permission = $this->canUserEdit ();
+	public function OutputEditEffectForm()
+	{
+		$permission = $this->canUserEdit();
+		if ($permission === false) return $this->reportError( "Error: you have no permission to edit effects" );
 		
-		if ($permission === False) {
-			return $this->reportError ( "Error: you have no permission to edit effects" );
-		}
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
+		$req = $this->getRequest();
 		
-		$output = $this->getOutput ();
-		$baselink = $this->GetBaseLink ();
-		$req = $this->getRequest ();
-		
-		$effectId = $req->getVal ( 'effectid' );
+		$effectId = $req->getVal( 'effectid' );
 		$ruleId = $this->GetRuleId();
 		
-		$this->loadEffect ( $effectId );
+		if (!$this->LoadEffect( $effectId )) return $this->reportError("Error: Failed to load effect #$effectId!");
 		
-		$version = $this->escapeHtml( $this->effect ['version'] );
-		$statId = $this->escapeHtml( $this->effect ['statId'] );
-		$value = $this->escapeHtml( $this->effect ['value'] );
-		$display = $this->escapeHtml( $this->effect ['display'] );
-		$category = $this->escapeHtml( $this->effect ['category'] );
-		$combineAs = $this->escapeHtml( $this->effect ['combineAs'] );
-		$round = $this->escapeHtml( $this->effect ['roundNum'] );
-		$factorValue = $this->escapeHtml( $this->effect ['factorValue'] );
-		$statDesc = $this->escapeHtml( $this->effect ['statDesc'] );
-		$buffId = $this->escapeHtml( $this->effect ['buffId'] );
-		$regexVar = $this->escapeHtml( $this->effect ['regexVar'] );
+		$version = $this->escapeHtml( $this->effect['version'] );
+		$statId = $this->escapeHtml( $this->effect['statId'] );
+		$value = $this->escapeHtml( $this->effect['value'] );
+		$display = $this->escapeHtml( $this->effect['display'] );
+		$category = $this->escapeHtml( $this->effect['category'] );
+		$combineAs = $this->escapeHtml( $this->effect['combineAs'] );
+		$round = $this->escapeHtml( $this->effect['roundNum'] );
+		$factorValue = $this->escapeHtml( $this->effect['factorValue'] );
+		$statDesc = $this->escapeHtml( $this->effect['statDesc'] );
+		$buffId = $this->escapeHtml( $this->effect['buffId'] );
+		$regexVar = $this->escapeHtml( $this->effect['regexVar'] );
 		
-		$output->addHTML ( "<a href='$baselink/showrules'>Show Rules : </a>" );
-		$output->addHTML ( "<a href='$baselink/editrule?ruleid=$ruleId'>Rule #$ruleId</a><br>" );
-		$output->addHTML ( "<h3>Editing Effect #$effectId for Rule #$ruleId</h3>" );
-		$output->addHTML ( "<form action='$baselink/saveediteffectform?effectid=$effectId&ruleid=$ruleId' method='POST'>" );
+		$output->addHTML( "<a href='$baselink/showrules'>Show Rules : </a>" );
+		$output->addHTML( "<a href='$baselink/editrule?ruleid=$ruleId'>Rule #$ruleId</a><br>" );
+		$output->addHTML( "<h3>Editing Effect #$effectId for Rule #$ruleId</h3>" );
+		$output->addHTML( "<form action='$baselink/saveediteffectform?effectid=$effectId&ruleid=$ruleId' method='POST'>" );
 		
 		$this->OutputVersionListHtml( 'edit_version', $version );
+		$output->addHTML( "<br/>" );
 		
-		$this->laodStatIds ();
-		$output->addHTML ( "<label for='edit_statId'>Stat Id </label>" );
-		$output->addHTML ( "<input list='edit_statIds' id='edit_statId' name='edit_statId' value='$statId'>" );
-		$output->addHTML ( "<datalist id='edit_statIds' name='edit_statId'>" );
-		foreach ( $this->ids as $id ) {
-			$statIdVal = $this->escapeHtml( $id ['statId'] );
-			$output->addHTML ( "<option value='$statIdVal'>$statIdVa</option>" );
+		if (!$this->LoadStatIds()) return $this->reportError("Error: Failed to load statIds!");
+		
+		$output->addHTML( "<label for='edit_statId'>Stat Id</label>" );
+		$output->addHTML( "<input list='edit_statIds' id='edit_statId' name='edit_statId' value='$statId'>" );
+		$output->addHTML( "<datalist id='edit_statIds' name='edit_statId'>" );
+		
+		foreach ( $this->ids as $id )
+		{
+			$statIdValue = $this->escapeHtml( $id['statId'] );
+			$output->addHTML( "<option value='$statIdValue'>$statIdValue</option>" );
 		}
-		$output->addHTML ( "</datalist><br />" );
+		$output->addHTML( "</datalist><br />" );
 		
-		$output->addHTML ( "<label for='edit_value'>Value </label>" );
-		$output->addHTML ( "<input type='text' id='edit_value' name='edit_value' value='$value'><br>" );
-		$output->addHTML ( "<label for='edit_display'>Display </label>" );
-		$output->addHTML ( "<input type='text' id='edit_display' name='edit_display' value='$display'><br>" );
-		$output->addHTML ( "<label for='edit_category'>Category </label>" );
-		$output->addHTML ( "<input type='text' id='edit_category' name='edit_category' value='$category'><br>" );
-		$output->addHTML ( "<label for='edit_combineAs'>CombineAs </label>" );
-		$output->addHTML ( "<input type='text' id='edit_combineAs' name='edit_combineAs' value='$combineAs'><br>" );
+		$output->addHTML( "<label for='edit_value'>Value</label>" );
+		$output->addHTML( "<input type='text' id='edit_value' name='edit_value' value='$value'><br>" );
+		$output->addHTML( "<label for='edit_display'>Display</label>" );
+		$output->addHTML( "<input type='text' id='edit_display' name='edit_display' value='$display'><br>" );
+		$output->addHTML( "<label for='edit_category'>Category</label>" );
+		$output->addHTML( "<input type='text' id='edit_category' name='edit_category' value='$category'><br>" );
+		$output->addHTML( "<label for='edit_combineAs'>CombineAs</label>" );
+		$output->addHTML( "<input type='text' id='edit_combineAs' name='edit_combineAs' value='$combineAs'><br>" );
 		
-		$this->rounds ( 'edit_round', $round );
+		$this->OutputRoundsListHtml( 'edit_round', $round );
 		
-		$output->addHTML ( "<label for='edit_factorValue'>Factor Value </label>" );
-		$output->addHTML ( "<input type='text' id='edit_factorValue' name='edit_factorValue' value='$factorValue'><br>" );
-		$output->addHTML ( "<label for='edit_statDesc'>Stat Desc </label>" );
-		$output->addHTML ( "<input type='text' id='edit_statDesc' name='edit_statDesc' value='$statDesc'><br>" );
+		$output->addHTML( "<label for='edit_factorValue'>Factor Value</label>" );
+		$output->addHTML( "<input type='text' id='edit_factorValue' name='edit_factorValue' value='$factorValue'><br>" );
+		$output->addHTML( "<label for='edit_statDesc'>Stat Desc</label>" );
+		$output->addHTML( "<input type='text' id='edit_statDesc' name='edit_statDesc' value='$statDesc'><br>" );
 		
-		$this->loadBuffIds ();
-		$output->addHTML ( "<label for='edit_buffId'>Buff Id </label>" );
-		$output->addHTML ( "<select name='edit_buffId' id='edit_buffId'>" );
-		foreach ( $this->buffIds as $buffIdVal ) {
-			$optionVal = $this->escapeHtml( $buffIdVal ['nameId'] );
-			if ($optionVal != '') {
-				$output->addHTML ( "<option value='$optionVal'>$optionVal</option>" );
-			}
-		}
-		$output->addHTML ( "</select><br />" );
+		$this->OutputBuffListHtml('edit_buffId', $this->effect['buffId']);
 		
-		$output->addHTML ( "<label for='edit_regexVar'>Regex Var </label>" );
-		$output->addHTML ( "<input type='text' id='edit_regexVar' name='edit_regexVar' value='$regexVar' size='60'>" );
-		$output->addHTML ( "<p class='errorMsg'></p>" );
+		$output->addHTML( "<br/><label for='edit_regexVar'>Regex Variable</label>" );
+		$output->addHTML( "<input type='text' id='edit_regexVar' name='edit_regexVar' value='$regexVar'>" );
+		$output->addHTML( "<p class='errorMsg'></p>" );
 		
-		$output->addHTML ( "<br><input type='submit' value='Save Edits' class='submit_btn'>" );
-		$output->addHTML ( "</form><br>" );
+		$output->addHTML( "<br><input type='submit' value='Save Edits' class='submit_btn'>" );
+		$output->addHTML( "</form><br>" );
 	}
 	
 	
-	public function SaveEditEffectForm() {
-		$permission = $this->canUserEdit ();
+	public function SaveEditEffectForm()
+	{
+		$permission = $this->canUserEdit();
+		if ($permission === false) return $this->reportError( "Error: you have no permission to edit effects" );
 		
-		if ($permission === False) {
-			return $this->reportError ( "Error: you have no permission to edit effects" );
-		}
-		
-		$output = $this->getOutput ();
-		$baselink = $this->GetBaseLink ();
-		$req = $this->getRequest ();
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
+		$req = $this->getRequest();
 		
 		$ruleId = $this->GetRuleId();
-		$effectId = $req->getVal ( 'effectid' );
+		$effectId = $req->getVal( 'effectid' );
+		if ($effectId <= 0) return $this->reportError( "Error: invalid effect ID" );
 		
-		$effectId = $this->db->real_escape_string( $effectId );
-		
-		if ($effectId <= 0) {
-			return $this->reportError ( "Error: invalid effect ID" );
-		}
-		
-		$new_version = $req->getVal ( 'edit_version' );
-		$new_statId = $req->getVal ( 'edit_statId' );
-		$new_value = $req->getVal ( 'edit_value' );
-		$new_display = $req->getVal ( 'edit_display' );
-		$new_category = $req->getVal ( 'edit_category' );
-		$new_combineAs = $req->getVal ( 'edit_combineAs' );
-		$new_round = $req->getVal ( 'edit_round' );
-		$new_factorValue = $req->getVal ( 'edit_factorValue' );
-		$new_statDesc = $req->getVal ( 'edit_statDesc' );
-		$new_buffId = $req->getVal ( 'edit_buffId' );
-		$new_regexVar = $req->getVal ( 'edit_regexVar' );
+		$new_version = $req->getVal( 'edit_version' );
+		$new_statId = $req->getVal( 'edit_statId' );
+		$new_value = $req->getVal( 'edit_value' );
+		$new_display = $req->getVal( 'edit_display' );
+		$new_category = $req->getVal( 'edit_category' );
+		$new_combineAs = $req->getVal( 'edit_combineAs' );
+		$new_round = $req->getVal( 'edit_round' );
+		$new_factorValue = trim($req->getVal( 'edit_factorValue' ));
+		$new_statDesc = $req->getVal( 'edit_statDesc' );
+		$new_buffId = $req->getVal( 'edit_buffId' );
+		$new_regexVar = $req->getVal( 'edit_regexVar' );
 		
 		$values = [ ];
 		
-		$values [] = "version='" . $this->db->real_escape_string( $new_version ) . "'";
-		$values [] = "statId='" . $this->db->real_escape_string( $new_statId ) . "'";
-		$values [] = "value='" . $this->db->real_escape_string( $new_value ) . "'";
-		$values [] = "display='" . $this->db->real_escape_string( $new_display ) . "'";
-		$values [] = "category='" . $this->db->real_escape_string( $new_category ) . "'";
-		$values [] = "combineAs='" . $this->db->real_escape_string( $new_combineAs ) . "'";
-		$values [] = "roundNum='" . $this->db->real_escape_string( $new_round ) . "'";
-		$values [] = "factorValue='" . $this->db->real_escape_string( $new_factorValue ) . "'";
-		$values [] = "statDesc='" . $this->db->real_escape_string( $new_statDesc ) . "'";
-		$values [] = "buffId='" . $this->db->real_escape_string( $new_buffId ) . "'";
-		$values [] = "regexVar='" . $this->db->real_escape_string( $new_regexVar ) . "'";
+		$values[] = "version='" . $this->db->real_escape_string( $new_version ) . "'";
+		$values[] = "statId='" . $this->db->real_escape_string( $new_statId ) . "'";
+		$values[] = "value='" . $this->db->real_escape_string( $new_value ) . "'";
+		$values[] = "display='" . $this->db->real_escape_string( $new_display ) . "'";
+		$values[] = "category='" . $this->db->real_escape_string( $new_category ) . "'";
+		$values[] = "combineAs='" . $this->db->real_escape_string( $new_combineAs ) . "'";
+		$values[] = "roundNum='" . $this->db->real_escape_string( $new_round ) . "'";
 		
-		$updateResult = $this->UpdateQueries ( 'effects', $values, 'effectId', $effectId );
-		if (!$updateResult) return $this->reportError("Error: Failed to update record in effects!");
+		if ($new_factorValue == '')
+			$values[] = "factorValue=NULL";
+		else
+			$values[] = "factorValue='" . $this->db->real_escape_string( $new_factorValue ) . "'";
 		
-		$output->addHTML ( "<p>Edits saved for effect #$effectId</p><br>" );
-		$output->addHTML ( "<a href='$baselink/editrule?ruleid=$ruleId'>Rule #$ruleId</a><br>" );
+		$values[] = "statDesc='" . $this->db->real_escape_string( $new_statDesc ) . "'";
+		$values[] = "buffId='" . $this->db->real_escape_string( $new_buffId ) . "'";
+		$values[] = "regexVar='" . $this->db->real_escape_string( $new_regexVar ) . "'";
+		
+		$effectId = $this->db->real_escape_string( $effectId );
+		
+		$updateResult = $this->UpdateQueries ( 'effects', $values, 'id', $effectId );
+		if (!$updateResult) return $this->reportError("Error: Failed to save effect record!");
+		
+		$output->addHTML( "<p>Successfully saved effect #$effectId!</p><br>" );
+		$output->addHTML( "<a href='$baselink/showrules'>Show Rules</a> : <a href='$baselink/editrule?ruleid=$ruleId'>Edit Rule #$ruleId</a> <br>" );
 	}
 	
 	
-	public function GetEffectId() {
-		$req = $this->getRequest ();
-		$effectId = $req->getVal ( 'effectid' );
+	public function GetEffectId()
+	{
+		$req = $this->getRequest();
+		$effectId = $req->getVal( 'effectid' );
 		return $effectId;
 	}
 	
 	
-	// -------------------computedStats functions---------------
-	public function loadComputedStats() {
-		$query = "SELECT * FROM computedStats;";
-		$computedStats_result = $this->db->query ( $query );
-		
-		if ($computedStats_result === false) {
-			return $this->reportError ( "Error: failed to load computed Stats from database" );
+	public function LoadComputedStats($version = '')
+	{
+		if ($version == '')
+		{
+			$query = "SELECT * FROM computedStats;";
+		}
+		else
+		{
+			$safeVersion = $this->db->real_escape_string($version);
+			$query = "SELECT * FROM computedStats WHERE version='$safeVersion';";
 		}
 		
-		$this->computedStatsDatas = [ ];
+		$computedStats_result = $this->db->query( $query );
 		
-		while ( $row = mysqli_fetch_assoc ( $computedStats_result ) ) {
-			$this->computedStatsDatas [] = $row;
+		if ($computedStats_result === false) {
+			return $this->reportError( "Error: failed to load computed Stats from database" );
+		}
+		
+		$this->computedStatsDatas = [];
+		
+		while ( $row = $computedStats_result->fetch_assoc() )
+		{
+			$this->computedStatsDatas[] = $row;
 		}
 		
 		return true;
 	}
 	
 	
-	public function OutputShowComputedStatsTable() {
-		$this->loadComputedStats ();
+	public function OutputShowComputedStatsTable()
+	{
+		if (!$this->LoadComputedStats()) return $this->reportError("Error: Failed to load computed stats!");
 		
 		$output = $this->getOutput ();
 		$baselink = $this->GetBaseLink ();
 		
-		$output->addHTML ( "<a href='$baselink'>Home</a>" );
-		$output->addHTML ( "<h3>Showing All Computed Stats</h3>" );
+		$output->addHTML( "<a href='$baselink'>Home</a> : <a href='$baselink/addcomputedstat'>Add New Stat</a>" );
+		$output->addHTML( "<h3>Showing All Computed Stats</h3>" );
 		
-		$output->addHTML ( "<table class='wikitable sortable jquery-tablesorter' id='computedStats'><thead>" );
+		$output->addHTML( "<table class='wikitable sortable jquery-tablesorter' id='computedStats'><thead>" );
 		
-		$output->addHTML ( "<tr>" );
-		$output->addHTML ( "<th>Edit</th>" );
-		$output->addHTML ( "<th>Stat Id</th>" );
-		$output->addHTML ( "<th>Version</th>" );
-		$output->addHTML ( "<th>Round</th>" );
-		$output->addHTML ( "<th>Class</th>" );
-		$output->addHTML ( "<th>Comment</th>" );
-		$output->addHTML ( "<th>Min Value</th>" );
-		$output->addHTML ( "<th>Max Value</th>" );
-		$output->addHTML ( "<th>Defer Level</th>" );
-		$output->addHTML ( "<th>Display</th>" );
-		$output->addHTML ( "<th>Compute</th>" );
-		$output->addHTML ( "<th>Idx</th>" );
-		$output->addHTML ( "<th>Category</th>" );
-		$output->addHTML ( "<th>Suffix</th>" );
-		$output->addHTML ( "<th>Depends On</th>" );
-		$output->addHTML ( "<th>Delete</th>" );
-		$output->addHTML ( "</tr></thead><tbody>" );
+		$output->addHTML( "<tr>" );
+		$output->addHTML( "<th>Edit</th>" );
+		$output->addHTML( "<th>Stat Id</th>" );
+		$output->addHTML( "<th>Version</th>" );
+		$output->addHTML( "<th>Round</th>" );
+		$output->addHTML( "<th>Title</th>" );
+		$output->addHTML( "<th>Class</th>" );
+		$output->addHTML( "<th>Comment</th>" );
+		$output->addHTML( "<th>Min Value</th>" );
+		$output->addHTML( "<th>Max Value</th>" );
+		$output->addHTML( "<th>Defer Level</th>" );
+		$output->addHTML( "<th>Display</th>" );
+		$output->addHTML( "<th>Compute</th>" );
+		$output->addHTML( "<th>Index</th>" );
+		$output->addHTML( "<th>Category</th>" );
+		$output->addHTML( "<th>Suffix</th>" );
+		$output->addHTML( "<th>Depends On</th>" );
+		$output->addHTML( "<th>Delete</th>" );
+		$output->addHTML( "</tr></thead><tbody>" );
 		
-		foreach ( $this->computedStatsDatas as $computedStatsData ) {
+		foreach ( $this->computedStatsDatas as $computedStatsData )
+		{
+			$id = $this->escapeHtml( $computedStatsData['id'] );
+			$statId = $this->escapeHtml( $computedStatsData['statId'] );
+			$version = $this->escapeHtml( $computedStatsData['version'] );
+			$roundNum = $this->escapeHtml( $computedStatsData['roundNum'] );
+			$title = $this->escapeHtml( $computedStatsData['title'] );
+			$addClass = $this->escapeHtml( $computedStatsData['addClass'] );
+			$comment = $this->escapeHtml( $computedStatsData['comment'] );
+			$minimumValue = $this->escapeHtml( $computedStatsData['minimumValue'] );
+			$maximumValue = $this->escapeHtml( $computedStatsData['maximumValue'] );
+			$deferLevel = $this->escapeHtml( $computedStatsData['deferLevel'] );
+			$display = $this->escapeHtml( $computedStatsData['display'] );
+			$idx = $this->escapeHtml( $computedStatsData['idx'] );
+			$category = $this->escapeHtml( $computedStatsData['category'] );
+			$suffix = $this->escapeHtml( $computedStatsData['suffix'] );
 			
-			$statId = $this->escapeHtml( $computedStatsData ['statId'] );
-			$version = $this->escapeHtml( $computedStatsData ['version'] );
-			$roundNum = $this->escapeHtml( $computedStatsData ['roundNum'] );
-			$addClass = $this->escapeHtml( $computedStatsData ['addClass'] );
-			$comment = $this->escapeHtml( $computedStatsData ['comment'] );
-			$minimumValue = $this->escapeHtml( $computedStatsData ['minimumValue'] );
-			$maximumValue = $this->escapeHtml( $computedStatsData ['maximumValue'] );
-			$deferLevel = $this->escapeHtml( $computedStatsData ['deferLevel'] );
-			$display = $this->escapeHtml( $computedStatsData ['display'] );
-			$idx = $this->escapeHtml( $computedStatsData ['idx'] );
-			$category = $this->escapeHtml( $computedStatsData ['category'] );
-			$suffix = $this->escapeHtml( $computedStatsData ['suffix'] );
-			
-			if ($computedStatsData['compute'] == '') {
+			if ($computedStatsData['compute'] == '')
+			{
 				$data = [ ];
-			} else {
-				$data = json_decode ( $computedStatsData['compute'], true );
+			}
+			else
+			{
+				$data = json_decode( $computedStatsData['compute'], true );
 				if ($data == null) $data = [];	//TODO: Error handling?
 				if (!is_array($data)) $data = ['Error: Not Array!', $computedStatsData['compute']];
+				
+				foreach ($data as $i => $d)
+				{
+					$data[$i] = trim($d);
+				}
+			
+			array_filter($data, 'strlen');
 			}
 			
 			$computedStatsData['compute'] = $data;
 			
-			if ($computedStatsData['dependsOn'] == '') {
+			if ($computedStatsData['dependsOn'] == '')
+			{
 				$datas = [ ];
-			} else {
+			} else
+			{
 				$datas = json_decode ( $computedStatsData['dependsOn'], true );
 				if ($datas == null) $datas = [];	//TODO: Error handling?
 				if (!is_array($datas)) $datas = ['Error: Not Array!', $computedStatsData['dependsOn']];
+				
+				foreach ($datas as $i => $d)
+				{
+					$datas[$i] = trim($d);
+				}
+			
+				array_filter($datas, 'strlen');
 			}
 			
 			$computedStatsData['dependsOn'] = $datas;
 			
-			$output->addHTML ( "<tr>" );
-			$output->addHTML ( "<td><a href='$baselink/editcomputedstat?statid=$statId'>Edit</a></td>" );
-			$output->addHTML ( "<td>$statId</td>" );
-			$output->addHTML ( "<td>$version</td>" );
-			$output->addHTML ( "<td>$roundNum</td>" );
-			$output->addHTML ( "<td>$addClass</td>" );
-			$output->addHTML ( "<td>$comment</td>" );
-			$output->addHTML ( "<td>$minimumValue</td>" );
-			$output->addHTML ( "<td>$maximumValue</td>" );
-			$output->addHTML ( "<td>$deferLevel</td>" );
-			$output->addHTML ( "<td>$display</td>" );
+			$output->addHTML( "<tr>" );
+			$output->addHTML( "<td><a href='$baselink/editcomputedstat?statid=$id'>Edit</a></td>" );
+			$output->addHTML( "<td>$statId</td>" );
+			$output->addHTML( "<td>$version</td>" );
+			$output->addHTML( "<td>$roundNum</td>" );
+			$output->addHTML( "<td>$title</td>" );
+			$output->addHTML( "<td>$addClass</td>" );
+			$output->addHTML( "<td>$comment</td>" );
+			$output->addHTML( "<td>$minimumValue</td>" );
+			$output->addHTML( "<td>$maximumValue</td>" );
+			$output->addHTML( "<td>$deferLevel</td>" );
+			$output->addHTML( "<td>$display</td>" );
 			
-			$output->addHTML ( "<td>" );
+			$output->addHTML( "<td>" );
 			
-			foreach ( $computedStatsData['compute'] as $key => $val ) {
-				$output->addHTML ( "$val <br />" );
+			foreach ( $computedStatsData['compute'] as $key => $val )
+			{
+				$output->addHTML( "$val <br />" );
 			}
 			
-			$output->addHTML ( "</td>" );
+			$output->addHTML( "</td>" );
 			
-			$output->addHTML ( "<td>$idx</td>" );
-			$output->addHTML ( "<td>$category</td>" );
-			$output->addHTML ( "<td>$suffix</td>" );
+			$output->addHTML( "<td>$idx</td>" );
+			$output->addHTML( "<td>$category</td>" );
+			$output->addHTML( "<td>$suffix</td>" );
 			
-			$output->addHTML ( "<td>" );
+			$output->addHTML( "<td>" );
 			
-			foreach ( $computedStatsData['dependsOn'] as $key => $val ) {
-				$output->addHTML ( "$val <br />" );
+			foreach ( $computedStatsData['dependsOn'] as $key => $val )
+			{
+				$output->addHTML( "$val <br />" );
 			}
 			
-			$output->addHTML ( "</td>" );
+			$output->addHTML( "</td>" );
 			
-			$output->addHTML ( "<td><a href='$baselink/deletcomputedstat?statid=$statId'>Delete</a></td>" );
+			$output->addHTML( "<td><a href='$baselink/deletcomputedstat?statid=$id'>Delete</a></td>" );
 		}
 		
-		$output->addHTML ( "</table>" );
+		$output->addHTML( "</table>" );
 	}
 	
 	
-	public function OutputAddComputedStatsForm() {
-		$permission = $this->canUserEdit ();
+	public function OutputAddComputedStatsForm()
+	{
+		$permission = $this->canUserEdit();
+		if ($permission === false) return $this->reportError( "Error: you have no permission to add computed stats" );
 		
-		if ($permission === False) {
-			return $this->reportError ( "Error: you have no permission to add computed stats" );
-		}
-		$output = $this->getOutput ();
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
 		
-		$baselink = $this->GetBaseLink ();
+		$output->addHTML( "<h3>Adding New Computed Stat</h3>" );
+		$output->addHTML( "<form action='$baselink/savenewcomputedstat' method='POST'>" );
 		
-		$output->addHTML ( "<h3>Adding New Computed Stat</h3>" );
-		$output->addHTML ( "<form action='$baselink/savenewcomputedstat' method='POST'>" );
-		
-		$output->addHTML ( "<label for='statId'>Stat Id </label>" );
-		$output->addHTML ( "<input type='text' id='statId' name='statId'><br>" );
+		$output->addHTML( "<label title='Should be a unique name composed of letters.' for='statId'>Stat Id</label>" );
+		$output->addHTML( "<input type='text' id='statId' name='statId'><br>" );
 		
 		$this->OutputVersionListHtml( 'version', '1' );
-		$this->rounds ( 'round', '' );
+		$output->addHTML( "<br/>" );
+		$this->OutputRoundsListHtml( 'round', '' );
 		
-		$output->addHTML ( "<label for='addClass'>Class </label>" );
-		$output->addHTML ( "<input type='text' id='addClass' name='addClass'><br>" );
-		$output->addHTML ( "<label for='comment'>Comment </label>" );
-		$output->addHTML ( "<input type='text' id='comment' name='comment'><br>" );
-		$output->addHTML ( "<label for='minimumValue'>Min Value </label>" );
-		$output->addHTML ( "<input type='number' id='minimumValue' name='minimumValue'><br>" );
-		$output->addHTML ( "<label for='maximumValue'>Max Value </label>" );
-		$output->addHTML ( "<input type='number' id='maximumValue' name='maximumValue'><br>" );
-		$output->addHTML ( "<label for='deferLevel'>Defer Level </label>" );
-		$output->addHTML ( "<input type='text' id='deferLevel' name='deferLevel'><br>" );
-		$output->addHTML ( "<label for='display'>Display </label>" );
-		$output->addHTML ( "<input type='text' id='display' name='display'><br>" );
+		$output->addHTML( "<label title='Optional CSS class name added to the stat block.' for='addClass'>Class</label>" );
+		$output->addHTML( "<input type='text' id='addClass' name='addClass'><br>" );
+		$output->addHTML( "<label title='Note added to the detail stat popup.' for='comment'>Comment</label>" );
+		$output->addHTML( "<input type='text' id='comment' name='comment'><br>" );
+		$output->addHTML( "<label title='Displayed stat name.' for='edit_title'>Title</label>" );
+		$output->addHTML( "<input type='text' id='edit_title' name='edit_title' value='$title' size='60'><br>" );
+		$output->addHTML( "<label title='Optional minimum value for the stat.' for='minimumValue'>Min Value</label>" );
+		$output->addHTML( "<input type='number' id='minimumValue' name='minimumValue'><br>" );
+		$output->addHTML( "<label title='Optional maximum value for the stat.' for='maximumValue'>Max Value</label>" );
+		$output->addHTML( "<input type='number' id='maximumValue' name='maximumValue'><br>" );
+		$output->addHTML( "<label title='Optional integer used for deferring calculation of the stat (most stats have a value of 0, higher values defer for longer).' for='deferLevel'>Defer Level</label>" );
+		$output->addHTML( "<input type='text' id='deferLevel' name='deferLevel'><br>" );
+		$output->addHTML( "<label title='Change how the stat value is displayed (%, %2, round2, resist, critresist, elementresist, ...).' for='display'>Display</label>" );
+		$output->addHTML( "<input type='text' id='display' name='display'><br>" );
 		
-		$output->addHTML ( "<label for='compute'>Compute </label>" );
-		$output->addHTML ( "<textarea id='compute' name='compute' class='txtArea' rows='15' cols='50'></textarea><br>" );
+		$output->addHTML( "<label title='Calculation formula for the stat in postfix form (one entry per line, each line can be a normal infix calculation as well).' for='compute'>Compute</label>" );
+		$output->addHTML( "<textarea id='compute' name='compute' class='txtArea' rows='15' cols='50'></textarea><br>" );
 		
-		$output->addHTML ( "<label for='idx'>Idx </label>" );
-		$output->addHTML ( "<input type='text' id='idx' name='idx'><br>" );
+		$output->addHTML( "<label title='Integer value that orders the stats in the list when output (starting at 1).' for='idx'>Index</label>" );
+		$output->addHTML( "<input type='text' id='idx' name='idx'><br>" );
 		
-		$output->addHTML ( "<label for='category'>Category </label>" );
+		$output->addHTML( "<label title='Which category to display the stat in.' for='category'>Category</label>" );
 		$this->OutputListHtml( '', $this->COMPUTED_STAT_CATEGORIES, 'category' );
+		$output->addHTML( "<br/>" );
 		
-		$output->addHTML ( "<label for='suffix'>Suffix </label>" );
-		$output->addHTML ( "<input type='text' id='suffix' name='suffix'><br>" );
-		$output->addHTML ( "<label for='dependsOn'>Depends On </label>" );
-		$output->addHTML ( "<textarea id='dependsOn' name='dependsOn' class='txtArea' rows='4' cols='50'></textarea><br>" );
+		$output->addHTML( "<label title='Optional suffix to append to the stat value.' for='suffix'>Suffix</label>" );
+		$output->addHTML( "<input type='text' id='suffix' name='suffix'><br>" );
+		$output->addHTML( "<label title='Optional list of stats that this stat depends on (one stat per line).' for='dependsOn'>Depends On</label>" );
+		$output->addHTML( "<textarea id='dependsOn' name='dependsOn' class='txtArea' rows='4' cols='50'></textarea><br>" );
 		
-		$output->addHTML ( "<br><input type='submit' value='Save computed Stat'>" );
-		$output->addHTML ( "</form>" );
+		$output->addHTML( "<br><input type='submit' value='Save computed Stat'>" );
+		$output->addHTML( "</form>" );
 	}
 	
 	
-	public function laodStatIds() {
-		$query = "SELECT statId FROM computedStats;";
-		$result = $this->db->query ( $query );
+	public function LoadStatIds()
+	{
+		$query = "SELECT DISTINCT statId FROM computedStats;";
+		$result = $this->db->query( $query );
 		
 		if ($result === false) {
-			return $this->reportError ( "Error: failed to load stat IDs from database" );
+			return $this->reportError( "Error: failed to load stat IDs from database" );
 		}
 		
 		$this->ids = [ ];
 		
-		while ( $row = mysqli_fetch_assoc ( $result ) ) {
-			$this->ids [] = $row;
+		while ( $row = $result->fetch_assoc() )
+		{
+			$this->ids[] = $row;
 		}
 		
 		return true;
 	}
 	
 	
-	public function SaveNewComputedStat() {
-		$permission = $this->canUserEdit ();
+	public function SaveNewComputedStat()
+	{
+		$permission = $this->canUserEdit();
+		if ($permission === false) return $this->reportError( "Error: you have no permission to add computed stats" );
 		
-		if ($permission === False) {
-			return $this->reportError ( "Error: you have no permission to add computed stats" );
-		}
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
+		$req = $this->getRequest();
 		
-		$output = $this->getOutput ();
-		$baselink = $this->GetBaseLink ();
-		$req = $this->getRequest ();
+		$input_statId = $req->getVal( 'statId' );
 		
-		$input_statId = $req->getVal ( 'statId' );
+		if (!$this->LoadStatIds()) return $this->reportError("Error: Failed to load statIds!");
 		
-		$this->laodStatIds ();
-		
-		foreach ( $this->ids as $id ) {
+		foreach ( $this->ids as $id )
+		{
 			$usedId = $this->escapeHtml( $id ['statId'] );
-			
-			if ($input_statId === $usedId) {
-				return $this->reportError ( "Error: statId '$input_statId' is already used" );
-			}
+			if ($input_statId === $usedId) return $this->reportError( "Error: statId '$input_statId' is already used" );
 		}
 		
-		$input_version = $req->getVal ( 'version' );
-		$input_roundNum = $req->getVal ( 'round' );
-		$input_addClass = $req->getVal ( 'addClass' );
-		$input_comment = $req->getVal ( 'comment' );
-		$input_minimumValue = $req->getVal ( 'minimumValue' );
-		$input_maximumValue = $req->getVal ( 'maximumValue' );
-		$input_deferLevel = $req->getVal ( 'deferLevel' );
-		$input_display = $req->getVal ( 'display' );
+		$input_version = $req->getVal( 'version' );
+		$input_roundNum = $req->getVal( 'round' );
+		$input_addClass = $req->getVal( 'addClass' );
+		$input_comment = $req->getVal( 'comment' );
+		$input_title = $req->getVal( 'title' );
+		$input_minimumValue = trim($req->getVal( 'minimumValue' ));
+		$input_maximumValue = trim($req->getVal( 'maximumValue' ));
+		$input_deferLevel = trim($req->getVal( 'deferLevel' ));
+		$input_display = $req->getVal( 'display' );
 		
-		$compute = $req->getVal ( 'compute' );
-		$compute_strings = explode ( "\n", $compute );
+		$compute = $req->getVal( 'compute' );
+		$compute = trim($compute);
+		$compute_strings = explode ( "\r\n", $compute );
 		$trimedStrings = array_map ( 'trim', $compute_strings );
 		$input_compute = json_encode ( $trimedStrings );
 		
-		$input_idx = $req->getVal ( 'idx' );
-		$input_category = $req->getVal ( 'category' );
-		$input_suffix = $req->getVal ( 'suffix' );
+		$input_idx = $req->getVal( 'idx' );
+		$input_category = $req->getVal( 'category' );
+		$input_suffix = $req->getVal( 'suffix' );
 		
-		$dependsOn = $req->getVal ( 'dependsOn' );
-		$dependsOn_strings = explode ( "\n", $dependsOn );
+			// TODO: Put into function?
+		$dependsOn = $req->getVal( 'dependsOn' );
+		$dependsOn = trim($dependsOn);
+		$dependsOn_strings = explode ( "\r\n", $dependsOn );
+		$dependsOn_strings = array_map( 'trim', $dependsOn_strings );
+		array_filter($dependsOn_strings);
 		$input_dependsOn = json_encode ( $dependsOn_strings );
 		
 		$cols = [ ];
 		$values = [ ];
-		$cols [] = 'statId';
-		$cols [] = 'version';
-		$cols [] = 'roundNum';
-		$cols [] = 'addClass';
-		$cols [] = 'comment';
-		$cols [] = 'minimumValue';
-		$cols [] = 'maximumValue';
-		$cols [] = 'deferLevel';
-		$cols [] = 'display';
-		$cols [] = 'compute';
-		$cols [] = 'idx';
-		$cols [] = 'category';
-		$cols [] = 'suffix';
-		$cols [] = 'dependsOn';
+		$cols[] = 'statId';
+		$cols[] = 'version';
+		$cols[] = 'roundNum';
+		$cols[] = 'addClass';
+		$cols[] = 'comment';
+		$cols[] = 'title';
+		$cols[] = 'minimumValue';
+		$cols[] = 'maximumValue';
+		$cols[] = 'deferLevel';
+		$cols[] = 'display';
+		$cols[] = 'compute';
+		$cols[] = 'idx';
+		$cols[] = 'category';
+		$cols[] = 'suffix';
+		$cols[] = 'dependsOn';
 		
-		$values [] = "'" . $this->db->real_escape_string( $input_statId ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_version ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_roundNum ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_addClass ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_comment ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_minimumValue ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_maximumValue ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_deferLevel ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_display ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_compute ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_idx ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_category ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_suffix ) . "'";
-		$values [] = "'" . $this->db->real_escape_string( $input_dependsOn ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $input_statId ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $input_title ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $input_version ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $input_roundNum ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $input_addClass ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $input_comment ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $input_title ) . "'";
+		
+		if ($input_minimumValue == '')
+			$values[] = "NULL";
+		else
+			$values[] = "'" . $this->db->real_escape_string( $input_minimumValue ) . "'";
+		
+		if ($input_maximumValue == '')
+			$values[] = "NULL";
+		else
+			$values[] = "'" . $this->db->real_escape_string( $input_maximumValue ) . "'";
+		
+		if ($input_deferLevel == '')
+			$values[] = "NULL";
+		else
+			$values[] = "'" . $this->db->real_escape_string( $input_deferLevel ) . "'";
+		
+		$values[] = "'" . $this->db->real_escape_string( $input_display ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $input_compute ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $input_idx ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $input_category ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $input_suffix ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $input_dependsOn ) . "'";
 		
 		$insertResult = $this->InsertQueries ( 'computedStats', $cols, $values );
 		if (!$insertResult) return $this->reportError("Error: Failed to insert record into computedStats!");
 		
-		$output->addHTML ( "<p>New computed Stat added</p><br>" );
-		$output->addHTML ( "<a href='$baselink'>Home</a>" );
+		$output->addHTML( "<a href='$baselink'>Home</a><br/>" );
+		$output->addHTML( "<p>New computed Stat added</p><br/>" );
 	}
 	
 	
-	public function LoadComputedStat($primaryKey) {
+	public function LoadComputedStat($primaryKey)
+	{
 		$primaryKey = $this->db->real_escape_string( $primaryKey );
-		$query = "SELECT * FROM computedStats WHERE statId= '$primaryKey';";
-		$computedStats_result = $this->db->query ( $query );
+		$query = "SELECT * FROM computedStats WHERE id='$primaryKey';";
+		$computedStats_result = $this->db->query( $query );
 		
 		if ($computedStats_result === false) {
-			return $this->reportError ( "Error: failed to load computed Stat from database" );
+			return $this->reportError( "Error: failed to load computed Stat from database" );
 		}
 		
 		$row = [ ];
-		$row [] = $computedStats_result->fetch_assoc ();
-		$this->computedStat = $row [0];
+		$row[] = $computedStats_result->fetch_assoc();
+		$this->computedStat = $row[0];
 		
 		return true;
 	}
 	
 	
-	public function OutputEditComputedStatForm() {
-		$permission = $this->canUserEdit ();
+	public function OutputEditComputedStatForm()
+	{
+		$permission = $this->canUserEdit();
+		if ($permission === false) return $this->reportError( "Error: you have no permission to edit computed stats" );
 		
-		if ($permission === False) {
-			return $this->reportError ( "Error: you have no permission to edit computed stats" );
-		}
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
+		$req = $this->getRequest();
 		
-		$output = $this->getOutput ();
-		$baselink = $this->GetBaseLink ();
-		$req = $this->getRequest ();
+		$id = $req->getVal( 'statid' );
 		
-		$statId = $req->getVal ( 'statid' );
+		if (!$this->LoadComputedStat( $id )) return $this->reportError("Error: Failed to load computed stat!");
 		
-		$this->LoadComputedStat ( $statId );
+		$statId = $this->escapeHtml( $this->computedStat['statId'] );
+		$version = $this->escapeHtml( $this->computedStat['version'] );
+		$round = $this->escapeHtml( $this->computedStat['roundNum'] );
+		$addClass = $this->escapeHtml( $this->computedStat['addClass'] );
+		$comment = $this->escapeHtml( $this->computedStat['comment'] );
+		$minimumValue = $this->escapeHtml( $this->computedStat['minimumValue'] );
+		$maximumValue = $this->escapeHtml( $this->computedStat['maximumValue'] );
+		$deferLevel = $this->escapeHtml( $this->computedStat['deferLevel'] );
+		$display = $this->escapeHtml( $this->computedStat['display'] );
+		$idx = $this->escapeHtml( $this->computedStat['idx'] );
+		$category = $this->escapeHtml( $this->computedStat['category'] );
+		$suffix = $this->escapeHtml( $this->computedStat['suffix'] );
+		$title = $this->escapeHtml( $this->computedStat['title'] );
 		
-		$version = $this->escapeHtml( $this->computedStat ['version'] );
-		$round = $this->escapeHtml( $this->computedStat ['roundNum'] );
-		$addClass = $this->escapeHtml( $this->computedStat ['addClass'] );
-		$comment = $this->escapeHtml( $this->computedStat ['comment'] );
-		$minimumValue = $this->escapeHtml( $this->computedStat ['minimumValue'] );
-		$maximumValue = $this->escapeHtml( $this->computedStat ['maximumValue'] );
-		$deferLevel = $this->escapeHtml( $this->computedStat ['deferLevel'] );
-		$display = $this->escapeHtml( $this->computedStat ['display'] );
-		$idx = $this->escapeHtml( $this->computedStat ['idx'] );
-		$category = $this->escapeHtml( $this->computedStat ['category'] );
-		$suffix = $this->escapeHtml( $this->computedStat ['suffix'] );
-		
-		if ($this->computedStat ['compute'] == '') {
+		if ($this->computedStat['compute'] == '')
+		{
 			$data = [ ];
-		} else {
-			$data = json_decode ( $this->computedStat['compute'], true );
+		} else
+		{
+			$data = json_decode( $this->computedStat['compute'], true );
 			if ($data == null) $data = [];	//TODO: Error handling?
 			if (!is_array($data)) $data = ['Error: Not Array!', $this->computedStat['compute']];
+			
+			foreach ($data as $i => $d)
+			{
+				$data[$i] = trim($d);
+				if ($data[$i] == '') unset($data[$i]);
+			}
 		}
 		
 		$this->computedStat['compute'] = $data;
 		
-		if ($this->computedStat ['dependsOn'] == '') {
+		if ($this->computedStat['dependsOn'] == '')
+		{
 			$data = [ ];
-		} else {
-			$data = json_decode ( $this->computedStat['dependsOn'], true );
+		} else
+		{
+			$data = json_decode( $this->computedStat['dependsOn'], true );
 			if ($data == null) $data = [];	//TODO: Error handling?
 			if (!is_array($data)) $data = ['Error: Not Array!', $computedStatsData['dependsOn']];
+			
+			foreach ($data as $i => $d)
+			{
+				$data[$i] = trim($d);
+			}
+			
+			array_filter($data, 'strlen');
 		}
 		
-		$this->computedStat ['dependsOn'] = $data;
+		$this->computedStat['dependsOn'] = $data;
 		
-		$output->addHTML ( "<a href='$baselink/showcomputedstats'>Show Computed Stats</a><br>" );
-		$output->addHTML ( "<h3>Editing Computed Stat $statId</h3>" );
-		$output->addHTML ( "<form action='$baselink/saveeditcomputedstatsform?statid=$statId' method='POST'>" );
+		$output->addHTML( "<a href='$baselink/showcomputedstats'>Show Computed Stats</a><br>" );
+		$output->addHTML( "<h3>Editing Computed Stat: $statId (#$id)</h3>" );
+		$output->addHTML( "<form action='$baselink/saveeditcomputedstatsform?statid=$id' method='POST'>" );
+		
+		$output->addHTML( "<label for='edit_title'>Title</label>" );
+		$output->addHTML( "<input type='text' id='edit_title' name='edit_title' value='$title'><br>" );
 		
 		$this->OutputVersionListHtml( 'edit_version', $version );
-		$roundOptions = $this->rounds ( 'edit_round', $round );
+		$output->addHTML( "<br/>" );
+		$this->OutputRoundsListHtml( 'edit_round', $round );
 		
-		$output->addHTML ( "<label for='edit_addClass'>Class </label>" );
-		$output->addHTML ( "<input type='text' id='edit_addClass' name='edit_addClass' value='$addClass'><br>" );
-		$output->addHTML ( "<label for='edit_comment'>Comment </label>" );
-		$output->addHTML ( "<input type='text' id='edit_comment' name='edit_comment' value='$comment'><br>" );
-		$output->addHTML ( "<label for='edit_minimumValue'>Min Value </label>" );
-		$output->addHTML ( "<input type='text' id='edit_minimumValue' name='edit_minimumValue' value='$minimumValue'><br>" );
-		$output->addHTML ( "<label for='edit_maximumValue'>Max Value </label>" );
-		$output->addHTML ( "<input type='text' id='edit_maximumValue' name='edit_maximumValue' value='$maximumValue'><br>" );
-		$output->addHTML ( "<label for='edit_deferLevel'>Defer Level </label>" );
-		$output->addHTML ( "<input type='text' id='edit_deferLevel' name='edit_deferLevel' value='$deferLevel'><br>" );
-		$output->addHTML ( "<label for='edit_display'>Display </label>" );
-		$output->addHTML ( "<input type='text' id='edit_display' name='edit_display' value='$display'><br>" );
+		$output->addHTML( "<label for='edit_addClass'>Class</label>" );
+		$output->addHTML( "<input type='text' id='edit_addClass' name='edit_addClass' value='$addClass'><br>" );
+		$output->addHTML( "<label for='edit_comment'>Comment</label>" );
+		$output->addHTML( "<input type='text' id='edit_comment' name='edit_comment' value='$comment'><br>" );
+		$output->addHTML( "<label for='edit_minimumValue'>Min Value</label>" );
+		$output->addHTML( "<input type='text' id='edit_minimumValue' name='edit_minimumValue' value='$minimumValue'><br>" );
+		$output->addHTML( "<label for='edit_maximumValue'>Max Value</label>" );
+		$output->addHTML( "<input type='text' id='edit_maximumValue' name='edit_maximumValue' value='$maximumValue'><br>" );
+		$output->addHTML( "<label for='edit_deferLevel'>Defer Level</label>" );
+		$output->addHTML( "<input type='text' id='edit_deferLevel' name='edit_deferLevel' value='$deferLevel'><br>" );
+		$output->addHTML( "<label for='edit_display'>Display</label>" );
+		$output->addHTML( "<input type='text' id='edit_display' name='edit_display' value='$display'><br>" );
 		
-		$output->addHTML ( "<label for='edit_compute'>Compute </label>" );
-		$output->addHTML ( "<textarea id='edit_compute' name='edit_compute' class='txtArea' rows='15' cols='50'>" );
+		$output->addHTML( "<label for='edit_compute'>Compute</label>" );
+		$output->addHTML( "<textarea id='edit_compute' name='edit_compute' class='txtArea' rows='15' cols='50'>" );
 		
-		foreach ( $this->computedStat ['compute'] as $key => $val ) {
-			$output->addHTML ( "$val \n" );
+		foreach ( $this->computedStat['compute'] as $key => $val )
+		{
+			$output->addHTML( "$val \n" );
 		}
-		$output->addHTML ( "</textarea><br>" );
+		$output->addHTML( "</textarea><br>" );
 		
-		$output->addHTML ( "<label for='edit_idx'>Idx </label>" );
-		$output->addHTML ( "<input type='text' id='edit_idx' name='edit_idx' value='$idx'><br>" );
+		$output->addHTML( "<label for='edit_idx'>Index</label>" );
+		$output->addHTML( "<input type='text' id='edit_idx' name='edit_idx' value='$idx'><br>" );
 		
-		$output->addHTML ( "<label for='edit_category'>Category </label>" );
+		$output->addHTML( "<label for='edit_category'>Category</label>" );
 		$this->OutputListHtml( $category, $this->COMPUTED_STAT_CATEGORIES, 'edit_category' );
+		$output->addHTML( "<br/>" );
 		
-		$output->addHTML ( "<label for='edit_suffix'>Suffix </label>" );
-		$output->addHTML ( "<input type='text' id='edit_suffix' name='edit_suffix' value='$suffix'><br>" );
+		$output->addHTML( "<label for='edit_suffix'>Suffix</label>" );
+		$output->addHTML( "<input type='text' id='edit_suffix' name='edit_suffix' value='$suffix'><br>" );
 		
-		$output->addHTML ( "<label for='edit_dependsOn'>Depends On </label>" );
-		$output->addHTML ( "<textarea id='edit_dependsOn' name='edit_dependsOn' class='txtArea' rows='4' cols='50'>" );
+		$output->addHTML( "<label for='edit_dependsOn'>Depends On</label>" );
+		$output->addHTML( "<textarea id='edit_dependsOn' name='edit_dependsOn' class='txtArea' rows='4' cols='50'>" );
 		
-		foreach ( $this->computedStat ['dependsOn'] as $key => $val ) {
-			$output->addHTML ( "$val \n" );
+		foreach ( $this->computedStat['dependsOn'] as $key => $val ) {
+			$output->addHTML( "$val \n" );
 		}
-		$output->addHTML ( "</textarea><br>" );
+		$output->addHTML( "</textarea><br>" );
 		
-		$output->addHTML ( "<br><input class='btn' type='submit' value='Save Edits'>" );
-		$output->addHTML ( "</form><br>" );
+		$output->addHTML( "<br><input class='btn' type='submit' value='Save Edits'>" );
+		$output->addHTML( "</form><br>" );
 	}
 	
 	
-	public function SaveEditComputedStatsForm() {
-		$permission = $this->canUserEdit ();
+	public function SaveEditComputedStatsForm()
+	{
+		$permission = $this->canUserEdit();
+		if ($permission === false) return $this->reportError( "Error: you have no permission to edit computed stats" );
 		
-		if ($permission === False) {
-			return $this->reportError ( "Error: you have no permission to edit computed stats" );
-		}
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
+		$req = $this->getRequest();
 		
-		$output = $this->getOutput ();
-		$baselink = $this->GetBaseLink ();
-		$req = $this->getRequest ();
-		
-		$statId = $req->getVal ( 'statid' );
+		$statId = $req->getVal( 'statid' );
 		$statId = $this->db->real_escape_string( $statId );
 		
-		$new_version = $req->getVal ( 'edit_version' );
-		$new_roundNum = $req->getVal ( 'edit_round' );
-		$new_addClass = $req->getVal ( 'edit_addClass' );
-		$new_comment = $req->getVal ( 'edit_comment' );
-		$new_minimumValue = $req->getVal ( 'edit_minimumValue' );
-		$new_maximumValue = $req->getVal ( 'edit_maximumValue' );
-		$new_deferLevel = $req->getVal ( 'edit_deferLevel' );
-		$new_display = $req->getVal ( 'edit_display' );
+		$new_version = $req->getVal( 'edit_version' );
+		$new_roundNum = $req->getVal( 'edit_round' );
+		$new_addClass = $req->getVal( 'edit_addClass' );
+		$new_comment = $req->getVal( 'edit_comment' );
+		$new_title = $req->getVal( 'edit_title' );
+		$new_minimumValue = trim($req->getVal( 'edit_minimumValue' ));
+		$new_maximumValue = trim($req->getVal( 'edit_maximumValue' ));
+		$new_deferLevel = trim($req->getVal( 'edit_deferLevel' ));
+		$new_display = $req->getVal( 'edit_display' );
 		
-		$compute = $req->getVal ( 'edit_compute' );
-		$compute_strings = explode ( "\n", $compute );
-		$trimedStrings = array_map ( 'trim', $compute_strings );
-		$new_compute = json_encode ( $trimedStrings );
+		$compute = $req->getVal( 'edit_compute' );
+		$compute = trim($compute);
+		$compute_strings = explode( "\r\n", $compute );
+		$trimedStrings = array_map( 'trim', $compute_strings );
+		$new_compute = json_encode( $trimedStrings );
 		
-		$new_idx = $req->getVal ( 'edit_idx' );
-		$new_category = $req->getVal ( 'edit_category' );
-		$new_suffix = $req->getVal ( 'edit_suffix' );
+		$new_idx = $req->getVal( 'edit_idx' );
+		$new_category = $req->getVal( 'edit_category' );
+		$new_suffix = $req->getVal( 'edit_suffix' );
 		
-		$dependsOn = $req->getVal ( 'edit_dependsOn' );
-		$dependsOn_strings = explode ( "\n", $dependsOn );
-		$new_dependsOn = json_encode ( $dependsOn_strings );
+		$dependsOn = $req->getVal( 'edit_dependsOn' );
+		$dependsOn = trim($dependsOn);
+		$dependsOn_strings = explode( "\r\n", $dependsOn );
+		$dependsOn_strings = array_map( 'trim', $dependsOn_strings );
+		array_filter($dependsOn_strings);
+		$new_dependsOn = json_encode( $dependsOn_strings );
 		
 		$values = [ ];
 		
-		$values [] = "version='" . $this->db->real_escape_string( $new_version ) . "'";
-		$values [] = "roundNum='" . $this->db->real_escape_string( $new_roundNum ) . "'";
-		$values [] = "addClass='" . $this->db->real_escape_string( $new_addClass ) . "'";
-		$values [] = "comment='" . $this->db->real_escape_string( $new_comment ) . "'";
-		$values [] = "minimumValue='" . $this->db->real_escape_string( $new_minimumValue ) . "'";
-		$values [] = "maximumValue='" . $this->db->real_escape_string( $new_maximumValue ) . "'";
-		$values [] = "deferLevel='" . $this->db->real_escape_string( $new_deferLevel ) . "'";
-		$values [] = "display='" . $this->db->real_escape_string( $new_display ) . "'";
-		$values [] = "compute='" . $this->db->real_escape_string( $new_compute ) . "'";
-		$values [] = "idx='" . $this->db->real_escape_string( $new_idx ) . "'";
-		$values [] = "category='" . $this->db->real_escape_string( $new_category ) . "'";
-		$values [] = "suffix='" . $this->db->real_escape_string( $new_suffix ) . "'";
-		$values [] = "dependsOn='" . $this->db->real_escape_string( $new_dependsOn ) . "'";
+		$values[] = "version='" . $this->db->real_escape_string( $new_version ) . "'";
+		$values[] = "roundNum='" . $this->db->real_escape_string( $new_roundNum ) . "'";
+		$values[] = "addClass='" . $this->db->real_escape_string( $new_addClass ) . "'";
+		$values[] = "comment='" . $this->db->real_escape_string( $new_comment ) . "'";
 		
-		$updateResult = $this->UpdateQueries ( 'computedStats', $values, 'statId', $statId );
-		if (!$updateResult) return $this->reportError("Error: Failed to update record in computedStats!");
+		if ($new_minimumValue == '')
+			$values[] = "minimumValue=NULL";
+		else
+			$values[] = "minimumValue='" . $this->db->real_escape_string( $new_minimumValue ) . "'";
 		
-		$output->addHTML ( "<p>Edits saved for computed Stat #$statId</p><br>" );
-		$output->addHTML ( "<a href='$baselink'>Home</a>" );
+		if ($new_maximumValue == '')
+			$values[] = "maximumValue=NULL";
+		else
+			$values[] = "maximumValue='" . $this->db->real_escape_string( $new_maximumValue ) . "'";
+		
+		if ($new_deferLevel == '')
+			$values[] = "deferLevel=NULL";
+		else
+			$values[] = "deferLevel='" . $this->db->real_escape_string( $new_deferLevel ) . "'";
+		
+		$values[] = "display='" . $this->db->real_escape_string( $new_display ) . "'";
+		$values[] = "compute='" . $this->db->real_escape_string( $new_compute ) . "'";
+		$values[] = "idx='" . $this->db->real_escape_string( $new_idx ) . "'";
+		$values[] = "category='" . $this->db->real_escape_string( $new_category ) . "'";
+		$values[] = "suffix='" . $this->db->real_escape_string( $new_suffix ) . "'";
+		$values[] = "dependsOn='" . $this->db->real_escape_string( $new_dependsOn ) . "'";
+		$values[] = "title='" . $this->db->real_escape_string( $new_title ) . "'";
+		
+		$updateResult = $this->UpdateQueries( 'computedStats', $values, 'id', $statId );
+		if (!$updateResult) return $this->reportError("Error: Failed to saved computed stat record!");
+		
+		$output->addHTML( "<p>Successfully saved computed stat #$statId!</p><br>" );
+		$output->addHTML( "<a href='$baselink'>Home</a> : <a href='$baselink/showcomputedstats'>Show Stats</a> <br/>" );
 	}
 	
 	
-	public function OutputDeleteComputedStat() {
-		$permission = $this->canUserEdit ();
+	public function OutputDeleteComputedStat()
+	{
+		$permission = $this->canUserEdit();
+		if ($permission === false) return $this->reportError( "Error: you have no permission to delete computed stats" );
 		
-		if ($permission === False) {
-			return $this->reportError ( "Error: you have no permission to delete computed stats" );
-		}
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
+		$req = $this->getRequest();
 		
-		$output = $this->getOutput ();
-		$baselink = $this->GetBaseLink ();
-		$req = $this->getRequest ();
+		$id = $req->getVal( 'statid' );
 		
-		$statId = $req->getVal ( 'statid' );
+		if (!$this->LoadComputedStat( $id )) return $this->reportError( "Error: Failed to load computed stat!" );
+		
 		$statId = $this->escapeHtml( $statId );
+		$version = $this->escapeHtml( $this->computedStat['version'] );
+		$roundNum = $this->escapeHtml( $this->computedStat['roundNum'] );
+		$addClass = $this->escapeHtml( $this->computedStat['addClass'] );
+		$comment = $this->escapeHtml( $this->computedStat['comment'] );
+		$minimumValue = $this->escapeHtml( $this->computedStat['minimumValue'] );
+		$maximumValue = $this->escapeHtml( $this->computedStat['maximumValue'] );
+		$deferLevel = $this->escapeHtml( $this->computedStat['deferLevel'] );
+		$display = $this->escapeHtml( $this->computedStat['display'] );
+		$compute = $this->escapeHtml( $this->computedStat['compute'] );
+		$idx = $this->escapeHtml( $this->computedStat['idx'] );
+		$category = $this->escapeHtml( $this->computedStat['category'] );
+		$suffix = $this->escapeHtml( $this->computedStat['suffix'] );
+		$dependsOn = $this->escapeHtml( $this->computedStat['dependsOn'] );
 		
-		$this->LoadComputedStat ( $statId );
+		$output->addHTML( "<h3>Are you sure you want to delete this computed Stat: </h3>" );
+		$output->addHTML( "<label><b>Id:</b> $id</label><br>" );
+		$output->addHTML( "<label><b>Stat Id:</b> $statId</label><br>" );
+		$output->addHTML( "<label><b>Version:</b> $version</label><br>" );
+		$output->addHTML( "<label><b>Round:</b> $roundNum</label><br>" );
+		$output->addHTML( "<label><b>Class:</b> $addClass</label><br>" );
+		$output->addHTML( "<label><b>Comment:</b> $comment</label><br>" );
+		$output->addHTML( "<label><b>Min Value:</b> $minimumValue</label><br>" );
+		$output->addHTML( "<label><b>Max Value:</b> $maximumValue</label><br>" );
+		$output->addHTML( "<label><b>Defer Level:</b> $deferLevel</label><br>" );
+		$output->addHTML( "<label><b>Display:</b> $display</label><br>" );
+		$output->addHTML( "<label><b>Compute:</b> $compute</label><br>" );
+		$output->addHTML( "<label><b>Idx:</b> $idx</label><br>" );
+		$output->addHTML( "<label><b>Category:</b> $category</label><br>" );
+		$output->addHTML( "<label><b>Suffix:</b> $suffix</label><br>" );
+		$output->addHTML( "<label><b>Depends On:</b> $dependsOn</label><br>" );
 		
-		if ($this->LoadComputedStat ( $statId ) == False) {
-			return $this->reportError ( "Error: cannot load stat" );
-		}
-		
-		$version = $this->escapeHtml( $this->computedStat ['version'] );
-		$roundNum = $this->escapeHtml( $this->computedStat ['roundNum'] );
-		$addClass = $this->escapeHtml( $this->computedStat ['addClass'] );
-		$comment = $this->escapeHtml( $this->computedStat ['comment'] );
-		$minimumValue = $this->escapeHtml( $this->computedStat ['minimumValue'] );
-		$maximumValue = $this->escapeHtml( $this->computedStat ['maximumValue'] );
-		$deferLevel = $this->escapeHtml( $this->computedStat ['deferLevel'] );
-		$display = $this->escapeHtml( $this->computedStat ['display'] );
-		$compute = $this->escapeHtml( $this->computedStat ['compute'] );
-		$idx = $this->escapeHtml( $this->computedStat ['idx'] );
-		$category = $this->escapeHtml( $this->computedStat ['category'] );
-		$suffix = $this->escapeHtml( $this->computedStat ['suffix'] );
-		$dependsOn = $this->escapeHtml( $this->computedStat ['dependsOn'] );
-		
-		$output->addHTML ( "<h3>Are you sure you want to delete this computed Stat: </h3>" );
-		$output->addHTML ( "<label><b>Id:</b> $statId </label><br>" );
-		$output->addHTML ( "<label><b>Version:</b> $version </label><br>" );
-		$output->addHTML ( "<label><b>Round:</b> $roundNum </label><br>" );
-		$output->addHTML ( "<label><b>Class:</b> $addClass </label><br>" );
-		$output->addHTML ( "<label><b>Comment:</b> $comment </label><br>" );
-		$output->addHTML ( "<label><b>Min Value:</b> $minimumValue </label><br>" );
-		$output->addHTML ( "<label><b>Max Value:</b> $maximumValue </label><br>" );
-		$output->addHTML ( "<label><b>Defer Level:</b> $deferLevel </label><br>" );
-		$output->addHTML ( "<label><b>Display:</b> $display </label><br>" );
-		$output->addHTML ( "<label><b>Compute:</b> $compute </label><br>" );
-		$output->addHTML ( "<label><b>Idx:</b> $idx </label><br>" );
-		$output->addHTML ( "<label><b>Category:</b> $category </label><br>" );
-		$output->addHTML ( "<label><b>Suffix:</b> $suffix </label><br>" );
-		$output->addHTML ( "<label><b>Depends On:</b> $dependsOn </label><br>" );
-		
-		$output->addHTML ( "<br><a href='$baselink/statdeleteconfirm?statid=$statId&confirm=True'>Delete </a>" );
-		$output->addHTML ( "<a href='$baselink/statdeleteconfirm?statid=$statId&confirm=False'> Cancel</a>" );
+		$output->addHTML( "<br><a href='$baselink/statdeleteconfirm?statid=$id&confirm=True'>Delete </a>" );
+		$output->addHTML( "<a href='$baselink/statdeleteconfirm?statid=$id&confirm=false'> Cancel</a>" );
 	}
 	
 	
-	public function ConfirmDeleteStat() {
-		$permission = $this->canUserEdit ();
+	public function ConfirmDeleteStat()
+	{
+		$permission = $this->canUserEdit();
+		if ($permission === false) return $this->reportError( "Error: you have no permission to delete computed stats" );
 		
-		if ($permission === False) {
-			return $this->reportError ( "Error: you have no permission to delete computed stats" );
-		}
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
+		$req = $this->getRequest();
 		
-		$output = $this->getOutput ();
-		$baselink = $this->GetBaseLink ();
-		$req = $this->getRequest ();
+		$confirm = $req->getVal( 'confirm' );
+		$id = $req->getVal( 'statid' );
 		
-		$confirm = $req->getVal ( 'confirm' );
-		$statId = $req->getVal ( 'statid' );
-		$statId = $this->db->real_escape_string( $statId );
-		
-		if ($confirm !== 'True') {
-			$output->addHTML ( "<p>Delete cancelled</p><br>" );
-			$output->addHTML ( "<a href='$baselink'>Home</a>" );
-		} else {
-			$this->LoadComputedStat ( $statId );
+		if ($confirm !== 'True')
+		{
+			$output->addHTML( "<p>Delete cancelled</p><br>" );
+			$output->addHTML( "<a href='$baselink'>Home</a>" );
+		} else
+		{
+			if (!$this->LoadComputedStat( $id )) return $this->reportError( "Error: cannot load stat" );
 			
-			if ($this->LoadComputedStat ( $statId ) == False) {
-				return $this->reportError ( "Error: cannot load stat" );
-			}
-			
-			$version = $this->escapeHtml( $this->computedStat ['version'] );
-			$round = $this->escapeHtml( $this->computedStat ['roundNum'] );
-			$addClass = $this->escapeHtml( $this->computedStat ['addClass'] );
-			$comment = $this->escapeHtml( $this->computedStat ['comment'] );
-			$minimumValue = $this->escapeHtml( $this->computedStat ['minimumValue'] );
-			$maximumValue = $this->escapeHtml( $this->computedStat ['maximumValue'] );
-			$deferLevel = $this->escapeHtml( $this->computedStat ['deferLevel'] );
-			$display = $this->escapeHtml( $this->computedStat ['display'] );
-			$compute = $this->escapeHtml( $this->computedStat ['compute'] );
-			$idx = $this->escapeHtml( $this->computedStat ['idx'] );
-			$category = $this->escapeHtml( $this->computedStat ['category'] );
-			$suffix = $this->escapeHtml( $this->computedStat ['suffix'] );
-			$dependsOn = $this->escapeHtml( $this->computedStat ['dependsOn'] );
+			$statId = $this->escapeHtml( $this->computedStat['statId'] );
+			$version = $this->escapeHtml( $this->computedStat['version'] );
+			$round = $this->escapeHtml( $this->computedStat['roundNum'] );
+			$addClass = $this->escapeHtml( $this->computedStat['addClass'] );
+			$comment = $this->escapeHtml( $this->computedStat['comment'] );
+			$title = $this->escapeHtml( $this->computedStat['title'] );
+			$minimumValue = $this->escapeHtml( $this->computedStat['minimumValue'] );
+			$maximumValue = $this->escapeHtml( $this->computedStat['maximumValue'] );
+			$deferLevel = $this->escapeHtml( $this->computedStat['deferLevel'] );
+			$display = $this->escapeHtml( $this->computedStat['display'] );
+			$compute = $this->escapeHtml( $this->computedStat['compute'] );
+			$idx = $this->escapeHtml( $this->computedStat['idx'] );
+			$category = $this->escapeHtml( $this->computedStat['category'] );
+			$suffix = $this->escapeHtml( $this->computedStat['suffix'] );
+			$dependsOn = $this->escapeHtml( $this->computedStat['dependsOn'] );
 			
 			$cols = [ ];
 			$values = [ ];
-			$cols [] = 'statId';
-			$cols [] = 'version';
-			$cols [] = 'roundNum';
-			$cols [] = 'addClass';
-			$cols [] = 'comment';
-			$cols [] = 'minimumValue';
-			$cols [] = 'maximumValue';
-			$cols [] = 'deferLevel';
-			$cols [] = 'display';
-			$cols [] = 'compute';
-			$cols [] = 'idx';
-			$cols [] = 'category';
-			$cols [] = 'suffix';
-			$cols [] = 'dependsOn';
+			$cols[] = 'id';
+			$cols[] = 'statId';
+			$cols[] = 'version';
+			$cols[] = 'roundNum';
+			$cols[] = 'addClass';
+			$cols[] = 'comment';
+			$cols[] = 'title';
+			$cols[] = 'minimumValue';
+			$cols[] = 'maximumValue';
+			$cols[] = 'deferLevel';
+			$cols[] = 'display';
+			$cols[] = 'compute';
+			$cols[] = 'idx';
+			$cols[] = 'category';
+			$cols[] = 'suffix';
+			$cols[] = 'dependsOn';
 			
-			$values [] = "'" . $this->db->real_escape_string( $statId ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $version ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $round ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $addClass ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $comment ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $minimumValue ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $maximumValue ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $deferLevel ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $display ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $compute ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $idx ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $category ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $suffix ) . "'";
-			$values [] = "'" . $this->db->real_escape_string( $dependsOn ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $id ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $statId ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $version ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $round ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $addClass ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $comment ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $title ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $minimumValue ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $maximumValue ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $deferLevel ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $display ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $compute ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $idx ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $category ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $suffix ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $dependsOn ) . "'";
 			
 			$insertResult = $this->InsertQueries ( 'computedStatsArchive', $cols, $values );
 			if (!$insertResult) return $this->reportError("Error: Failed to insert record into computedStatsArchive!");
 			
-			$deleteResult = $this->DeleteQueries ( 'computedStats', 'statId', $statId );
+			$deleteResult = $this->DeleteQueries ( 'computedStats', 'id', $id );
 			if (!$deleteResult) return $this->reportError("Error: Failed to delete record from computedStats!");
 			
-			$output->addHTML ( "<p>computed Stat deleted</p><br>" );
-			$output->addHTML ( "<a href='$baselink'>Home</a>" );
+			$output->addHTML( "<p>computed Stat deleted</p><br>" );
+			$output->addHTML( "<a href='$baselink'>Home</a>" );
 		}
 	}
 	
 	
-	// -------------------Main page---------------
-	public function OutputTableOfContents() {
-		$output = $this->getOutput ();
+	public function CreateDuplicateRuleGroups()
+	{
+		$groups = [];
 		
-		$baselink = $this->GetBaseLink ();
+		foreach ($this->rulesDatas as $ruleId => $rule)
+		{
+			$version = $rule['version'];
+			$ruleType = $rule['ruleType'];
+			
+			$matchRegex = $rule['matchRegex'];
+			if ($matchRegex == '') continue;
+			
+			$nameId = $rule['nameId'];
+			
+			$matchRegex = str_replace('(', '', $matchRegex);
+			$matchRegex = str_replace(')', '', $matchRegex);
+			
+			$groups[$version][$ruleType][$matchRegex][] = $rule;
+		}
 		
-		$output->addHTML ( "<ul>" );
-		$output->addHTML ( "<li><a href='$baselink/showrules'>Show Rules</a></li>" );
-		$output->addHTML ( "<li><a href='$baselink/addrule'>Add Rule</a></li>" );
-		$output->addHTML ( "<br>" );
-		$output->addHTML ( "<li><a href='$baselink/showcomputedstats'>Show Computed Stats</a></li>" );
-		$output->addHTML ( "<li><a href='$baselink/addcomputedstat'>Add Computed Stat</a></li>" );
-		$output->addHTML ( "<br>" );
-		$output->addHTML ( "<li><a href='$baselink/addversion'>Add Version</a></li>" );
-		$output->addHTML ( "</ul>" );
+		
+		return $groups;
 	}
 	
 	
-	function execute($parameter) {
-		$request = $this->getRequest ();
-		$output = $this->getOutput ();
-		$this->setHeaders ();
+	public function CheckDuplicateRules()
+	{
+		$req = $this->getRequest();
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
 		
-		// TODO: Remove after testing
-		/*
-		 * if ($this->canUserEdit())
-		 * $output->addHTML("Use can edit</br>");
-		 * else
-		 * $output->addHTML("Use CANNOT edit</br>");
-		 */
+		$version = $req->getVal('version');
 		
-		// TODO: Determine action/output based on the input $parameter
+		if (!$this->LoadRules($version)) return $this->reportError("Error: Failed to load rules!");
+		
+		$groups = $this->CreateDuplicateRuleGroups();
+		
+		$output->addHTML( "<a href='$baselink'>Home</a><br/>" );
+		
+		if ($version == null) 
+			$version = 'All';
+		else
+			$version = $this->escapeHtml($version);
+		
+		$output->addHTML("<br/>Showing duplicate rules for version $version:<p/><br/>");
+		$output->addHTML("<ol>");
+		
+		foreach ($groups as $version => $groups1)
+		{
+			foreach ($groups1 as $ruleType => $groups2)
+			{
+				foreach ($groups2 as $matchRegex => $groups3)
+				{
+					$count = count($groups3);
+					if ($count <= 1) continue;
+					
+					$matchRegex = $this->escapeHtml($matchRegex);
+					
+					$output->addHTML("<li>");
+					$output->addHTML("<b>$count Duplicates</b> -- ($ruleType) $matchRegex");
+					
+					$output->addHTML("<ol>");
+					
+					foreach ($groups3 as $i => $rule)
+					{
+						$ruleId = $rule['id'];
+						$url = $this->GetBaseLink() . "/editrule?ruleid=$ruleId";
+						$nameId = $this->escapeHtml($rule['nameId']);
+						
+						$output->addHTML("<li>");
+						$output->addHTML("<a href='$url'>$nameId -- Rule #$ruleId</a>");
+						$output->addHTML("</li>");
+					}
+					
+					$output->addHTML("</ol>");
+					$output->addHTML("</li>");
+				}
+			}
+		}
+		
+		$output->addHTML("</ol>");
+		
+		return true;
+	}
+	
+	
+	public function OutputTableOfContents()
+	{
+		$output = $this->getOutput();
+		
+		$baselink = $this->GetBaseLink();
+		
+		$output->addHTML( "Edit rules, effects, and computed stats used for the <a href='/wiki/Special:EsoBuildEditor'>ESO Build Editor</a>.<p/>" );
+		
+		$output->addHTML( "<ul>" );
+		$output->addHTML( "<li><a href='$baselink/showrules'>Show Rules</a></li>" );
+		$output->addHTML( "<li><a href='$baselink/addrule'>Add Rule</a></li>" );
+		$output->addHTML( "<br>" );
+		$output->addHTML( "<li><a href='$baselink/showcomputedstats'>Show Computed Stats</a></li>" );
+		$output->addHTML( "<li><a href='$baselink/addcomputedstat'>Add Computed Stat</a></li>" );
+		$output->addHTML( "<br>" );
+		$output->addHTML( "<li><a href='$baselink/addversion'>Add Version</a></li>" );
+		$output->addHTML( "<li><a href='$baselink/checkduprules'>Find Duplicate Rules</a></li>" );
+		$output->addHTML( "</ul>" );
+	}
+	
+	
+	function execute($parameter)
+	{
+		$request = $this->getRequest();
+		$output = $this->getOutput();
+		$this->setHeaders();
 		
 		if ($parameter == "showrules")
-			$this->OutputShowRulesTable ();
+			$this->OutputShowRulesTable();
 		elseif ($parameter == "addrule")
-			$this->OutputAddRuleForm ();
+			$this->OutputAddRuleForm();
 		elseif ($parameter == "editrule")
-			$this->OutputEditRuleForm ();
+			$this->OutputEditRuleForm();
 		elseif ($parameter == "saverule")
-			$this->SaveNewRule ();
+			$this->SaveNewRule();
 		elseif ($parameter == "saveeditruleform")
-			$this->SaveEditRuleForm ();
+			$this->SaveEditRuleForm();
 		elseif ($parameter == "addneweffect")
-			$this->OutputAddtEffectForm ();
-		elseif ($parameter == "savenewffect")
-			$this->SaveNewEffect ();
+			$this->OutputAddEffectForm();
+		elseif ($parameter == "saveneweffect")
+			$this->SaveNewEffect();
 		elseif ($parameter == "saveediteffectform")
-			$this->SaveEditEffectForm ();
+			$this->SaveEditEffectForm();
 		elseif ($parameter == "editeffect")
-			$this->OutputEditEffectForm ();
+			$this->OutputEditEffectForm();
 		elseif ($parameter == "showcomputedstats")
-			$this->OutputShowComputedStatsTable ();
+			$this->OutputShowComputedStatsTable();
 		elseif ($parameter == "addcomputedstat")
-			$this->OutputAddComputedStatsForm ();
+			$this->OutputAddComputedStatsForm();
 		elseif ($parameter == "savenewcomputedstat")
-			$this->SaveNewComputedStat ();
+			$this->SaveNewComputedStat();
 		elseif ($parameter == "editcomputedstat")
-			$this->OutputEditComputedStatForm ();
+			$this->OutputEditComputedStatForm();
 		elseif ($parameter == "saveeditcomputedstatsform")
-			$this->SaveEditComputedStatsForm ();
+			$this->SaveEditComputedStatsForm();
 		elseif ($parameter == "deleterule")
-			$this->OutputDeleteRule ();
+			$this->OutputDeleteRule();
 		elseif ($parameter == "ruledeleteconfirm")
-			$this->ConfirmDeleteRule ();
+			$this->ConfirmDeleteRule();
 		elseif ($parameter == "deletcomputedstat")
-			$this->OutputDeleteComputedStat ();
+			$this->OutputDeleteComputedStat();
 		elseif ($parameter == "statdeleteconfirm")
-			$this->ConfirmDeleteStat ();
+			$this->ConfirmDeleteStat();
 		elseif ($parameter == "deleteeffect")
-			$this->OutputDeleteEffect ();
+			$this->OutputDeleteEffect();
 		elseif ($parameter == "effectdeleteconfirm")
-			$this->ConfirmDeleteEffect ();
+			$this->ConfirmDeleteEffect();
 		elseif ($parameter == "addversion")
-			$this->OutputAddVersionForm ();
+			$this->OutputAddVersionForm();
 		elseif ($parameter == "saveversion")
-			$this->SaveNewVersion ();
+			$this->SaveNewVersion();
+		elseif ($parameter == "checkduprules")
+			$this->CheckDuplicateRules();
 		else
-			$this->OutputTableOfContents ();
+			$this->OutputTableOfContents();
 	}
 	
 	
-	function getgroupName() {
+	function getgroupName()
+	{
 		return 'wiki';
 	}
+	
 };
 

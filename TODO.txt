@@ -1,3 +1,11 @@
 TODO:
-- NumberValidate() regex.
-- EffectsRegexValidate regex.
+	- NumberValidate() regex.
+	- EffectsRegexValidate regex.
+
+
+IDEAS:
+	- Show icon image.
+	- Select icon image from list/gallery.
+	- Auto select effect version. Auto change effect version when changing parent rule version.
+	- Check that matchRegex and description match for Mundus rules.
+	- Show effect count in rules table.

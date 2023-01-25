@@ -2,17 +2,22 @@ form label {
 	display: inline-block;
 	width: 200px;
 	text-align: right;
-	margin-right: 20px;
+	margin-right: 5px;
 	margin-top: 5px;
 	margin-bottom: 5px;
 }
 
-.txtArea{
+.txtArea {
 	display: inline-block;
 	width: 50%;
 	vertical-align: top;
-	margin-bottom: 10px;
-	margin-top: 10px;
+	margin-bottom: 5px;
+	margin-top: 5px;
+	border: 1px solid rgb(118,118,118);
+}
+
+.txtArea:hover {
+	border: 1px solid rgb(78,78,78);
 }
 
 .btn {
@@ -20,31 +25,50 @@ form label {
 	text-align: right;
 }
 
-.costumeDataLi {
+.customData li {
 	margin-left: 20px;
 }
 
 .custCol {
-	margin-left: 20%;
+	margin-left: 205px;
 }
 
 .errorMsg {
-		color: red;
-		text-align: center;
-		display: inline;
-		margin-left: 10px;
+	color: red;
+	text-align: center;
+	display: inline;
+	margin-left: 10px;
 }
 
 .errorMsg:after {
-		content: "\a";
-		white-space: pre;
+	content: "\a";
+	white-space: pre;
 }
 
 .badRegex {
 	background-color: #ffcccc;
-
 }
+
 .warningErr {
 	background-color: #FFFF8F;
+	display: inline;
+}
 
+.custReadOnly {
+	background-color: #ddd;
+	text-align: center;
+}
+
+#filterRuleForm label {
+	display: inline-block;
+	margin: 2px;
+	width: auto;
+}
+
+#filterRuleForm {
+	margin-left: 25px;
+}
+
+#rules td:nth-child(3) {
+	white-space: nowrap;
 }
