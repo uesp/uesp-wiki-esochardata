@@ -640,7 +640,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	}
 	
 	
-	public function OutputVersionListHtml($elementId, $selectedVersion, $includeAny = false)
+	public function OutputVersionListHtml($elementId, $selectedVersion, $includeAny = false, $omitVersion = null)
 	{
 		$this->LoadVersions();
 		
@@ -655,6 +655,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		{
 			$selected = '';
 			$versionOption = $this->escapeHtml( $version );
+			
+			if ($omitVersion == $versionOption) continue;
 			
 			if ($versionOption == $selectedVersion) $selected = "selected";
 			if ($versionOption != "") $output->addHTML( "<option value='$versionOption' $selected >$versionOption</option>" );
@@ -1235,6 +1237,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 			$matchRegex = $this->rule['matchRegex'];
 			$displayRegex = $this->rule['displayRegex'];
 			$statRequireId = $this->rule['statRequireId'];
+			$statRequireValue = $this->rule['statRequireValue'];
 			$factorStatId = $this->rule['factorStatId'];
 			$originalId = $this->rule['originalId'];
 			$version = $this->rule['version'];
@@ -1247,7 +1250,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 			$isVisible = $this->rule['isVisible'];
 			$enableOffBar = $this->rule['enableOffBar'];
 			$isToggle = $this->rule['isToggle'];
-			$statRequireValue = $this->rule['statRequireValue'];
+			
 			$customData = $this->rule['customData'];
 			
 			$cols = [ ];
@@ -1258,7 +1261,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 			$cols[] = 'nameId';
 			$cols[] = 'displayName';
 			$cols[] = 'matchRegex';
+			$cols[] = 'displayRegex';
 			$cols[] = 'statRequireId';
+			$cols[] = 'statRequireValue';
 			$cols[] = 'factorStatId';
 			$cols[] = 'originalId';
 			$cols[] = 'version';
@@ -1271,15 +1276,16 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 			$cols[] = 'isVisible';
 			$cols[] = 'enableOffBar';
 			$cols[] = 'isToggle';
-			$cols[] = 'statRequireValue';
 			$cols[] = 'customData';
 			
 			$values[] = "'" . $this->db->real_escape_string( $id ) . "'";
 			$values[] = "'" . $this->db->real_escape_string( $ruleType ) . "'";
-			$values[] = "'" . $this->db->real_escape_string( $displayName ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $nameId ) . "'";
 			$values[] = "'" . $this->db->real_escape_string( $displayName ) . "'";
 			$values[] = "'" . $this->db->real_escape_string( $matchRegex ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $displayRegex ) . "'";
 			$values[] = "'" . $this->db->real_escape_string( $statRequireId ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $statRequireValue ) . "'";
 			$values[] = "'" . $this->db->real_escape_string( $factorStatId ) . "'";
 			$values[] = "'" . $this->db->real_escape_string( $originalId ) . "'";
 			$values[] = "'" . $this->db->real_escape_string( $version ) . "'";
@@ -1292,7 +1298,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 			$values[] = "'" . $this->db->real_escape_string( $isVisible ) . "'";
 			$values[] = "'" . $this->db->real_escape_string( $enableOffBar ) . "'";
 			$values[] = "'" . $this->db->real_escape_string( $isToggle ) . "'";
-			$values[] = "'" . $this->db->real_escape_string( $statRequireValue ) . "'";
 			$values[] = "'" . $this->db->real_escape_string( $customData ) . "'";
 			
 			$insertResult = $this->InsertQueries ( 'rulesArchive', $cols, $values );
@@ -1432,7 +1437,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		
 		$this->rule['customData'] = $data;
 		
-		$output->addHTML( "<a href='$baselink/showrules'>Show Rules</a> : <a href='$baselink/testrule?ruleid=$id'>Test Rule</a> : <a href='$baselink/deleterule?ruleid=$id'>Delete Rule</a> <br/>" );
+		$output->addHTML( "<a href='$baselink/showrules'>Show Rules</a> : <a href='$baselink/testrule?ruleid=$id'>Test Rule</a> : <a href='$baselink/copyrule?ruleid=$id'>Copy Rule</a> : <a href='$baselink/deleterule?ruleid=$id'>Delete Rule</a> <br/>" );
 		$output->addHTML( "<h3>Editing Rule #$id</h3>" );
 		$output->addHTML( "<form action='$baselink/saveeditruleform?ruleid=$id' method='POST'>" );
 		
@@ -3503,6 +3508,175 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	}
 	
 	
+	public function OutputDoSaveCopyRule()
+	{
+		$req = $this->getRequest();
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
+		
+		$permission = $this->canUserEdit();
+		if ($permission === false) return $this->reportError( "Error: you have no permission to copy rules!" );
+		
+		$ruleId = $req->getVal("ruleid");
+		$oldVersion = $req->getVal("oldversion");
+		$version = $req->getVal("version");
+		
+		if (!$this->LoadRule($ruleId)) return $this->reportError("Error: Failed to load rule $ruleId for copying!");
+		if ($version == null || $version == '') return $this->reportError("Error: Missing new version for rule $ruleId copy!");
+		
+		$ruleType = $this->rule['ruleType'];
+		$nameId = $this->rule['nameId'];
+		$displayName = $this->rule['displayName'];
+		$matchRegex = $this->rule['matchRegex'];
+		$displayRegex = $this->rule['displayRegex'];
+		$statRequireId = $this->rule['statRequireId'];
+		$statRequireValue = $this->rule['statRequireValue'];
+		$factorStatId = $this->rule['factorStatId'];
+		$isEnabled = $this->rule['isEnabled'];
+		$isVisible = $this->rule['isVisible'];
+		$isToggle = $this->rule['isToggle'];
+		$enableOffBar = $this->rule['enableOffBar'];
+		$originalId = $this->rule['originalId'];
+		$icon = $this->rule['icon'];
+		$groupName = $this->rule['groupName'];
+		$maxTimes = $this->rule['maxTimes'];
+		$comment = $this->rule['comment'];
+		$description = $this->rule['description'];
+		$customData = $this->rule['customData'];
+		
+		$cols = [ ];
+		$values = [ ];
+		
+		$cols[] = 'version';
+		$cols[] = 'ruleType';
+		$cols[] = 'nameId';
+		$cols[] = 'displayName';
+		$cols[] = 'matchRegex';
+		$cols[] = 'displayRegex';
+		$cols[] = 'statRequireId';
+		$cols[] = 'statRequireValue';
+		$cols[] = 'factorStatId';
+		$cols[] = 'isEnabled';
+		$cols[] = 'isVisible';
+		$cols[] = 'isToggle';
+		$cols[] = 'enableOffBar';
+		$cols[] = 'originalId';
+		$cols[] = 'icon';
+		$cols[] = 'groupName';
+		$cols[] = 'maxTimes';
+		$cols[] = 'comment';
+		$cols[] = 'description';
+		$cols[] = 'customData';
+		
+		$values[] = "'" . $this->db->real_escape_string( $version ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $ruleType ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $nameId ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $displayName ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $matchRegex ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $displayRegex ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $statRequireId ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $statRequireValue ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $factorStatId ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $isEnabled ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $isVisible ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $isToggle ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $enableOffBar ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $originalId ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $icon ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $groupName ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $maxTimes ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $comment ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $description ) . "'";
+		$values[] = "'" . $this->db->real_escape_string( $customData ) . "'";
+		
+		$insertResult = $this->InsertQueries( 'rules', $cols, $values );
+		if (!$insertResult) return $this->reportError("Error: Failed to insert record into rules!");
+		
+		$newRuleId = $this->db->insert_id;
+		
+		if (!$this->LoadEffects($ruleId)) return $this->reportError("Error: Failed to load effects for rule #$ruleId!");
+		
+		foreach ( $this->effectsDatas as $effectsData ) {
+			$effectId = $effectsData['id'];
+			$statId = $effectsData['statId'];
+			$value = $effectsData['value'];
+			$display = $effectsData['display'];
+			$category = $effectsData['category'];
+			$combineAs = $effectsData['combineAs'];
+			$roundNum = $effectsData['roundNum'];
+			$factorValue = $effectsData['factorValue'];
+			$statDesc = $effectsData['statDesc'];
+			$buffId = $effectsData['buffId'];
+			$regexVar = $effectsData['regexVar'];
+			
+			$cols = [ ];
+			$values = [ ];
+			
+			$cols[] = 'ruleId';
+			$cols[] = 'version';
+			$cols[] = 'statId';
+			$cols[] = 'value';
+			$cols[] = 'display';
+			$cols[] = 'category';
+			$cols[] = 'combineAs';
+			$cols[] = 'roundNum';
+			$cols[] = 'factorValue';
+			$cols[] = 'statDesc';
+			$cols[] = 'buffId';
+			$cols[] = 'regexVar';
+			
+			$values[] = "'" . $this->db->real_escape_string( $newRuleId ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $version ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $statId ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $value ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $display ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $category ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $combineAs ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $roundNum ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $factorValue ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $statDesc ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $buffId ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $regexVar ) . "'";
+			
+			$insertResult = $this->InsertQueries ( 'effects', $cols, $values );
+			if (!$insertResult) return $this->reportError("Error: Failed to insert record into effects!");
+		}
+		
+		$output->addHTML("Copied <a href='$baselink/editrule?ruleid=$ruleId'>Rule #$ruleId</a> into new rule <a href='$baselink/editrule?ruleid=$newRuleId'>Rule #$newRuleId</a> for version $version!");
+	}
+	
+	
+	public function OutputDoShowCopyRule()
+	{
+		$req = $this->getRequest();
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
+		
+		$permission = $this->canUserEdit();
+		if ($permission === false) return $this->reportError( "Error: you have no permission to copy rules!" );
+		
+		$ruleId = $req->getVal("ruleid");
+		
+		if (!$this->LoadRule($ruleId)) return $this->reportError("Error: Failed to load rule $ruleId for copying!");
+		
+		$output->addHTML( "<h2>Copy Rule #$ruleId</h2>" );
+		
+		$version = $this->escapeHtml($this->rule['version']);
+		$output->addHTML("Copy the given rule and its effects from version $version to a new version:");
+		
+		$output->addHTML( "<form action='$baselink/savecopyrule' method='POST'>" );
+		$output->addHTML("<input type='hidden' name='ruleid' value='$ruleId' />");
+		$output->addHTML("<input type='hidden' name='oldversion' value='$version' />");
+		
+			//TODO: Add option for copying to all versions?
+		$this->OutputVersionListHtml('version', '', false, $this->rule['version']);
+		
+		$output->addHTML("<input type='submit' value='Copy' />");
+		
+		$output->addHTML("</form>");
+	}
+	
+	
 	public function OutputDoTestRule()
 	{
 		$req = $this->getRequest();
@@ -3511,7 +3685,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		
 		$ruleId = $req->getVal("ruleid");
 		
-		if (!$this->LoadRule($ruleId)) return $this->reportError("Error: Failed to load rule $ruleID for testing!");
+		if (!$this->LoadRule($ruleId)) return $this->reportError("Error: Failed to load rule $ruleId for testing!");
 		
 		$output->addHTML( "<h2>Testing Rule #$ruleId</h2>" );
 		
@@ -3788,6 +3962,10 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 			$this->OutputDoRuleTests();
 		elseif ($parameter == "testrule")
 			$this->OutputDoTestRule();
+		elseif ($parameter == "copyrule")
+			$this->OutputDoShowCopyRule();
+		elseif ($parameter == "savecopyrule")
+			$this->OutputDoSaveCopyRule();
 		else
 			$this->OutputTableOfContents();
 	}
