@@ -1,6 +1,8 @@
 <?php
 
 require_once ("/home/uesp/secrets/esobuilddata.secrets");
+require_once ("/home/uesp/secrets/esolog.secrets");
+require_once ("/home/uesp/esolog.static/esoCommon.php");
 
 class SpecialEsoBuildRuleEditor extends SpecialPage {
 	
@@ -31,6 +33,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 			'floor' => 'Floor',
 			'floor2' => 'Floor2',
 			'floor10' => 'Floor10',
+			'round' => 'Round',
 		];
 	
 	public $RULE_TYPE_OPTIONS = [ 
@@ -41,6 +44,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 				'cp' => 'CP',
 				'armorenchant' => 'Enchantment (Armor)',
 				'offhandenchant' => 'Enchantment (Off-Hand Weapon)',
+				'offhandweaponenchant' => 'Enchantment (Off-Hand Weapon)',
 				'weaponenchant' => 'Enchantment (Weapon)',
 				'mundus' => 'Mundus',
 				'passive' => 'Passive',
@@ -50,11 +54,20 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	public $RULE_TYPE_OPTIONS_ANY = [];
 	
 	public $db = null;
+	public $logdb = null;
 	public $hasLoadedBuffIds = false;
 	
 	public $rulesDatas = [];
 	public $hasFilteredRules = false;
 	public $totalRuleCount = 0;
+	
+	public $hasFilteredStats = false;
+	public $totalStatsCount = 0;
+	
+	public $testSetData = [];
+	public $testCpData = [];
+	public $testSkillData = [];
+	public $testMatchData = [];
 	
 	
 	function __construct()
@@ -75,7 +88,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 			// TODO: Add any mobile specific CSS/scripts resource modules here
 		}
 		
-		$this->InitDatabase ();
+		$this->InitDatabase();
 	}
 	
 	
@@ -276,10 +289,25 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	{
 		global $uespEsoBuildDataWriteDBHost, $uespEsoBuildDataWriteUser, $uespEsoBuildDataWritePW, $uespEsoBuildDataDatabase;
 		
-		$this->db = new mysqli ( $uespEsoBuildDataWriteDBHost, $uespEsoBuildDataWriteUser, $uespEsoBuildDataWritePW, $uespEsoBuildDataDatabase );
-		if ($this->db->connect_error) return $this->reportError( "Error: failed to initialize database" );
+		if ($this->db) return true;
 		
-		$this->CreateTables ();
+		$this->db = new mysqli( $uespEsoBuildDataWriteDBHost, $uespEsoBuildDataWriteUser, $uespEsoBuildDataWritePW, $uespEsoBuildDataDatabase );
+		if ($this->db->connect_error) return $this->reportError( "Error: failed to initialize database!" );
+		
+		$this->CreateTables();
+		return true;
+	}
+	
+	
+	public function InitLogDatabase()
+	{
+		global $uespEsoLogReadDBHost, $uespEsoLogReadUser, $uespEsoLogReadPW, $uespEsoLogDatabase;
+		
+		if ($this->logdb) return true;
+		
+		$this->logdb = new mysqli( $uespEsoLogReadDBHost, $uespEsoLogReadUser, $uespEsoLogReadPW, $uespEsoLogDatabase );
+		if ($this->logdb->connect_error) return $this->reportError( "Error: failed to initialize log database!" );
+		
 		return true;
 	}
 	
@@ -287,7 +315,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	public function OutputAddVersionForm() 
 	{
 		$permission = $this->canUserEdit();
-		if ($permission === false) return $this->reportError( "Error: you have no permission to add versions" );
+		if ($permission === false) return $this->reportError( "Error: you have no permission to add versions!" );
 		
 		$output = $this->getOutput ();
 		$baselink = $this->GetBaseLink ();
@@ -430,7 +458,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 			$values[] = "'" . $this->db->real_escape_string( $rule['isVisible'] ) . "'";
 			$values[] = "'" . $this->db->real_escape_string( $rule['enableOffBar'] ) . "'";
 			$values[] = "'" . $this->db->real_escape_string( $rule['isToggle'] ) . "'";
-			$values[] = "'" . $this->db->real_escape_string( $rule['statRequireId'] ) . "'";
+			$values[] = "'" . $this->db->real_escape_string( $rule['statRequireValue'] ) . "'";
 			$values[] = "'" . $this->db->real_escape_string( $rule['customData'] ) . "'";
 			
 			$insertResult = $this->InsertQueries( 'rules', $cols, $values );
@@ -699,6 +727,20 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	}
 	
 	
+	public function LoadTotalStatsCount()
+	{
+		$query = "SELECT count(*) as c FROM computedStats;";
+		
+		$result = $this->db->query( $query );
+		if ($result === false) return $this->reportError( "Error: Failed to load total computed stats count from database!" );
+		
+		$row = $result->fetch_assoc();
+		$this->totalStatsCount = intval($row['c']);
+		
+		return $this->totalStatsCount;
+	}
+	
+	
 	public function LoadRules($version = '')
 	{
 		$this->LoadTotalRuleCount();
@@ -740,7 +782,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		if ($ruleType) $where[] = $this->MakeSafeMatchQuery('ruleType', $ruleType);
 		
 		$searchText = $req->getVal('searchtext');
-		if ($searchText) $where[] = $this->MakeSafeLikeQuery('displayName', $searchText);
+		if ($searchText) $where[] = $this->MakeSafeLikeQuery(['displayName', 'nameId', 'matchRegex', 'displayRegex', 'comment', 'description', 'customData'], $searchText);
 		
 		$where = implode(' AND ', $where);
 		
@@ -759,6 +801,35 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	}
 	
 	
+	public function MakeFilteredStatsQuery($filters)
+	{
+		$query = "";
+		$where = [];
+		$req = $this->getRequest();
+		
+		$version = $req->getVal('version');
+		if ($version) $where[] = $this->MakeSafeMatchQuery('version', $version);
+		
+		$searchText = $req->getVal('searchtext');
+		if ($searchText) $where[] = $this->MakeSafeLikeQuery(['statId', 'compute', 'title', 'comment', 'addClass', 'dependsOn'], $searchText);
+		
+		$where = implode(' AND ', $where);
+		
+		if ($where)
+		{
+			$this->hasFilteredStats = true;
+			$query = "SELECT * FROM computedStats WHERE $where;";
+		}
+		else
+		{
+			$query = "SELECT * FROM computedStats;";
+			$this->hasFilteredStats = false;
+		}
+		
+		return $query;
+	}
+	
+	
 	public function MakeSafeMatchQuery($col, $value)
 	{
 		$safeValue = $this->db->real_escape_string($value);
@@ -766,10 +837,38 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	}
 	
 	
-	public function MakeSafeLikeQuery($col, $value)
+	public function MakeSafeLikeQuery($cols, $value)
 	{
 		$safeValue = $this->db->real_escape_string($value);
-		return "`$col` LIKE '$safeValue%'";
+		if (gettype($cols) == "string") return "`$col` LIKE '%$safeValue%'";
+		
+		$where = [];
+		
+		foreach ($cols as $col)
+		{
+			$where[] = "`$col` LIKE '%$safeValue%'";
+		}
+		
+		if (count($where) == 0) return "1";
+		return "(" . implode(" OR ", $where) . ")";
+	}
+	
+	
+	public function LoadEffectsForRules(&$rules)
+	{
+		
+		foreach ($rules as $i => $rule)
+		{
+			$ruleId = $rule['id'];
+			
+			if (!$this->LoadEffects($ruleId))
+			{
+				$rules[$i]['effects'] = [];
+				continue;
+			}
+			
+			$rules[$i]['effects'] = $this->effectsDatas;
+		}
 	}
 	
 	
@@ -792,6 +891,25 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	}
 	
 	
+	public function LoadFilteredStats($filters = [])
+	{
+		$this->computedStatsDatas = [];
+		$this->LoadTotalStatsCount();
+		
+		$query = $this->MakeFilteredStatsQuery($filters);
+		
+		$result = $this->db->query( $query );
+		if ($result === false) return $this->reportError( "Error: Failed to load filtered computed stats from database!" );
+		
+		while ( $row = $result->fetch_assoc() )
+		{
+			$this->computedStatsDatas[] = $row;
+		}
+		
+		return true;
+	}
+	
+	
 	public function OutputShowRulesFilterForm()
 	{
 		$req = $this->getRequest();
@@ -808,6 +926,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$output->addHTML( "<form id='filterRuleForm' action='$baselink/showrules'>" );
 		
 		$this->OutputVersionListHtml( 'version', $version, true );
+		
 		$output->addHTML( "<label for='ruletype'>Rule Type</label>" );
 		$this->OutputListHtml( $ruleType, $this->RULE_TYPE_OPTIONS_ANY, 'ruletype' );
 		
@@ -825,6 +944,38 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 			$output->addHTML( "Showing matching $ruleCount rules out of $totalRuleCount total." );
 		else
 			$output->addHTML( "Showing all $ruleCount rules." );
+	}
+	
+	
+	public function OutputShowStatsFilterForm()
+	{
+		$req = $this->getRequest();
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
+		
+		$version = $req->getVal('version');
+		$searchText = $req->getVal('searchtext');
+		
+		$safeSearchType = $this->escapeHtml($searchText);
+		
+		$output->addHTML( "<form id='filterStatsForm' action='$baselink/showcomputedstats'>" );
+		
+		$this->OutputVersionListHtml( 'version', $version, true );
+		
+		$output->addHTML( " <input type='text' id='filterStatSearch' name='searchtext' value='$safeSearchType'/>" );
+		
+		$output->addHTML( " <input type='submit' value='Filter'/>" );
+		$output->addHTML( " <input type='button' value='Clear' onclick='OnClearStatFilterForm();'/>" );
+		
+		$output->addHTML( "</form>" );
+		
+		$statCount = count($this->computedStatsDatas);
+		$totalStatCount = $this->totalStatsCount;
+		
+		if ($this->hasFilteredStats)
+			$output->addHTML( "Showing matching $statCount computed stats out of $totalStatCount total." );
+		else
+			$output->addHTML( "Showing all $statCount computed stats." );
 	}
 	
 	
@@ -1154,17 +1305,17 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 			
 			foreach ( $this->effectsDatas as $effectsData ) {
 				$effectId = $effectsData['id'];
-				$version = $effectsData ['version'];
-				$statId = $effectsData ['statId'];
-				$value = $effectsData ['value'];
-				$display = $effectsData ['display'];
-				$category = $effectsData ['category'];
-				$combineAs = $effectsData ['combineAs'];
-				$roundNum = $effectsData ['roundNum'];
-				$factorValue = $effectsData ['factorValue'];
-				$statDesc = $effectsData ['statDesc'];
-				$buffId = $effectsData ['buffId'];
-				$regexVar = $effectsData ['regexVar'];
+				$version = $effectsData['version'];
+				$statId = $effectsData['statId'];
+				$value = $effectsData['value'];
+				$display = $effectsData['display'];
+				$category = $effectsData['category'];
+				$combineAs = $effectsData['combineAs'];
+				$roundNum = $effectsData['roundNum'];
+				$factorValue = $effectsData['factorValue'];
+				$statDesc = $effectsData['statDesc'];
+				$buffId = $effectsData['buffId'];
+				$regexVar = $effectsData['regexVar'];
 				
 				$cols = [ ];
 				$values = [ ];
@@ -1224,6 +1375,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$row[] = $result->fetch_assoc ();
 		$this->rule = $row[0];
 		
+		if ($this->rule == null) return $this->reportError( "Error: failed to load rule from database" );
+		
 		return true;
 	}
 	
@@ -1238,7 +1391,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		
 		$id = $this->GetRuleId();
 		
-		if (!$this->LoadRule( $id )) return $this->reportError("Error: Failed to load rule #id!");
+		if (!$this->LoadRule($id)) return $this->reportError("Error: Failed to load rule #id!");
 		
 		$ruleType = $this->escapeHtml( $this->rule['ruleType'] );
 		$nameId = $this->escapeHtml( $this->rule['nameId'] );
@@ -1279,7 +1432,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		
 		$this->rule['customData'] = $data;
 		
-		$output->addHTML( "<a href='$baselink/showrules'>Show Rules</a> : <a href='$baselink/deleterule?ruleid=$id'>Delete Rule</a><br/>" );
+		$output->addHTML( "<a href='$baselink/showrules'>Show Rules</a> : <a href='$baselink/testrule?ruleid=$id'>Test Rule</a> : <a href='$baselink/deleterule?ruleid=$id'>Delete Rule</a> <br/>" );
 		$output->addHTML( "<h3>Editing Rule #$id</h3>" );
 		$output->addHTML( "<form action='$baselink/saveeditruleform?ruleid=$id' method='POST'>" );
 		
@@ -1389,7 +1542,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$output->addHTML( "<p class='errorMsg'></p>" );
 		
 		$output->addHTML( "<label for='displayName'>Display Name</label>" );
-		$output->addHTML( "<input type='text' id='displayName' name='displayname' size='60'><br>" );
+		$output->addHTML( "<input type='text' id='displayName' name='displayName' size='60'><br>" );
 		
 		$output->addHTML( "<label for='matchRegex'>Match Regex</label>" );
 		$output->addHTML( "<input type='text' id='matchRegex' name='matchRegex' size='60'>" );
@@ -2102,7 +2255,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	{
 		if ($this->hasLoadedBuffIds) return true;
 		
-		$query = "SELECT nameId FROM rules where ruleType='buff';";
+		$query = "SELECT DISTINCT nameId FROM rules where ruleType='buff';";
 		
 		$result = $this->db->query( $query );
 		if ($result === false) return $this->reportError( "Error: failed to load buffs from database" );
@@ -2288,13 +2441,19 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	
 	public function OutputShowComputedStatsTable()
 	{
-		if (!$this->LoadComputedStats()) return $this->reportError("Error: Failed to load computed stats!");
+		if (!$this->LoadFilteredStats()) return $this->reportError("Error: Failed to load computed stats!");
 		
-		$output = $this->getOutput ();
-		$baselink = $this->GetBaseLink ();
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
 		
 		$output->addHTML( "<a href='$baselink'>Home</a> : <a href='$baselink/addcomputedstat'>Add New Stat</a>" );
-		$output->addHTML( "<h3>Showing All Computed Stats</h3>" );
+		
+		if ($this->hasFilteredStats)
+			$output->addHTML( "<h3>Showing Matching Computed Stats</h3>" );
+		else
+			$output->addHTML( "<h3>Showing All Computed Stats</h3>" );
+		
+		$this->OutputShowStatsFilterForm();
 		
 		$output->addHTML( "<table class='wikitable sortable jquery-tablesorter' id='computedStats'><thead>" );
 		
@@ -2539,11 +2698,11 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$cols = [ ];
 		$values = [ ];
 		$cols[] = 'statId';
+		$cols[] = 'title';
 		$cols[] = 'version';
 		$cols[] = 'roundNum';
 		$cols[] = 'addClass';
 		$cols[] = 'comment';
-		$cols[] = 'title';
 		$cols[] = 'minimumValue';
 		$cols[] = 'maximumValue';
 		$cols[] = 'deferLevel';
@@ -2560,7 +2719,6 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$values[] = "'" . $this->db->real_escape_string( $input_roundNum ) . "'";
 		$values[] = "'" . $this->db->real_escape_string( $input_addClass ) . "'";
 		$values[] = "'" . $this->db->real_escape_string( $input_comment ) . "'";
-		$values[] = "'" . $this->db->real_escape_string( $input_title ) . "'";
 		
 		if ($input_minimumValue == '')
 			$values[] = "NULL";
@@ -2966,6 +3124,528 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	}
 	
 	
+	public function OutputShowTestForm($title = "Test Rules")
+	{
+		$req = $this->getRequest();
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
+		
+		$version = $req->getVal("version");
+		$ruleType = $req->getVal("ruletype");
+		
+		$output->addHTML( "<a href='$baselink'>Home</a><br/>" );
+		
+		$output->addHTML( "<h3>$title</h3>" );
+		$output->addHTML( "<form action='$baselink/testrules' method='GET'>" );
+		
+		$this->OutputVersionListHtml( 'version', $version, false );
+		
+		$output->addHTML( "<label for='ruleType'>Rule Type</label>" );
+		$this->OutputListHtml( $ruleType, $this->RULE_TYPE_OPTIONS_ANY, 'ruletype' );
+		
+		$output->addHTML( "<br><input type='submit' value='Test Rules' class='submit_btn'>" );
+		$output->addHTML( "</form>" );
+	}
+	
+	
+	public function LoadTestSetData($version)
+	{
+		$version = preg_replace('/[^0-9a-zA-Z_]/', '', $version);
+		if ($this->testSetData) return $this->testSetData;
+		
+		$this->InitLogDatabase();
+		
+		if (GetEsoItemTableSuffix($version) == '')
+			$table = "setSummary";
+		else
+			$table = "setSummary$version";
+		
+		$query = "SELECT * FROM `$table`;";
+		$result = $this->logdb->query($query);
+		if ($result === false) return null;
+		
+		$setData = [];
+		
+		while ($row = $result->fetch_assoc())
+		{
+			$setName = strtolower($row['setName']);
+			$row['rawSetBonusDesc'] = preg_replace('/([0-9]+)-([0-9]+)/', '\2', $row['setBonusDesc']);
+			
+			$setData[$setName] = $row;
+		}
+		
+		$this->InitTestSetMatchData($setData);
+		
+		$this->testSetData = $setData;
+		return $this->testSetData;
+	}
+	
+	
+	public function InitTestSetMatchData($setDatas)
+	{
+		
+		foreach ($setDatas as $setData)
+		{
+			for ($i = 1; $i <= 12; ++$i)
+			{
+				$desc = $setData["setBonusDesc$i"];
+				if ($desc == "") continue;
+				$this->testMatchData['set'][$setData['setName']][$i] = [];
+			}
+		}
+	}
+	
+	
+	public function TestCpRule($rule)
+	{
+		$testResult = [];
+		return $testResult;
+	}
+	
+	
+	public function TestSetRule($rule)
+	{
+		$errors = [];
+		$output = $this->getOutput();
+		
+		$setDatas = $this->LoadTestSetData($rule['version']);
+		if ($setDatas == null) return [ 'errorsMsg' => "Failed to load set data!" ];
+		
+		if ($rule['matchRegex'] == null || $rule['matchRegex'] == "") $errors[] = "Missing match regex!";
+		
+		$matchedSets = [];
+		$nameId = strtolower($rule['nameId']);
+		$originalId = strtolower($rule['originalId']);
+		if ($originalId != '') $nameId = $originalId;
+		
+		foreach ($setDatas as $setName => $setData)
+		{
+			$isMatched = false;
+			if ($nameId != '' && $nameId != strtolower($setName)) continue;
+			
+			for ($i = 1; $i <= 12; ++$i)
+			{
+				$desc = preg_replace('/([0-9]+)-([0-9]+)/', '\2', $setData["setBonusDesc$i"]);
+				$desc = preg_replace('/\([0-9]+ item[s]*\) /', '', $desc);
+				if ($desc == "") continue;
+				
+				$result = preg_match($rule['matchRegex'], $desc, $matches);
+				if (!$result) continue;
+				
+				$isMatched = true;
+				
+				$newData = [];
+				$newData['rule'] = $rule;
+				$newData['set'] = $setData;
+				
+				$this->testMatchData['set'][$setData['setName']][$i][] = $newData;
+			}
+			
+			if ($isMatched) $matchedSets[] = $setData;
+		}
+		
+		if (count($matchedSets) == 0)
+		{
+			$safeRegex = $this->escapeHtml($rule['matchRegex']);
+			$errors[] = "Regex doesn't match any sets!<br/>$safeRegex";
+		}
+		else
+		{
+			//$count = count($matchedSets);
+			//$safeRegex = $this->escapeHtml($rule['matchRegex']);
+			//$errors[] = "Regex matches $count sets!<br/>$safeRegex";
+		}
+		
+		return [ 'errors' => $errors, 'matchedSets' => $matchedSets ];
+	}
+	
+	
+	public function TestSkillRule($rule, $isPassive)
+	{
+		$testResult = [];
+		return $testResult;
+	}
+	
+	
+	public function TestAbilityDescRule($rule)
+	{
+		$testResult = [];
+		return $testResult;
+	}
+	
+	
+	public function TestBuffRule($rule)
+	{
+		$errors = [];
+		
+		if ($rule['nameId'] == null || $rule['nameId'] == "") $errors[] = "Missing nameID!";
+		if ($rule['icon'] == null || $rule['icon'] == "") $errors[] = "Missing icon!";
+		
+		$effectErrors = $this->TestRuleEffects(null, null, $rule);
+		if ($effectErrors) $errors = array_merge($errors, $effectErrors);
+		
+		return [ 'errors' => $errors ];
+	}
+	
+	
+	public function TestMundusRule($rule)
+	{
+		$errors = [];
+		
+		if ($rule['matchRegex'] == null || $rule['matchRegex'] == "") $errors[] = "Missing match regex!";
+		if ($rule['description'] == null || $rule['description'] == "") $errors[] = "Missing description!";
+		
+		if ($rule['matchRegex'] && $rule['description'])
+		{
+			$regexErrors = $this->TestRuleRegex($rule['matchRegex'], $rule['description'], $rule);
+			if ($regexErrors) $errors = array_merge($errors, $regexErrors);
+			
+			$effectErrors = $this->TestRuleEffects($rule['matchRegex'], $rule['description'], $rule);
+			if ($effectErrors) $errors = array_merge($errors, $effectErrors);
+		}
+		
+		return [ 'errors' => $errors ];
+	}
+	
+	
+	public function TestEnchantRule($rule)
+	{
+		$testResult = [];
+		return $testResult;
+	}
+	
+	
+	public function TestRuleRegex($regex, $text, $rule)
+	{
+		if ($regex == null || $regex == '') return [ "Missing regex!" ];
+		if ($text == null || $text == '') return [ "Missing text for regex!" ];
+		
+		$safeText = $this->escapeHtml($text);
+		$safeRegex = $this->escapeHtml($regex);
+		
+		$result = preg_match($regex, $text, $matches);
+		if ($result === false) return [ "Invalid regex!<br/>'$safeRegex'" ];
+		if ($result === 0) return [ "Regex does not match text!<br/>'$safeRegex' != '$safeText'" ];
+		
+		return null;
+	}
+	
+	
+	public function TestRuleEffects($regex, $text, $rule)
+	{
+		if ($rule['effects'] === null) return [ "Rule has no effects (NULL)!" ];
+		if (count($rule['effects']) == 0) return [ "Rule has no effects!" ];
+		
+		if ($regex == null || $regex == '')
+		{
+			$regex = null;
+			$matches = null;
+		}
+		elseif  ($text == null || $text == '')
+		{
+			return null;
+		}
+		else
+		{
+			$result = preg_match($regex, $text, $matches);
+			if (!$result) return null;
+		}
+		
+		$errors = [];
+		
+		foreach ($rule['effects'] as $effect)
+		{
+			$regexVar = $effect['regexVar'];
+			$ruleId = $effect['ruleId'];
+			$effectId = $effect['id'];
+			$statId = $effect['statId'];
+			$buffId = $effect['buffId'];
+			$value = $effect['value'];
+			
+			$effectLink = $this->GetBaseLink() . "/editeffect?effectid=$effectId&ruleid=$ruleId";
+			$effectTag = "<a href='$effectLink'>Effect #$effectId</a>";
+			
+			if ($statId == null || $statId == '') 
+			{
+				if ($buffId == null || $buffId == '') 
+				{
+					if ($value == null || $value == '')
+					{
+						$errors[] = "$effectTag: Missing statId, value, and buffId!";
+					}
+				}
+			}
+			
+			if ($regexVar == null || $regexVar == '') 
+				$regexVar = 1;
+			else if (preg_match('/[0-9]+/', $regexVar))
+				$regexVar = intval($regexVar);
+			
+			if ($matches == null)
+			{
+				if ($value == null || $value == '')
+				{
+					if ($buffId == null || $buffId == '') $errors[] = "$effectTag: Missing value or buffId for rule with no regex!";
+				}
+			}
+			elseif ($matches[$regexVar] == null)
+			{
+				$regexVar = $this->escapeHtml($regexVar);
+				$errors[] = "$effectTag: Variable '$regexVar' not found in match regex!";
+			}
+		}
+		
+		return $errors;
+	}
+	
+	
+	public function TestRule($rule)
+	{
+		switch ($rule['ruleType'])
+		{
+			case 'cp': return $this->TestCpRule($rule);
+			case 'set': return $this->TestSetRule($rule);
+			case 'active': return $this->TestSkillRule($rule, false);
+			case 'passive': return $this->TestSkillRule($rule, true);
+			case 'abilitydesc': return $this->TestAbilityDescRule($rule, true);
+			case 'buff': return $this->TestBuffRule($rule, true);
+			case 'mundus': return $this->TestMundusRule($rule, true);
+			case 'weaponenchant':
+			case 'armorenchant':
+			case 'offhandenchant':
+			case 'offhandweaponenchant':
+				return $this->TestEnchantRule($rule, true);
+		}
+		
+		return [ "errorMsg" => "Error: Unknown rule type '{$rule['ruleType']}' found!" ];
+	}
+	
+	
+	public function OutputTestRuleResult($result, $rule, $showExtra = false)
+	{
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
+		
+		$id = $rule['id'];
+		$ruleType = $rule['ruleType'];
+		if ($this->RULE_TYPE_OPTIONS[$ruleType]) $ruleType = $this->RULE_TYPE_OPTIONS[$ruleType];
+		
+		$link = "$baselink/editrule?ruleid=$id";
+		$rowHeader = "<tr><td><a href='$link'>$ruleType Rule #$id</a></td><td><ul>\n";
+		
+		$numErrors = 0;
+		
+		if ($result['errorMsg'])
+		{
+			$output->addHTML($rowHeader);
+			
+			$text = $result['errorMsg'];
+			$text = str_replace("\n", "<br/>", $text);
+			$output->addHTML("<li>$text</li>\n");
+			
+			$output->addHTML("</ul></td></tr>\n");
+			++$numErrors;
+		}
+		
+		if ($result['errors'])
+		{
+			$output->addHTML($rowHeader);
+			
+			foreach ($result['errors'] as $errorMsg)
+			{
+				$text = $errorMsg;
+				$text = str_replace("\n", "<br/>", $text);
+				$output->addHTML("<li>$text</li>\n");
+			}
+			
+			$output->addHTML("</ul></td></tr>\n");
+			
+			$numErrors += count($result['errors']);
+		}
+		
+		if ($result['matchedSets'] && $showExtra) $this->OutputTestRuleSetResult($result, $rule);
+		
+		return $numErrors;
+	}
+	
+	
+	public function OutputTestRuleSetResult($result, $rule)
+	{
+		$matchedSets = $result['matchedSets'];
+		$setDatas = $this->LoadTestSetData($rule['version']);
+		$output = $this->getOutput();
+		$count = count($matchedSets);
+		
+		$output->addHTML("<tr><td></td><td>Found $count matching sets:<ul>\n");
+		
+		foreach ($matchedSets as $setData)
+		{
+			$setName = $this->escapeHtml($setData['setName']);
+			$output->addHTML("<li>$setName");
+			
+			for ($i = 1; $i <= 12; ++$i)
+			{
+				$desc = preg_replace('/([0-9]+)-([0-9]+)/', '\2', $setData["setBonusDesc$i"]);
+				$desc = preg_replace('/\([0-9]+ item[s]*\) /', '', $desc);
+				if ($desc == "") continue;
+				
+				$result = preg_match($rule['matchRegex'], $desc, $matches);
+				if (!$result) continue;
+				
+				$desc = $this->escapeHtml($setData["setBonusDesc$i"]);
+				$output->addHTML("<pre>$desc</pre>");
+			}
+			
+			$output->addHTML("</li>");
+		}
+		
+		$output->addHTML("</ul></td></tr>");
+	}
+	
+	
+	public function OutputDoTestRule()
+	{
+		$req = $this->getRequest();
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
+		
+		$ruleId = $req->getVal("ruleid");
+		
+		if (!$this->LoadRule($ruleId)) return $this->reportError("Error: Failed to load rule $ruleID for testing!");
+		
+		$output->addHTML( "<h2>Testing Rule #$ruleId</h2>" );
+		
+		$output->addHTML("<table class='wikitable'>");
+		$output->addHTML("<tr><th></th><th>Errors / Notes</th></tr>");
+		
+		$result = $this->TestRule($this->rule);
+		$numErrors = $this->OutputTestRuleResult($result, $this->rule, true);
+		
+		$output->addHTML("</table>");
+		$output->addHTML("Found $numErrors errors in rules!");
+	}
+	
+	
+	public function OutputDoRuleTests()
+	{
+		$req = $this->getRequest();
+		$output = $this->getOutput();
+		$baselink = $this->GetBaseLink();
+		
+		$version = $req->getVal("version");
+		$ruleType = $req->getVal("ruletype");
+		
+		if (!$this->LoadFilteredRules()) return $this->reportError("Error: Failed to load rules for tests!");
+		$this->LoadEffectsForRules($this->rulesDatas);
+		
+		$this->OutputShowTestForm("Test Rules Results");
+		
+		$ruleCount = count($this->rulesDatas);
+		$totalRuleCount = $this->totalRuleCount;
+		
+		if ($this->hasFilteredRules)
+			$output->addHTML( "Testing matching $ruleCount rules out of $totalRuleCount total." );
+		else
+			$output->addHTML( "Testing all $ruleCount rules." );
+		
+		$output->addHTML("<table class='wikitable'>");
+		$output->addHTML("<tr><th>Rule</th><th>Errors</th></tr>");
+		$numErrors = 0;
+		
+		foreach ($this->rulesDatas as $rule)
+		{
+			$result = $this->TestRule($rule);
+			$numErrors += $this->OutputTestRuleResult($result, $rule);
+		}
+		
+		$numErrors += $this->OutputTestMatchData();
+		
+		$output->addHTML("</table>");
+		$output->addHTML("Found $numErrors errors in rules!");
+	}
+	
+	
+	public function OutputTestMatchData()
+	{
+		$errors = $this->OutputTestMatchSetData();
+		
+		$output = $this->getOutput();
+		
+		foreach ($errors as $errorMsg)
+		{
+			$output->addHTML("<tr><td></td><td>");
+			$output->addHTML("$errorMsg");
+			$output->addHTML("</td></tr>\n");
+		}
+		
+		return count($errors);
+	}
+	
+	
+	public function OutputTestMatchSetData()
+	{
+		$errors = [];
+		if ($this->testMatchData['set'] == null) return null;
+		
+		$baselink = $this->GetBaseLink();
+		
+		foreach ($this->testMatchData['set'] as $setName => $setBonusData)
+		{
+			foreach ($setBonusData as $i => $matchData)
+			{
+				$count = count($matchData);
+				
+				if ($count == 1)
+				{
+					continue;
+				}
+				elseif ($count == 0)
+				{
+					$setData = $this->testSetData[strtolower($setName)];
+					$setBonusDesc = "<pre>" . $this->escapeHtml($setData["setBonusDesc$i"]) . "</pre>";
+					$errors[] = "$setName Bonus #$i has no rule match!<br/>$setBonusDesc";
+				}
+				else
+				{
+					$setData = $matchData[0]['set'];
+					$setBonusDesc = "<pre>" . $this->escapeHtml($setData["setBonusDesc$i"]) . "</pre>";
+					$ruleTexts = [];
+					
+					foreach ($matchData as $data)
+					{
+						$rule = $data['rule'];
+						$ruleId = $rule['id'];
+						$nameId = $rule['nameId'];
+						$isToggle = $rule['isToggle'];
+						$statRequireId = $this->escapeHtml($rule['statRequireId']);
+						$statRequireValue = $this->escapeHtml($rule['statRequireValue']);
+						$matchRegex = $this->escapeHtml($rule['matchRegex']);
+						
+						$options = [];
+						if ($isToggle) $options[] = "Toggle";
+						if ($statRequireId) $options[] = "$statRequireId=$statRequireValue";
+						$options = implode(", ", $options);
+						
+						if ($nameId && $options)
+							$ruleTexts[] = "<a href='$baselink/editrule?ruleid=$ruleId'>Rule #$ruleId</a> -- $nameId ($options): $matchRegex";
+						elseif ($nameId)
+							$ruleTexts[] = "<a href='$baselink/editrule?ruleid=$ruleId'>Rule #$ruleId</a> -- $nameId: $matchRegex";
+						elseif ($options)
+							$ruleTexts[] = "<a href='$baselink/editrule?ruleid=$ruleId'>Rule #$ruleId</a> -- ($options) $matchRegex";
+						else
+							$ruleTexts[] = "<a href='$baselink/editrule?ruleid=$ruleId'>Rule #$ruleId</a> -- $matchRegex";
+					}
+					
+					$ruleTexts = "<li>" . implode("</li><li>", $ruleTexts) . "</li>";
+					$errors[] = "$setName Bonus #$i has $count rule matches!<br/>$setBonusDesc</br><ul>$ruleTexts</ul>";
+				}
+			}
+		}
+		
+		return $errors;
+	}
+	
+	
 	public function CheckDuplicateRules()
 	{
 		$req = $this->getRequest();
@@ -3044,6 +3724,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$output->addHTML( "<br>" );
 		$output->addHTML( "<li><a href='$baselink/addversion'>Add Version</a></li>" );
 		$output->addHTML( "<li><a href='$baselink/checkduprules'>Find Duplicate Rules</a></li>" );
+		$output->addHTML( "<li><a href='$baselink/showtest'>Test Rules</a></li>" );
+		
 		$output->addHTML( "</ul>" );
 	}
 	
@@ -3072,9 +3754,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 			$this->SaveEditEffectForm();
 		elseif ($parameter == "editeffect")
 			$this->OutputEditEffectForm();
-		elseif ($parameter == "showcomputedstats")
+		elseif ($parameter == "showcomputedstats" || $parameter == "showstats")
 			$this->OutputShowComputedStatsTable();
-		elseif ($parameter == "addcomputedstat")
+		elseif ($parameter == "addcomputedstat" || $parameter == "addstat")
 			$this->OutputAddComputedStatsForm();
 		elseif ($parameter == "savenewcomputedstat")
 			$this->SaveNewComputedStat();
@@ -3100,6 +3782,12 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 			$this->SaveNewVersion();
 		elseif ($parameter == "checkduprules")
 			$this->CheckDuplicateRules();
+		elseif ($parameter == "showtest")
+			$this->OutputShowTestForm();
+		elseif ($parameter == "testrules")
+			$this->OutputDoRuleTests();
+		elseif ($parameter == "testrule")
+			$this->OutputDoTestRule();
 		else
 			$this->OutputTableOfContents();
 	}

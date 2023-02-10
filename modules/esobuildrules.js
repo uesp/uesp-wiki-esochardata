@@ -155,6 +155,11 @@ window.OnClearRuleFilterForm = function()
 	$("#version").val('');
 }
 
+window.OnClearStatFilterForm = function()
+{
+	$("#filterStatSearch").val('');
+	$("#version").val('');
+}
 
 $(document).ready(function () {
 	if (window.console && console.log) console.log("ESO Build Rules Editor JavaScript");
