@@ -1849,7 +1849,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		if (!$updateResult) return $this->reportError("Error: Failed to save rule record!");
 		
 		$output->addHTML( "<p>Successfully saved rule #$id!</p><br>" );
-		$output->addHTML( "<a href='$baselink'>Home</a> : <a href='$baselink/showrules'>Show Rules</a> <br/>" );
+		$output->addHTML( "<a href='$baselink'>Home</a> : <a href='$baselink/showrules'>Show Rules</a> : <a href='$baselink/testrule?ruleid=$id'>Test Rule</a><br/>" );
 	}
 	
 	
@@ -3138,7 +3138,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$version = $req->getVal("version");
 		$ruleType = $req->getVal("ruletype");
 		
-		$output->addHTML( "<a href='$baselink'>Home</a><br/>" );
+		$output->addHTML( "<a href='$baselink'>Home</a> : <a href='$baselink/showrules'>Show Rules</a> <br/>" );
 		
 		$output->addHTML( "<h3>$title</h3>" );
 		$output->addHTML( "<form action='$baselink/testrules' method='GET'>" );
@@ -3150,6 +3150,78 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		
 		$output->addHTML( "<br><input type='submit' value='Test Rules' class='submit_btn'>" );
 		$output->addHTML( "</form>" );
+	}
+	
+	
+	public function LoadTestSkillData($version, $isPassive)
+	{
+		$version = preg_replace('/[^0-9a-zA-Z_]/', '', $version);
+		if ($this->testSkillData) return $this->testSkillData;
+		
+		$this->InitLogDatabase();
+		
+		if (GetEsoItemTableSuffix($version) == '')
+			$table = "minedSkills";
+		else
+			$table = "minedSkills$version";
+		
+		if ($isPassive)
+			$query = "SELECT * FROM `$table` WHERE (isPlayer=1 OR setName!='') AND isPassive='1' AND rank='1';";
+		else
+			$query = "SELECT * FROM `$table` WHERE (isPlayer=1 OR setName!='') AND isPassive='0' AND (rank='1' OR rank='5' OR rank='9');";
+		
+		$result = $this->logdb->query($query);
+		if ($result === false) return null;
+		
+		$skillData = [];
+		
+		while ($row = $result->fetch_assoc())
+		{
+			$abilityId = intval($row['id']);
+			
+			$skillData[$abilityId] = $row;
+		}
+		
+		$this->InitTestSkillMatchData($skillData);
+		
+		$count = count($skillData);
+		$this->testSkillData = $skillData;
+		return $this->testSkillData;
+	}
+	
+	
+	public function LoadTestCpData($version)
+	{
+		$version = preg_replace('/[^0-9a-zA-Z_]/', '', $version);
+		if ($this->testCpData) return $this->testCpData;
+		
+		$this->InitLogDatabase();
+		
+		if (GetEsoItemTableSuffix($version) == '')
+			$table = "cp2Skills";
+		else
+			$table = "cp2Skills$version";
+		
+		$query = "SELECT * FROM `$table`;";
+		$result = $this->logdb->query($query);
+		if ($result === false) return null;
+		
+		$cpData = [];
+		
+		while ($row = $result->fetch_assoc())
+		{
+			$id = intval($row['skillId']);
+			
+			$cpData[$id] = $row;
+		}
+		
+		$this->InitTestCpMatchData($cpData);
+		
+		//$count = count($cpData);
+		//error_log("Loaded $count CP Data");
+		
+		$this->testCpData = $cpData;
+		return $this->testCpData;
 	}
 	
 	
@@ -3186,6 +3258,34 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	}
 	
 	
+	public function InitTestCpMatchData($cpDatas)
+	{
+		
+		foreach ($cpDatas as $cpData)
+		{
+			$desc = $cpData["minDescription"];
+			if ($desc == "") continue;
+			
+			$id = intval($cpData['skillId']);
+			$this->testMatchData['cp'][$id] = [];
+		}
+	}
+	
+	
+	public function InitTestSkillMatchData($skillDatas)
+	{
+		
+		foreach ($skillDatas as $skillData)
+		{
+			$desc = $skillData["description"];
+			if ($desc == "") continue;
+			
+			$abilityId = intval($skillData['id']);
+			$this->testMatchData['skill'][$abilityId] = [];
+		}
+	}
+	
+	
 	public function InitTestSetMatchData($setDatas)
 	{
 		
@@ -3195,6 +3295,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 			{
 				$desc = $setData["setBonusDesc$i"];
 				if ($desc == "") continue;
+				
 				$this->testMatchData['set'][$setData['setName']][$i] = [];
 			}
 		}
@@ -3203,8 +3304,44 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	
 	public function TestCpRule($rule)
 	{
-		$testResult = [];
-		return $testResult;
+		$errors = [];
+		$matchedCps = [];
+		$output = $this->getOutput();
+		
+		$cpDatas = $this->LoadTestCpData($rule['version']);
+		if ($cpDatas == null) return [ 'errorsMsg' => "Failed to load CP data!" ];
+		
+		if ($rule['matchRegex'] == null || $rule['matchRegex'] == "") $errors[] = "Missing match regex!";
+		
+		foreach ($cpDatas as $id => $cpData)
+		{
+			$desc = trim($cpData['minDescription']);
+			if ($desc == "") continue;
+			
+			$desc = str_replace("\n", " ", $desc);
+			$desc = str_replace("\r", " ", $desc);
+			$desc = FormatRemoveEsoItemDescriptionText($desc);
+			
+			error_log("$desc");
+			
+			$result = preg_match($rule['matchRegex'], $desc, $matches);
+			if (!$result) continue;
+			
+			$newData = [];
+			$newData['rule'] = $rule;
+			$newData['cp'] = $cpData;
+			
+			$this->testMatchData['cp'][$id][] = $newData;
+			$matchedCps[] = $cpData;
+		}
+		
+		if (count($matchedCps) == 0)
+		{
+			$safeRegex = $this->escapeHtml($rule['matchRegex']);
+			$errors[] = "Regex doesn't match any CPs!<br/>$safeRegex";
+		}
+		
+		return [ 'errors' => $errors, 'matchedCps' => $matchedCps ];
 	}
 	
 	
@@ -3267,8 +3404,60 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	
 	public function TestSkillRule($rule, $isPassive)
 	{
-		$testResult = [];
-		return $testResult;
+		$errors = [];
+		$output = $this->getOutput();
+		
+		$skillDatas = $this->LoadTestSkillData($rule['version'], $isPassive);
+		if ($skillDatas == null) return [ 'errorsMsg' => "Failed to load skill data!" ];
+		
+		if ($rule['matchRegex'] == null || $rule['matchRegex'] == "") $errors[] = "Missing match regex!";
+		
+		$matchedSkills = [];
+		
+		foreach ($skillDatas as $abilityId => $skillData)
+		{
+			$skillPassive = intval($skillData['isPassive']) != 0;
+			if ($isPassive != $skillPassive) continue;
+			
+			$name = trim($skillData['name']);
+			
+			if ($rule['isToggle'] && $rule['nameId'] && $rule['matchSkillName'])
+			{
+				if ($name != $rule['nameId']) continue;
+			}
+			
+			$desc = trim($skillData['description']);
+			if ($desc == "") continue;
+			
+			$abilityDesc = trim($skillData['abilityDesc']);
+			if ($abilityDesc) $desc = "$abilityDesc\n$desc";
+			
+			$desc = FormatRemoveEsoItemDescriptionText($desc);
+			
+			//error_log("{$rule['matchRegex']}, $desc");
+			//error_log("$desc");
+			
+			$result = preg_match($rule['matchRegex'], $desc, $matches);
+			if (!$result) continue;
+			
+			//error_log("Matched $abilityId");
+			
+			$newData = [];
+			$newData['rule'] = $rule;
+			$newData['isPassive'] = $isPassive;
+			$newData['skill'] = $skillData;
+			
+			$this->testMatchData['skill'][$abilityId][] = $newData;
+			$matchedSkills[] = $skillData;
+		}
+		
+		if (count($matchedSkills) == 0)
+		{
+			$safeRegex = $this->escapeHtml($rule['matchRegex']);
+			$errors[] = "Regex doesn't match any skills!<br/>$safeRegex";
+		}
+		
+		return [ 'errors' => $errors, 'matchedSkills' => $matchedSkills ];
 	}
 	
 	
@@ -3412,9 +3601,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 			case 'set': return $this->TestSetRule($rule);
 			case 'active': return $this->TestSkillRule($rule, false);
 			case 'passive': return $this->TestSkillRule($rule, true);
-			case 'abilitydesc': return $this->TestAbilityDescRule($rule, true);
-			case 'buff': return $this->TestBuffRule($rule, true);
-			case 'mundus': return $this->TestMundusRule($rule, true);
+			case 'abilitydesc': return $this->TestAbilityDescRule($rule);
+			case 'buff': return $this->TestBuffRule($rule);
+			case 'mundus': return $this->TestMundusRule($rule);
 			case 'weaponenchant':
 			case 'armorenchant':
 			case 'offhandenchant':
@@ -3469,15 +3658,65 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		}
 		
 		if ($result['matchedSets'] && $showExtra) $this->OutputTestRuleSetResult($result, $rule);
+		if ($result['matchedSkills'] && $showExtra) $this->OutputTestRuleSkillResult($result, $rule);
+		if ($result['matchedCps'] && $showExtra) $this->OutputTestRuleCpResult($result, $rule);
 		
 		return $numErrors;
+	}
+	
+	
+	public function OutputTestRuleCpResult($result, $rule)
+	{
+		$matchedCps = $result['matchedCps'];
+		$output = $this->getOutput();
+		$count = count($matchedCps);
+		
+		$output->addHTML("<tr><td></td><td>Found $count matching CPs:<ul>\n");
+		
+		foreach ($matchedCps as $cpData)
+		{
+			$name = $this->escapeHtml($cpData['name']);
+			$id = $cpData['skillId'];
+			$desc = $cpData["minDescription"];
+			$desc = FormatRemoveEsoItemDescriptionText($desc);
+			$desc = $this->escapeHtml($desc);
+			
+			$output->addHTML("<li>$name ($id) : $desc</li>");
+		}
+		
+		$output->addHTML("</ul></td></tr>");
+	}
+	
+	
+	
+	public function OutputTestRuleSkillResult($result, $rule)
+	{
+		$matchedSkills = $result['matchedSkills'];
+		$output = $this->getOutput();
+		$count = count($matchedSkills);
+		
+		$output->addHTML("<tr><td></td><td>Found $count matching skills:<ul>\n");
+		
+		foreach ($matchedSkills as $skillData)
+		{
+			$name = $this->escapeHtml($skillData['name']);
+			$abilityId = $skillData['id'];
+			$abilityDesc = trim($skillData['abilityDesc']);
+			$desc = $skillData["description"];
+			if ($abilityDesc) $desc = "$abilityDesc\r\n$desc";
+			$desc = FormatRemoveEsoItemDescriptionText($desc);
+			$desc = $this->escapeHtml($desc);
+			
+			$output->addHTML("<li>$name ($abilityId) : $desc</li>");
+		}
+		
+		$output->addHTML("</ul></td></tr>");
 	}
 	
 	
 	public function OutputTestRuleSetResult($result, $rule)
 	{
 		$matchedSets = $result['matchedSets'];
-		$setDatas = $this->LoadTestSetData($rule['version']);
 		$output = $this->getOutput();
 		$count = count($matchedSets);
 		
@@ -3687,6 +3926,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		
 		if (!$this->LoadRule($ruleId)) return $this->reportError("Error: Failed to load rule $ruleId for testing!");
 		
+		$output->addHTML( "<a href='$baselink'>Home</a> : <a href='$baselink/showrules'>Show Rules</a> <br/>" );
+		
 		$output->addHTML( "<h2>Testing Rule #$ruleId</h2>" );
 		
 		$output->addHTML("<table class='wikitable'>");
@@ -3742,6 +3983,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	public function OutputTestMatchData()
 	{
 		$errors = $this->OutputTestMatchSetData();
+		array_push($errors, ...$this->OutputTestMatchSkillData());
+		array_push($errors, ...$this->OutputTestMatchCpData());
 		
 		$output = $this->getOutput();
 		
@@ -3756,10 +3999,146 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	}
 	
 	
+	public function OutputTestMatchCpData()
+	{
+		$errors = [];
+		if ($this->testMatchData['cp'] == null) return $errors;
+		
+		//$output = $this->getOutput();
+		//$output->addHTML("<pre>" . print_r($this->testMatchData['skill'], true) . "</pre>");
+		
+		$baselink = $this->GetBaseLink();
+		
+		foreach ($this->testMatchData['cp'] as $abilityId => $matchData)
+		{
+			$count = count($matchData);
+			
+			if ($count == 1)
+			{
+				continue;
+			}
+			elseif ($count == 0)
+			{
+				$cpData = $this->testCpData[$abilityId];
+				$desc = FormatRemoveEsoItemDescriptionText($cpData["minDescription"]);
+				$desc = $this->escapeHtml($desc);
+				$desc = "<pre>$desc</pre>";
+				$errors[] = "#$abilityId CP has no rule match!<br/>$desc";
+			}
+			else
+			{
+				$cpData = $matchData[0]['cp'];
+				$desc = FormatRemoveEsoItemDescriptionText($cpData["minDescription"]);
+				$desc = $this->escapeHtml($desc);
+				$desc = "<pre>$desc</pre>";
+				$ruleTexts = [];
+				
+				foreach ($matchData as $data)
+				{
+					$rule = $data['rule'];
+					$ruleId = $rule['id'];
+					$nameId = $rule['nameId'];
+					$isToggle = $rule['isToggle'];
+					$statRequireId = $this->escapeHtml($rule['statRequireId']);
+					$statRequireValue = $this->escapeHtml($rule['statRequireValue']);
+					$matchRegex = $this->escapeHtml($rule['matchRegex']);
+					
+					$options = [];
+					if ($isToggle) $options[] = "Toggle";
+					if ($statRequireId) $options[] = "$statRequireId=$statRequireValue";
+					$options = implode(", ", $options);
+					
+					if ($nameId && $options)
+						$ruleTexts[] = "<a href='$baselink/editrule?ruleid=$ruleId'>Rule #$ruleId</a> -- $nameId ($options): $matchRegex";
+					elseif ($nameId)
+						$ruleTexts[] = "<a href='$baselink/editrule?ruleid=$ruleId'>Rule #$ruleId</a> -- $nameId: $matchRegex";
+					elseif ($options)
+						$ruleTexts[] = "<a href='$baselink/editrule?ruleid=$ruleId'>Rule #$ruleId</a> -- ($options) $matchRegex";
+					else
+						$ruleTexts[] = "<a href='$baselink/editrule?ruleid=$ruleId'>Rule #$ruleId</a> -- $matchRegex";
+				}
+				
+				$ruleTexts = "<li>" . implode("</li><li>", $ruleTexts) . "</li>";
+				$errors[] = "#$abilityId CP has $count rule matches!<br/>$desc</br><ul>$ruleTexts</ul>";
+			}
+		}
+		
+		return $errors;
+	}
+	
+	
+	public function OutputTestMatchSkillData()
+	{
+		$errors = [];
+		if ($this->testMatchData['skill'] == null) return $errors;
+		
+		//$output = $this->getOutput();
+		//$output->addHTML("<pre>" . print_r($this->testMatchData['skill'], true) . "</pre>");
+		
+		$baselink = $this->GetBaseLink();
+		
+		foreach ($this->testMatchData['skill'] as $abilityId => $matchData)
+		{
+			$count = count($matchData);
+			
+			if ($count == 1)
+			{
+				continue;
+			}
+			elseif ($count == 0)
+			{
+				$skillData = $this->testSkillData[$abilityId];
+				$desc = FormatRemoveEsoItemDescriptionText($skillData["description"]);
+				$desc = $this->escapeHtml($desc);
+				$desc = "<pre>$desc</pre>";
+				$errors[] = "$abilityId Skill has no rule match!<br/>$desc";
+			}
+			else
+			{
+				$skillData = $matchData[0]['skill'];
+				$desc = FormatRemoveEsoItemDescriptionText($skillData["description"]);
+				$desc = $this->escapeHtml($desc);
+				$desc = "<pre>$desc</pre>";
+				$ruleTexts = [];
+				
+				foreach ($matchData as $data)
+				{
+					$rule = $data['rule'];
+					$ruleId = $rule['id'];
+					$nameId = $rule['nameId'];
+					$isToggle = $rule['isToggle'];
+					$statRequireId = $this->escapeHtml($rule['statRequireId']);
+					$statRequireValue = $this->escapeHtml($rule['statRequireValue']);
+					$matchRegex = $this->escapeHtml($rule['matchRegex']);
+					
+					$options = [];
+					if ($isToggle) $options[] = "Toggle";
+					if ($statRequireId) $options[] = "$statRequireId=$statRequireValue";
+					$options = implode(", ", $options);
+					
+					if ($nameId && $options)
+						$ruleTexts[] = "<a href='$baselink/editrule?ruleid=$ruleId'>Rule #$ruleId</a> -- $nameId ($options): $matchRegex";
+					elseif ($nameId)
+						$ruleTexts[] = "<a href='$baselink/editrule?ruleid=$ruleId'>Rule #$ruleId</a> -- $nameId: $matchRegex";
+					elseif ($options)
+						$ruleTexts[] = "<a href='$baselink/editrule?ruleid=$ruleId'>Rule #$ruleId</a> -- ($options) $matchRegex";
+					else
+						$ruleTexts[] = "<a href='$baselink/editrule?ruleid=$ruleId'>Rule #$ruleId</a> -- $matchRegex";
+				}
+				
+				$ruleTexts = "<li>" . implode("</li><li>", $ruleTexts) . "</li>";
+				$errors[] = "$abilityId Skill has $count rule matches!<br/>$desc</br><ul>$ruleTexts</ul>";
+			}
+		}
+		
+		return $errors;
+	}
+	
+	
 	public function OutputTestMatchSetData()
 	{
 		$errors = [];
-		if ($this->testMatchData['set'] == null) return null;
+		if ($this->testMatchData['set'] == null) return $errors;
 		
 		$baselink = $this->GetBaseLink();
 		
