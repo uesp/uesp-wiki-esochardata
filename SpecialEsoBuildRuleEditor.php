@@ -1849,7 +1849,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		if (!$updateResult) return $this->reportError("Error: Failed to save rule record!");
 		
 		$output->addHTML( "<p>Successfully saved rule #$id!</p><br>" );
-		$output->addHTML( "<a href='$baselink'>Home</a> : <a href='$baselink/showrules'>Show Rules</a> : <a href='$baselink/testrule?ruleid=$id'>Test Rule</a><br/>" );
+		$output->addHTML( "<a href='$baselink'>Home</a> : <a href='$baselink/showrules'>Show Rules</a> : <a href='$baselink/testrule?ruleid=$id'>Test Rule</a> : <a href='$baselink/copyrule?ruleid=$id'>Copy Rule</a><br/>" );
 	}
 	
 	
@@ -3823,7 +3823,12 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$values[] = "'" . $this->db->real_escape_string( $originalId ) . "'";
 		$values[] = "'" . $this->db->real_escape_string( $icon ) . "'";
 		$values[] = "'" . $this->db->real_escape_string( $groupName ) . "'";
-		$values[] = "'" . $this->db->real_escape_string( $maxTimes ) . "'";
+		
+		if ($maxTimes == null || $maxTimes == '')
+			$values[] = "NULL";
+		else
+			$values[] = "'" . $this->db->real_escape_string( $maxTimes ) . "'";
+		
 		$values[] = "'" . $this->db->real_escape_string( $comment ) . "'";
 		$values[] = "'" . $this->db->real_escape_string( $description ) . "'";
 		$values[] = "'" . $this->db->real_escape_string( $customData ) . "'";
@@ -3872,7 +3877,12 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 			$values[] = "'" . $this->db->real_escape_string( $category ) . "'";
 			$values[] = "'" . $this->db->real_escape_string( $combineAs ) . "'";
 			$values[] = "'" . $this->db->real_escape_string( $roundNum ) . "'";
-			$values[] = "'" . $this->db->real_escape_string( $factorValue ) . "'";
+			
+			if ($factorValue == null || $factorValue == '')
+				$values[] = "NULL";
+			else
+				$values[] = "'" . $this->db->real_escape_string( $factorValue ) . "'";
+			
 			$values[] = "'" . $this->db->real_escape_string( $statDesc ) . "'";
 			$values[] = "'" . $this->db->real_escape_string( $buffId ) . "'";
 			$values[] = "'" . $this->db->real_escape_string( $regexVar ) . "'";
@@ -3926,7 +3936,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		
 		if (!$this->LoadRule($ruleId)) return $this->reportError("Error: Failed to load rule $ruleId for testing!");
 		
-		$output->addHTML( "<a href='$baselink'>Home</a> : <a href='$baselink/showrules'>Show Rules</a> <br/>" );
+		$output->addHTML( "<a href='$baselink'>Home</a> : <a href='$baselink/showrules'>Show Rules</a> : <a href='$baselink/editrule?ruleid=$ruleId'>Edit Rule</a><br/>" );
 		
 		$output->addHTML( "<h2>Testing Rule #$ruleId</h2>" );
 		
@@ -3999,6 +4009,40 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	}
 	
 	
+	public function GetOutputTestRulesHtml($matchData)
+	{
+		$ruleTexts = [];
+		
+		foreach ($matchData as $data)
+		{
+			$rule = $data['rule'];
+			$ruleId = $rule['id'];
+			$nameId = $rule['nameId'];
+			$isToggle = $rule['isToggle'];
+			$statRequireId = $this->escapeHtml($rule['statRequireId']);
+			$statRequireValue = $this->escapeHtml($rule['statRequireValue']);
+			$matchRegex = $this->escapeHtml($rule['matchRegex']);
+			
+			$options = [];
+			if ($isToggle) $options[] = "Toggle";
+			if ($statRequireId) $options[] = "$statRequireId=$statRequireValue";
+			$options = implode(", ", $options);
+			
+			if ($nameId && $options)
+				$ruleTexts[] = "<a href='$baselink/editrule?ruleid=$ruleId'>Rule #$ruleId</a> -- $nameId ($options): $matchRegex";
+			elseif ($nameId)
+				$ruleTexts[] = "<a href='$baselink/editrule?ruleid=$ruleId'>Rule #$ruleId</a> -- $nameId: $matchRegex";
+			elseif ($options)
+				$ruleTexts[] = "<a href='$baselink/editrule?ruleid=$ruleId'>Rule #$ruleId</a> -- ($options) $matchRegex";
+			else
+				$ruleTexts[] = "<a href='$baselink/editrule?ruleid=$ruleId'>Rule #$ruleId</a> -- $matchRegex";
+		}
+		
+		$ruleTexts = "<li>" . implode("</li><li>", $ruleTexts) . "</li>";
+		return $ruleTexts;
+	}
+	
+	
 	public function OutputTestMatchCpData()
 	{
 		$errors = [];
@@ -4031,34 +4075,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 				$desc = FormatRemoveEsoItemDescriptionText($cpData["minDescription"]);
 				$desc = $this->escapeHtml($desc);
 				$desc = "<pre>$desc</pre>";
-				$ruleTexts = [];
 				
-				foreach ($matchData as $data)
-				{
-					$rule = $data['rule'];
-					$ruleId = $rule['id'];
-					$nameId = $rule['nameId'];
-					$isToggle = $rule['isToggle'];
-					$statRequireId = $this->escapeHtml($rule['statRequireId']);
-					$statRequireValue = $this->escapeHtml($rule['statRequireValue']);
-					$matchRegex = $this->escapeHtml($rule['matchRegex']);
-					
-					$options = [];
-					if ($isToggle) $options[] = "Toggle";
-					if ($statRequireId) $options[] = "$statRequireId=$statRequireValue";
-					$options = implode(", ", $options);
-					
-					if ($nameId && $options)
-						$ruleTexts[] = "<a href='$baselink/editrule?ruleid=$ruleId'>Rule #$ruleId</a> -- $nameId ($options): $matchRegex";
-					elseif ($nameId)
-						$ruleTexts[] = "<a href='$baselink/editrule?ruleid=$ruleId'>Rule #$ruleId</a> -- $nameId: $matchRegex";
-					elseif ($options)
-						$ruleTexts[] = "<a href='$baselink/editrule?ruleid=$ruleId'>Rule #$ruleId</a> -- ($options) $matchRegex";
-					else
-						$ruleTexts[] = "<a href='$baselink/editrule?ruleid=$ruleId'>Rule #$ruleId</a> -- $matchRegex";
-				}
-				
-				$ruleTexts = "<li>" . implode("</li><li>", $ruleTexts) . "</li>";
+				$ruleTexts = $this->GetOutputTestRulesHtml($matchData);
 				$errors[] = "#$abilityId CP has $count rule matches!<br/>$desc</br><ul>$ruleTexts</ul>";
 			}
 		}
@@ -4099,34 +4117,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 				$desc = FormatRemoveEsoItemDescriptionText($skillData["description"]);
 				$desc = $this->escapeHtml($desc);
 				$desc = "<pre>$desc</pre>";
-				$ruleTexts = [];
-				
-				foreach ($matchData as $data)
-				{
-					$rule = $data['rule'];
-					$ruleId = $rule['id'];
-					$nameId = $rule['nameId'];
-					$isToggle = $rule['isToggle'];
-					$statRequireId = $this->escapeHtml($rule['statRequireId']);
-					$statRequireValue = $this->escapeHtml($rule['statRequireValue']);
-					$matchRegex = $this->escapeHtml($rule['matchRegex']);
-					
-					$options = [];
-					if ($isToggle) $options[] = "Toggle";
-					if ($statRequireId) $options[] = "$statRequireId=$statRequireValue";
-					$options = implode(", ", $options);
-					
-					if ($nameId && $options)
-						$ruleTexts[] = "<a href='$baselink/editrule?ruleid=$ruleId'>Rule #$ruleId</a> -- $nameId ($options): $matchRegex";
-					elseif ($nameId)
-						$ruleTexts[] = "<a href='$baselink/editrule?ruleid=$ruleId'>Rule #$ruleId</a> -- $nameId: $matchRegex";
-					elseif ($options)
-						$ruleTexts[] = "<a href='$baselink/editrule?ruleid=$ruleId'>Rule #$ruleId</a> -- ($options) $matchRegex";
-					else
-						$ruleTexts[] = "<a href='$baselink/editrule?ruleid=$ruleId'>Rule #$ruleId</a> -- $matchRegex";
-				}
-				
-				$ruleTexts = "<li>" . implode("</li><li>", $ruleTexts) . "</li>";
+				$ruleTexts = $this->GetOutputTestRulesHtml($matchData);
 				$errors[] = "$abilityId Skill has $count rule matches!<br/>$desc</br><ul>$ruleTexts</ul>";
 			}
 		}
@@ -4162,34 +4153,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 				{
 					$setData = $matchData[0]['set'];
 					$setBonusDesc = "<pre>" . $this->escapeHtml($setData["setBonusDesc$i"]) . "</pre>";
-					$ruleTexts = [];
-					
-					foreach ($matchData as $data)
-					{
-						$rule = $data['rule'];
-						$ruleId = $rule['id'];
-						$nameId = $rule['nameId'];
-						$isToggle = $rule['isToggle'];
-						$statRequireId = $this->escapeHtml($rule['statRequireId']);
-						$statRequireValue = $this->escapeHtml($rule['statRequireValue']);
-						$matchRegex = $this->escapeHtml($rule['matchRegex']);
-						
-						$options = [];
-						if ($isToggle) $options[] = "Toggle";
-						if ($statRequireId) $options[] = "$statRequireId=$statRequireValue";
-						$options = implode(", ", $options);
-						
-						if ($nameId && $options)
-							$ruleTexts[] = "<a href='$baselink/editrule?ruleid=$ruleId'>Rule #$ruleId</a> -- $nameId ($options): $matchRegex";
-						elseif ($nameId)
-							$ruleTexts[] = "<a href='$baselink/editrule?ruleid=$ruleId'>Rule #$ruleId</a> -- $nameId: $matchRegex";
-						elseif ($options)
-							$ruleTexts[] = "<a href='$baselink/editrule?ruleid=$ruleId'>Rule #$ruleId</a> -- ($options) $matchRegex";
-						else
-							$ruleTexts[] = "<a href='$baselink/editrule?ruleid=$ruleId'>Rule #$ruleId</a> -- $matchRegex";
-					}
-					
-					$ruleTexts = "<li>" . implode("</li><li>", $ruleTexts) . "</li>";
+					$ruleTexts = $this->GetOutputTestRulesHtml($matchData);
 					$errors[] = "$setName Bonus #$i has $count rule matches!<br/>$setBonusDesc</br><ul>$ruleTexts</ul>";
 				}
 			}
