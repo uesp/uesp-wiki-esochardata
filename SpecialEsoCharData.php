@@ -18,6 +18,7 @@ class SpecialEsoCharData extends SpecialPage
 		$this->charDataViewer = new EsoCharDataViewer();
 		$this->charDataViewer->baseUrl = "/wiki/Special:EsoCharData";
 		$this->charDataViewer->baseResourceUrl = "/esobuilddata/";
+		$this->charDataViewer->includeSetSkillData = true;
 	}
 	
 

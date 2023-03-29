@@ -17,6 +17,7 @@ class SpecialEsoBuildData extends SpecialPage
 		$this->buildDataViewer = new EsoBuildDataViewer();
 		$this->buildDataViewer->baseUrl = "/wiki/Special:EsoBuildData";
 		$this->buildDataViewer->baseResourceUrl = "/esobuilddata/";
+		$this->buildDataViewer->includeSetSkillData = true;
 	}
 	
 	
