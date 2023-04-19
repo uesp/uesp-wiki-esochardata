@@ -69,6 +69,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	public $testSkillData = [];
 	public $testMatchData = [];
 	
+	public $statIds = [];
+	
 	
 	function __construct()
 	{
@@ -1853,7 +1855,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		if (!$updateResult) return $this->reportError("Error: Failed to save rule record!");
 		
 		$output->addHTML( "<p>Successfully saved rule #$id!</p><br>" );
-		$output->addHTML( "<a href='$baselink'>Home</a> : <a href='$baselink/showrules'>Show Rules</a> : <a href='$baselink/testrule?ruleid=$id'>Test Rule</a> : <a href='$baselink/copyrule?ruleid=$id'>Copy Rule</a><br/>" );
+		$output->addHTML( "<a href='$baselink'>Home</a> : <a href='$baselink/showrules'>Show Rules</a> : <a href='$baselink/editrule?ruleid=$id'>Edit Rule</a> : <a href='$baselink/testrule?ruleid=$id'>Test Rule</a> : <a href='$baselink/copyrule?ruleid=$id'>Copy Rule</a><br/>" );
 	}
 	
 	
@@ -2206,7 +2208,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$output->addHTML( "<input list='statIds' id='statId' name='statId'>" );
 		$output->addHTML( "<datalist id='statIds' name='statId'>" );
 		
-		foreach ( $this->ids as $id )
+		foreach ( $this->statIds as $id )
 		{
 			$statIdValue = $this->escapeHtml( $id ['statId'] );
 			$output->addHTML( "<option value='$statIdValue'>$statIdValue</option>" );
@@ -2323,7 +2325,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$output->addHTML( "<input list='edit_statIds' id='edit_statId' name='edit_statId' value='$statId'>" );
 		$output->addHTML( "<datalist id='edit_statIds' name='edit_statId'>" );
 		
-		foreach ( $this->ids as $id )
+		foreach ( $this->statIds as $id )
 		{
 			$statIdValue = $this->escapeHtml( $id['statId'] );
 			$output->addHTML( "<option value='$statIdValue'>$statIdValue</option>" );
@@ -2646,11 +2648,11 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 			return $this->reportError( "Error: failed to load stat IDs from database" );
 		}
 		
-		$this->ids = [ ];
+		$this->statIds = [ ];
 		
 		while ( $row = $result->fetch_assoc() )
 		{
-			$this->ids[] = $row;
+			$this->statIds[] = $row;
 		}
 		
 		return true;
@@ -2670,7 +2672,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		
 		if (!$this->LoadStatIds()) return $this->reportError("Error: Failed to load statIds!");
 		
-		foreach ( $this->ids as $id )
+		foreach ( $this->statIds as $id )
 		{
 			$usedId = $this->escapeHtml( $id ['statId'] );
 			if ($input_statId === $usedId) return $this->reportError( "Error: statId '$input_statId' is already used" );
