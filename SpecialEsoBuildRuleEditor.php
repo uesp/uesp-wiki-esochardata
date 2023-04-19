@@ -1038,6 +1038,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		
 		$output->addHTML( "<th>Enabled</th>" );
 		$output->addHTML( "<th>Toggle</th>" );
+		$output->addHTML( "<th>Max Times</th>" );
 		$output->addHTML( "<th>Visible</th>" );
 		$output->addHTML( "<th>Enable Off Bar</th>" );
 		$output->addHTML( "<th>Stat Require Value</th>" );
@@ -1062,6 +1063,8 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 			$isVisible = $this->escapeHtml( $rulesData['isVisible'] );
 			$enableOffBar = $this->escapeHtml( $rulesData['enableOffBar'] );
 			$statRequireValue = $this->escapeHtml( $rulesData['statRequireValue'] );
+			$maxTimes = $this->escapeHtml( $rulesData['maxTimes'] );
+			if ($maxTimes == 0) $maxTimes = '';
 			
 			$isEnabledDisplay = $this->GetBooleanDispaly ( $isEnabled );
 			$toggleDisplay = $this->GetBooleanDispaly ( $toggle );
@@ -1100,6 +1103,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 			$output->addHTML( "<td>$description</td>" );
 			$output->addHTML( "<td>$isEnabledDisplay</td>" );
 			$output->addHTML( "<td>$toggleDisplay</td>" );
+			$output->addHTML( "<td>$maxTimes</td>" );
 			$output->addHTML( "<td>$isVisibleDisplay</td>" );
 			$output->addHTML( "<td>$enableOffBarDisplay</td>" );
 			$output->addHTML( "<td>$statRequireValue</td>" );
