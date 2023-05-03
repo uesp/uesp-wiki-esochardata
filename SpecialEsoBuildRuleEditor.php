@@ -3172,7 +3172,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 			$table = "minedSkills$version";
 		
 		if ($isPassive)
-			$query = "SELECT * FROM `$table` WHERE (isPlayer=1 OR setName!='') AND isPassive='1' AND rank='1';";
+			$query = "SELECT * FROM `$table` WHERE (isPlayer=1 OR setName!='') AND isPassive='1' AND (rank='1' OR rank='2');";
 		else
 			$query = "SELECT * FROM `$table` WHERE (isPlayer=1 OR setName!='') AND isPassive='0' AND (rank='1' OR rank='5' OR rank='9');";
 		
@@ -3264,6 +3264,38 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	}
 	
 	
+	public function LoadTestItemData($version)
+	{
+		$version = preg_replace('/[^0-9a-zA-Z_]/', '', $version);
+		if ($this->testItemData) return $this->testItemData;
+		
+		$this->InitLogDatabase();
+		
+		if (GetEsoItemTableSuffix($version) == '')
+			$table = "minedItemSummary";
+		else
+			$table = "minedItemSummary$version";
+		
+		$query = "SELECT * FROM `$table`;";
+		$result = $this->logdb->query($query);
+		if ($result === false) return null;
+		
+		$itemData = [];
+		
+		while ($row = $result->fetch_assoc())
+		{
+			$itemId = intval($row['itemId']);
+			
+			$itemData[$itemId] = $row;
+		}
+		
+		$this->InitTestItemMatchData($itemData);
+		
+		$this->testItemData = $itemData;
+		return $this->testItemData;
+	}
+	
+	
 	public function InitTestCpMatchData($cpDatas)
 	{
 		
@@ -3304,6 +3336,20 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 				
 				$this->testMatchData['set'][$setData['setName']][$i] = [];
 			}
+		}
+	}
+	
+	
+	public function InitTestItemMatchData($itemDatas)
+	{
+		
+		foreach ($itemDatas as $itemId => $itemData)
+		{
+			//$traitDesc = $setData["description"];
+			$abilityDesc = $setData["abilityDesc"];
+			if ($abilityDesc == "") continue;
+			
+			$this->testMatchData['item'][$itemId] = [];
 		}
 	}
 	
@@ -3438,6 +3484,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 			$abilityDesc = trim($skillData['abilityDesc']);
 			if ($abilityDesc) $desc = "$abilityDesc\n$desc";
 			
+			$header = trim($skillData["descHeader"]);
+			if ($header) $desc = "$header\r\n$desc";
+			
 			$desc = FormatRemoveEsoItemDescriptionText($desc);
 			
 			//error_log("{$rule['matchRegex']}, $desc");
@@ -3469,8 +3518,41 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	
 	public function TestAbilityDescRule($rule)
 	{
-		$testResult = [];
-		return $testResult;
+		$errors = [];
+		$output = $this->getOutput();
+		
+		$itemDatas = $this->LoadTestItemData($rule['version']);
+		if ($itemDatas == null) return [ 'errorsMsg' => "Failed to load item data!" ];
+		
+		if ($rule['matchRegex'] == null || $rule['matchRegex'] == "") $errors[] = "Missing match regex!";
+		
+		$matchedItems = [];
+		
+		foreach ($itemDatas as $itemId => $itemData)
+		{
+			$desc = trim($itemData['abilityDesc']);
+			if ($desc == "") continue;
+			
+			$desc = FormatRemoveEsoItemDescriptionText($desc);
+			
+			$result = preg_match($rule['matchRegex'], $desc, $matches);
+			if (!$result) continue;
+			
+			$newData = [];
+			$newData['rule'] = $rule;
+			$newData['item'] = $itemData;
+			
+			$this->testMatchData['item'][$itemId][] = $newData;
+			$matchedItems[] = $itemData;
+		}
+		
+		if (count($matchedItems) == 0)
+		{
+			$safeRegex = $this->escapeHtml($rule['matchRegex']);
+			$errors[] = "Regex doesn't match any items!<br/>$safeRegex";
+		}
+		
+		return [ 'errors' => $errors, 'matchedItems' => $matchedItems  ];
 	}
 	
 	
@@ -3666,6 +3748,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		if ($result['matchedSets'] && $showExtra) $this->OutputTestRuleSetResult($result, $rule);
 		if ($result['matchedSkills'] && $showExtra) $this->OutputTestRuleSkillResult($result, $rule);
 		if ($result['matchedCps'] && $showExtra) $this->OutputTestRuleCpResult($result, $rule);
+		if ($result['matchedItems'] && $showExtra) $this->OutputTestRuleItemResult($result, $rule);
 		
 		return $numErrors;
 	}
@@ -3694,6 +3777,28 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	}
 	
 	
+	public function OutputTestRuleItemResult($result, $rule)
+	{
+		$matchedItems = $result['matchedItems'];
+		$output = $this->getOutput();
+		$count = count($matchedItems);
+		
+		$output->addHTML("<tr><td></td><td>Found $count matching items!<ul>\n");
+		
+		foreach ($matchedItems as $itemData)
+		{
+			$name = $this->escapeHtml($itemData['name']);
+			$id = $itemData['itemId'];
+			$desc = $itemData["abilityDesc"];
+			$desc = FormatRemoveEsoItemDescriptionText($desc);
+			$desc = $this->escapeHtml($desc);
+			
+			$output->addHTML("<li>$name ($id) : $desc</li>");
+		}
+		
+		$output->addHTML("</ul></td></tr>");
+	}
+	
 	
 	public function OutputTestRuleSkillResult($result, $rule)
 	{
@@ -3707,9 +3812,11 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		{
 			$name = $this->escapeHtml($skillData['name']);
 			$abilityId = $skillData['id'];
+			$header = trim($skillData['descHeader']);
 			$abilityDesc = trim($skillData['abilityDesc']);
 			$desc = $skillData["description"];
 			if ($abilityDesc) $desc = "$abilityDesc\r\n$desc";
+			if ($header) $desc = "$header\r\n$desc";
 			$desc = FormatRemoveEsoItemDescriptionText($desc);
 			$desc = $this->escapeHtml($desc);
 			
@@ -4112,7 +4219,12 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 			elseif ($count == 0)
 			{
 				$skillData = $this->testSkillData[$abilityId];
-				$desc = FormatRemoveEsoItemDescriptionText($skillData["description"]);
+				
+				$desc = $skillData["description"];
+				$header = trim($skillData["descHeader"]);
+				if ($header) $desc = "$header\r\n$desc";
+				
+				$desc = FormatRemoveEsoItemDescriptionText($desc);
 				$desc = $this->escapeHtml($desc);
 				$desc = "<pre>$desc</pre>";
 				$errors[] = "$abilityId Skill has no rule match!<br/>$desc";
@@ -4120,7 +4232,12 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 			else
 			{
 				$skillData = $matchData[0]['skill'];
-				$desc = FormatRemoveEsoItemDescriptionText($skillData["description"]);
+				
+				$desc = $skillData["description"];
+				$header = trim($skillData["descHeader"]);
+				if ($header) $desc = "$header\r\n$desc";
+				
+				$desc = FormatRemoveEsoItemDescriptionText($desc);
 				$desc = $this->escapeHtml($desc);
 				$desc = "<pre>$desc</pre>";
 				$ruleTexts = $this->GetOutputTestRulesHtml($matchData);
