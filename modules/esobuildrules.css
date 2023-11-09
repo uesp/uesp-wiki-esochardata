@@ -72,3 +72,10 @@ form label {
 #rules td:nth-child(3) {
 	white-space: nowrap;
 }
+
+.ruleTextArea {
+	display: inline-block;
+	vertical-align: top;
+	width: 600px;
+	margin-bottom: 5px;
+}
