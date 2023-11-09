@@ -3247,8 +3247,9 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	
 	public function LoadTestSetData($version)
 	{
-		$version = preg_replace('/[^0-9a-zA-Z_]/', '', $version);
 		if ($this->testSetData) return $this->testSetData;
+		
+		$version = preg_replace('/[^0-9a-zA-Z_]/', '', $version);
 		
 		$this->InitLogDatabase();
 		
@@ -3360,7 +3361,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		foreach ($itemDatas as $itemId => $itemData)
 		{
 			//$traitDesc = $setData["description"];
-			$abilityDesc = $setData["abilityDesc"];
+			$abilityDesc = $itemData["abilityDesc"];
 			if ($abilityDesc == "") continue;
 			
 			$this->testMatchData['item'][$itemId] = [];
@@ -4137,11 +4138,13 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	public function OutputTestMatchData()
 	{
 		$errors = $this->OutputTestMatchSetData();
+		$itemErrors = $this->OutputTestMatchItemData();
 		$skillErrors = $this->OutputTestMatchSkillData();
 		$cpErrors = $this->OutputTestMatchCpData();
 		
 		if (count($skillErrors) > 0) array_push($errors, ...$skillErrors);
 		if (count($cpErrors) > 0) array_push($errors, ...$cpErrors);
+		if (count($itemErrors) > 0) array_push($errors, ...$itemErrors);
 		
 		$output = $this->getOutput();
 		
@@ -4315,6 +4318,35 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 					$errors[] = "Set $setName Bonus #$i has $count rule matches!<br/>$setBonusDesc</br><ul>$ruleTexts</ul>";
 				}
 			}
+		}
+		
+		return $errors;
+	}
+	
+	
+	public function OutputTestMatchItemData()
+	{
+		$errors = [];
+		if ($this->testMatchData['item'] == null) return $errors;
+		
+		$baselink = $this->GetBaseLink();
+		
+		foreach ($this->testMatchData['item'] as $itemId => $matchData)
+		{
+			$count = count($matchData);
+			
+			if ($count == 0)
+			{
+				$itemData = $this->testItemData[$itemId];
+				
+				$desc = $itemData["abilityDesc"];
+				
+				$desc = FormatRemoveEsoItemDescriptionText($desc);
+				$desc = $this->escapeHtml($desc);
+				$desc = "<pre>$desc</pre>";
+				$errors[] = "Item {$itemData['name']} ($itemId) has no rule match!<br/>$desc";
+			}
+			
 		}
 		
 		return $errors;
