@@ -1568,12 +1568,14 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		$output->addHTML( "<input type='text' id='displayName' name='displayName' size='60'><br>" );
 		
 		$output->addHTML( "<label for='matchRegex'>Match Regex</label>" );
-		$output->addHTML( "<input type='text' id='matchRegex' name='matchRegex' size='60'>" );
+		//$output->addHTML( "<input type='text' id='matchRegex' name='matchRegex' size='60'>" );
+		$output->addHTML( "<textarea id='matchRegex' name='matchRegex' rows='5' cols='10' wrap='soft' maxlength='1000' class='ruleTextArea'></textarea>" );
 		$output->addHTML( "<p class='errorMsg'></p>" );
 		$output->addHTML( "<p class='warningErr'></p>" );
 		
 		$output->addHTML( "<label for='displayRegex'>Display Regex</label>" );
-		$output->addHTML( "<input type='text' id='displayRegex' name='displayRegex' size='60'>" );
+		//$output->addHTML( "<input type='text' id='displayRegex' name='displayRegex' size='60'>" );
+		$output->addHTML( "<textarea id='displayRegex' name='displayRegex' rows='5' cols='10' wrap='soft' maxlength='1000' class='ruleTextArea'></textarea>" );
 		$output->addHTML( "<p class='errorMsg'></p>" );
 		
 		$output->addHTML( "<label for='statRequireId'>Stat Require Id</label>" );
@@ -4157,6 +4159,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 	public function GetOutputTestRulesHtml($matchData)
 	{
 		$ruleTexts = [];
+		$baselink = $this->GetBaseLink();
 		
 		foreach ($matchData as $data)
 		{
