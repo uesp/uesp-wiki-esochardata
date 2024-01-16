@@ -1,23 +1,23 @@
 @font-face {
 	font-family: 'EsoFontStyle';
-	src: url('esofontregular-webfont.eot');
-	src: url('esofontregular-webfont.eot?#iefix') format('embedded-opentype'),
-		url('esofontregular-webfont.woff2') format('woff2'),
-		url('esofontregular-webfont.woff') format('woff'),
-		url('esofontregular-webfont.ttf') format('truetype'),
-		url('esofontregular-webfont.svg#esofontregular') format('svg');
+	src: url('/esolog-static.uesp.net/resources/esofontregular-webfont.eot');
+	src: url('/esolog-static.uesp.net/resources/esofontregular-webfont.eot?#iefix') format('embedded-opentype'),
+		url('/esolog-static.uesp.net/resources/esofontregular-webfont.woff2') format('woff2'),
+		url('/esolog-static.uesp.net/resources/esofontregular-webfont.woff') format('woff'),
+		url('/esolog-static.uesp.net/resources/esofontregular-webfont.ttf') format('truetype'),
+		url('/esolog-static.uesp.net/resources/esofontregular-webfont.svg#esofontregular') format('svg');
 	font-weight: normal;
 	font-style: normal;
 }
 
 @font-face {
 	font-family: 'EsoFontStyle';
-	src: url('esofontbold-webfont.eot');
-	src: url('esofontbold-webfont.eot?#iefix') format('embedded-opentype'),
-		url('esofontbold-webfont.woff2') format('woff2'),
-		url('esofontbold-webfont.woff') format('woff'),
-		url('esofontbold-webfont.ttf') format('truetype'),
-		url('esofontbold-webfont.svg#esofontbold') format('svg');
+	src: url('/esolog-static.uesp.net/resources/esofontbold-webfont.eot');
+	src: url('/esolog-static.uesp.net/resources/esofontbold-webfont.eot?#iefix') format('embedded-opentype'),
+		url('/esolog-static.uesp.net/resources/esofontbold-webfont.woff2') format('woff2'),
+		url('/esolog-static.uesp.net/resources/esofontbold-webfont.woff') format('woff'),
+		url('/esolog-static.uesp.net/resources/esofontbold-webfont.ttf') format('truetype'),
+		url('/esolog-static.uesp.net/resources/esofontbold-webfont.svg#esofontbold') format('svg');
 	font-weight: bold;
 	font-style: normal;
 }
@@ -172,7 +172,7 @@
 	display: inline-block;
 	width: 68px;
 	height: 68px;
-	background-image: url(eso_ability_frame.png);
+	background-image: url(/esolog-static.uesp.net/resources/eso_ability_frame.png);
 	background-size: 100% 100%;
 	vertical-align: middle;
 	text-align: center;
@@ -206,7 +206,7 @@
 
 .ecdSkillTooltip {
 	width: 360px;
-	background-image: url(eso_item_border.png);
+	background-image: url(/esolog-static.uesp.net/resources/eso_item_border.png);
 	background-size: 100% 100%;
 	color: #C5C29E;
 	line-height: 125%;
@@ -216,7 +216,7 @@
 
 .ecdSkillTooltip1 {
 	width: 360px;
-	background-image: url(eso_item_border.png);
+	background-image: url(/esolog-static.uesp.net/resources/eso_item_border.png);
 	background-size: 100% 100%;
 	color: #C5C29E;
 	line-height: 125%;
@@ -691,7 +691,7 @@ tr.eso_item_link {
 .ecdSkillIconBox {
 	width: 34px;
 	height: 34px;
-	background-image: url(eso_ability_frame.png);
+	background-image: url(/esolog-static.uesp.net/resources/eso_ability_frame.png);
 	background-size: 100% 100%;
 	display: inline-block;
 	vertical-align: middle;
@@ -700,7 +700,7 @@ tr.eso_item_link {
 .ecdSkillPassiveIconBox {
 	width: 34px;
 	height: 34px;
-	background-image: url(eso_round_ability_frame.png);
+	background-image: url(/esolog-static.uesp.net/resources/eso_round_ability_frame.png);
 	background-size: 100% 100%;
 	display: inline-block;
 	vertical-align: middle;
@@ -1019,12 +1019,12 @@ table.tablesorter thead tr .header {
 }
 
 table.tablesorter thead tr .headerSortUp {
-    background-image: url(arrow_down.png);
+    background-image: url(/esolog-static.uesp.net/resources/arrow_down.png);
     background-size: 16px;
  }
  
  table.tablesorter thead tr .headerSortDown {
-    background-image: url(arrow_up.png);
+    background-image: url(/esolog-static.uesp.net/resources/arrow_up.png);
     background-size: 16px;
  }
  
