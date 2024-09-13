@@ -105,6 +105,31 @@ window.NumberValidate = function()
 }
 
 
+window.VersionValidate = function()
+{
+	var input = $(this).val().toLowerCase();
+	var errorMsg = $(this).next(".errorMsg");
+	var isNum = input.match(/^[0-9pts]+$/);
+	
+	if (input == "test")
+	{
+		//OK
+	}
+	else if (isNum != null || input == '')
+	{
+		errorMsg.text("");
+		$(this).removeClass("badRegex");
+		$('.submit_btn').prop('disabled', false);
+	}
+	else
+	{
+		errorMsg.text("Error: please enter a valid number");
+		$(this).addClass("badRegex");
+		$('.submit_btn').prop('disabled', true);
+	}
+}
+
+
 window.EffectsRegexValidate = function()
 {
 	var namedVars = $(this).val().matchAll(/\?\<([^>]+)\>/g);
@@ -169,7 +194,7 @@ $(document).ready(function () {
 	 $("#edit_matchRegex").on("input", RegexValidateNamedVar);
 	 $("#edit_displayRegex").on("input", RegexValidate);
 	 
-	 $("#version").on("input", NumberValidate);
+	 $("#version").on("input", VersionValidate);
 	 
 	 $("#nameId").on("input", NameIdValidate);
 	 $("#edit_nameId").on("input", NameIdValidate);

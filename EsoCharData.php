@@ -129,9 +129,7 @@ $wgGroupPermissions['*']['esochardata_ruleedit'] = false;
 $wgGroupPermissions['sysop']['esochardata_ruleedit'] = true;
 $wgGroupPermissions['esobuildruleseditor']['esochardata_ruleedit'] = true;
 
-
-
-
-
-
+$wgGroupPermissions['*']['esochardata_ruleadmin'] = false;
+$wgGroupPermissions['sysop']['esochardata_ruleadmin'] = true;
+$wgGroupPermissions['esobuildrulesadmin']['esochardata_ruleadmin'] = true;
 
