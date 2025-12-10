@@ -16,6 +16,7 @@ ignore = .git*
 dest = content1.uesp.net:/home/uesp/www/w/extensions/EsoCharData/
 dest = content2.uesp.net:/home/uesp/www/w/extensions/EsoCharData/
 dest = content3.uesp.net:/home/uesp/www/w/extensions/EsoCharData/
+dest = content4.uesp.net:/home/uesp/www/w/extensions/EsoCharData/
 
 destname = [backup]backup1.uesp.net:/home/uesp/www/w/extensions/EsoCharData/
 destname = [dev]content3.uesp.net:/home/uesp/dev/www/w/extensions/EsoCharData/

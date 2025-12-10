@@ -4471,7 +4471,7 @@ class SpecialEsoBuildRuleEditor extends SpecialPage {
 		
 		$baselink = $this->GetBaseLink();
 		
-		$output->addHTML( "Edit rules, effects, and computed stats used for the <a href='/wiki/Special:EsoBuildEditor'>ESO Build Editor</a>. For more information and help see <a href='/wiki/UESPWiki:ESO_Build_Rules_Editor'>here></a>.<p/>" );
+		$output->addHTML( "Edit rules, effects, and computed stats used for the <a href='/wiki/Special:EsoBuildEditor'>ESO Build Editor</a>. For more information and help see <a href='/wiki/UESPWiki:ESO_Build_Rules_Editor'>here</a>.<p/>" );
 		
 		$output->addHTML( "<ul>" );
 		$output->addHTML( "<li><a href='$baselink/showrules'>Show Rules</a></li>" );
